@@ -10,11 +10,22 @@ Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progre
 - **Metas:** reserva, objetivos de economia e estimativa ilustrativa de CDB a 100% do CDI a partir de dados do Banco Central.
 - **Sonho:** acompanhamento de objetivos pessoais.
 
-O aplicativo também oferece importação e exportação CSV, backup/restauração JSON e confirmação obrigatória de Reserva, Meta ou Sonho para aplicações identificadas no extrato bancário.
+O aplicativo também oferece importação e exportação CSV, backup/restauração JSON, **backup automático em pasta escolhida no computador** e confirmação obrigatória de Reserva, Meta ou Sonho para aplicações identificadas no extrato bancário.
+
+## Salvar automaticamente em uma pasta do PC
+
+1. Abra o aplicativo no **Chrome ou Edge no computador** (HTTPS ou `localhost`).
+2. Clique nos três pontos (`⋯`) no cabeçalho e selecione **Escolher pasta de dados**.
+3. Escolha uma pasta que será usada pelo aplicativo e autorize a gravação.
+4. A partir de então, cada alteração bem-sucedida nos dados é salva automaticamente no arquivo `meu-dinheiro-dados.json`, após uma pequena pausa de 350 ms. Uma cópia do dia também fica em `historico/`.
+
+O acesso à pasta é lembrado no navegador, mas a permissão de escrita pode expirar: nesse caso, um indicador aparece no botão de backup e o menu oferece **Reautorizar / salvar agora**. Se a pasta já contiver um backup com dados diferentes, o aplicativo **pede confirmação** e preserva uma cópia do arquivo anterior antes de substituí-lo. Se alguém editar o arquivo fora do app enquanto ele estiver aberto, a gravação é interrompida para evitar perda de dados.
+
+O backup contém receitas, despesas, metas, reservas, sonhos, aplicações e lembretes de aportes. Ele usa o **mesmo formato JSON** da opção **Restaurar backup (JSON)**. Os arquivos não são criptografados: mantenha a pasta em local seguro. A sincronização por pasta é específica de cada navegador e origem; as versões Vercel e GitHub Pages mantêm dados locais e permissões separados. Em navegadores sem acesso direto a pastas, o backup manual JSON continua disponível.
 
 ## Privacidade
 
-Os lançamentos e lembretes ficam no armazenamento local do navegador. O código público **não contém extratos, saldos ou dados financeiros pessoais**. Os arquivos CSV e JSON são processados no dispositivo. Ao trocar de aparelho ou de domínio, use o backup JSON para transportar os dados.
+Os lançamentos e lembretes ficam no armazenamento local do navegador. Quando o backup em pasta está ativado, uma cópia é gravada no diretório escolhido; o aplicativo não envia esses arquivos a um servidor próprio. O código público **não contém extratos, saldos ou dados financeiros pessoais**. Os arquivos CSV e JSON são processados no dispositivo. Ao trocar de aparelho ou de domínio, use o backup JSON para transportar os dados.
 
 ## Executar e testar localmente
 
