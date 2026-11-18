@@ -45,6 +45,9 @@ test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.ok(html.indexOf('src="./csv.js"') < html.indexOf('src="./analytics.js"'));
   assert.ok(html.indexOf('src="./analytics.js"') < html.indexOf('src="./app.js"'));
+  assert.ok(html.indexOf('src="./folder-backup.js"') < html.indexOf('src="./app.js"'));
+  assert.match(html, /id="folder-backup-connect"/);
+  assert.match(html, /id="folder-backup-reconnect"/);
   assert.match(html, /name="viewport"/);
 });
 
@@ -104,7 +107,8 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v7/);
+  assert.match(source, /meu-dinheiro-essencial-v8/);
+  assert.ok(assets.includes('./folder-backup.js'));
 });
 
 test('Offline: navegação recupera a página; arquivo inexistente nunca vira HTML', async () => {
