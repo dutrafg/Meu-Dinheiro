@@ -23,6 +23,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .backup-menu button{color:var(--text)}
 .backup-menu button:hover{background:var(--green-bg)}
 .backup-menu-divider{height:1px;background:var(--border);margin:5px 9px}
+.header .icon-button{position:relative}
+.folder-backup-alert{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:1px solid var(--bg)}
+.backup-menu .folder-backup-status{font-size:.79rem;color:var(--sub);line-height:1.5;margin:7px 10px 5px;overflow-wrap:anywhere}
+.backup-menu .folder-backup-status[data-state="saved"]{color:var(--green)}
+.backup-menu .folder-backup-status[data-state="error"],.backup-menu .folder-backup-status[data-state="conflict"],.backup-menu .folder-backup-status[data-state="permission"]{color:var(--red)}
+.backup-menu .folder-backup-warning{font-size:.72rem;color:var(--sub);line-height:1.45;margin:5px 10px 9px}
 .desktop-nav{display:flex;justify-content:center;gap:4px;border-radius:23px;background:#ededf0;margin:0 auto 27px;padding:8px;max-width:100%;width:max-content}
 .desktop-nav .nav-button{min-width:132px;padding:12px 17px;color:#585b61;display:flex;flex-direction:column;gap:7px;font-weight:650;font-size:.95rem;border-radius:16px}
 .desktop-nav .nav-button svg{width:29px;height:29px;stroke-width:1.9}
