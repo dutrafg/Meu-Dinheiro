@@ -16,6 +16,17 @@ test('Vercel publica a pasta dist sem compilação', () => {
   assert.ok(config.headers.some(item => item.source === '/sw.js'));
 });
 
+test('GitHub Pages abre o aplicativo e publica dist como raiz', () => {
+  const entry=read('index.html');
+  assert.match(entry,/http-equiv="refresh" content="0;url=\.\/dist\/"/);
+  assert.match(entry,/window\.location\.replace\(new URL\('\.\/dist\/'/);
+  const workflow=read('.github/workflows/pages.yml');
+  assert.match(workflow,/actions\/upload-pages-artifact@v4/);
+  assert.match(workflow,/path: dist/);
+  assert.match(workflow,/actions\/deploy-pages@v4/);
+  assert.ok(fs.existsSync(path.join(dist,'index.html')));
+});
+
 test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   const manifest = JSON.parse(read('dist/manifest.webmanifest'));
   assert.equal(manifest.display, 'standalone');
