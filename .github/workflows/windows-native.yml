@@ -1,0 +1,49 @@
+name: Meu Dinheiro Windows x64
+
+on:
+  push:
+    branches: [windows-native]
+    paths:
+      - 'desktop/**'
+      - 'dist/**'
+      - 'tests/**'
+      - '.github/workflows/windows-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    name: Compilar e testar instalador
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Testes JavaScript
+        run: node --test tests/analytics.test.cjs tests/csv.test.cjs tests/folder-backup.test.cjs tests/pwa.test.cjs tests/windows.test.cjs
+      - name: Instalar CLI Tauri
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Gerar ícones Windows
+        working-directory: desktop
+        run: npm run icons
+      - name: Testes Rust e SQLite
+        working-directory: desktop/src-tauri
+        run: cargo test --target x86_64-pc-windows-msvc
+      - name: Gerar instalador NSIS x64
+        working-directory: desktop
+        run: npm run build -- --target x86_64-pc-windows-msvc
+      - name: Disponibilizar instalador para teste
+        uses: actions/upload-artifact@v4
+        with:
+          name: Meu-Dinheiro-Windows-x64
+          path: desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 30
