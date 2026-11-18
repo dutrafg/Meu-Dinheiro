@@ -1,0 +1,10 @@
+node_modules/
+.vercel/
+.openai/
+.env
+.env.*
+*.csv
+*.xlsx
+*backup*.json
+extratos/
+dados-pessoais/

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f6f8" />
+  <meta name="description" content="Controle sua renda, despesas, reserva e sonhos em um lugar simples." />
+  <title>Meu Dinheiro</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./prototype.css" />
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-chart-pie" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9v9z"/><path d="M13 2.1A9 9 0 0 1 21.9 11H13z"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 3h16v18l-4-2.5L12 21l-4-2.5L4 21z"/><path d="M8 8h8M8 12h5"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m10.5 2 1.7 6 5.8 2-5.8 2-1.7 6-1.8-6-5.7-2 5.7-2z"/><circle cx="19.5" cy="4.5" r="2"/><path d="m19 15 .8 2.3L22 18l-2.2.7L19 21l-.8-2.3L16 18l2.2-.7z"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4m0 0-6 6m6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16m0 0 6-6m-6 6-6-6"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3.2 6.5 7.2 1-5.2 5.1 1.2 7.1-6.4-3.4-6.4 3.4 1.2-7.1-5.2-5.1 7.2-1z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l4-.8L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 14h10l1-14M10 11v6m4-6v6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="15" rx="3"/><path d="M3 9V6a3 3 0 0 1 3-3h12m3 9h-6a2 2 0 0 0 0 4h6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16M6 16v-5m6 5V5m6 11V9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 10h18c0-2-3-3-3-10M10 21h4"/></symbol>
+    <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3m0 0-5 5m5-5 5 5M4 17v3h16v-3"/></symbol>
+  </svg>
+  <div class="app-shell">
+    <header class="header">
+      <div class="prototype-heading"><span id="header-label">Resumo</span><strong id="header-balance">R$ 0,00</strong></div>
+      <div class="proto-header-actions">
+        <button type="button" id="reminder-button" class="icon-button quiet proto-reminder-button" aria-label="Lembretes de aporte" title="Lembretes de aporte"><svg><use href="#i-bell"/></svg><span id="reminder-count" class="proto-reminder-count hidden" aria-hidden="true"></span></button>
+        <button type="button" id="backup-menu-button" class="icon-button quiet" aria-label="Opções de backup" aria-expanded="false" title="Backup dos dados"><svg><use href="#i-ellipsis"/></svg></button>
+      </div>
+      <div id="backup-menu" class="backup-menu hidden" role="menu">
+        <button type="button" id="export-csv" role="menuitem"><svg><use href="#i-download"/></svg> Exportar CSV</button>
+        <button type="button" id="import-csv" role="menuitem"><svg><use href="#i-upload"/></svg> Importar CSV do banco</button>
+        <div class="backup-menu-divider"></div>
+        <button type="button" id="export-data" role="menuitem"><svg><use href="#i-download"/></svg> Backup completo (JSON)</button>
+        <button type="button" id="import-data" role="menuitem"><svg><use href="#i-upload"/></svg> Restaurar backup (JSON)</button>
+        <p>Os arquivos são processados no seu aparelho.</p>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+      <input type="file" id="csv-import-file" accept="text/csv,.csv,text/plain" hidden />
+    </header>
+    <nav class="desktop-nav" aria-label="Áreas do aplicativo" id="desktop-nav"></nav>
+    <main id="main-content" tabindex="-1" aria-live="polite"></main>
+    <button type="button" id="quick-add" class="fab" aria-label="Adicionar lançamento">+</button>
+    <nav class="mobile-nav" aria-label="Áreas do aplicativo" id="mobile-nav"></nav>
+  </div>
+
+  <dialog id="transaction-dialog" class="form-dialog">
+    <form id="transaction-form" autocomplete="off">
+      <div class="dialog-heading"><div><span class="eyebrow">LANÇAMENTO</span><h2 id="transaction-title">Nova renda</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+      <input name="id" type="hidden" />
+      <input name="type" type="hidden" />
+      <div class="tipo-toggle" id="transaction-type-toggle"><button type="button" data-trans-type="income">💵 Renda</button><button type="button" data-trans-type="expense">🧾 Despesa</button></div>
+      <label>Descrição <input name="description" maxlength="80" placeholder="Ex.: Salário, mercado..." required /></label>
+      <label>Valor (R$) <input name="amount" inputmode="decimal" type="number" min="0.01" max="999999999" step="0.01" placeholder="0,00" required /></label>
+      <div class="two-col"><label>Data <input name="date" type="date" required /></label><label>Categoria <select name="category" required></select></label></div>
+      <label class="check-row"><input name="recurring" type="checkbox" /><span>Repetir todo mês</span></label>
+      <p class="field-hint">Itens mensais continuam nos meses seguintes até você excluí-los.</p>
+      <div class="dialog-actions"><button class="button button-secondary close-dialog" type="button">Cancelar</button><button class="button button-primary" type="submit">Salvar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="goal-dialog" class="form-dialog">
+    <form id="goal-form" autocomplete="off">
+      <div class="dialog-heading"><div><span class="eyebrow" id="goal-eyebrow">META</span><h2 id="goal-title">Nova meta</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+      <input name="id" type="hidden" /><input name="kind" type="hidden" />
+      <label>Nome <input name="name" maxlength="80" placeholder="Ex.: Reserva de emergência" required /></label>
+      <label>Quanto você quer juntar (R$) <input name="target" type="number" min="0.01" max="999999999" step="0.01" required /></label>
+      <label>Quanto já guardou (R$) <input name="saved" type="number" min="0" max="999999999" step="0.01" value="0" required /></label>
+      <label>Data desejada (opcional) <input name="deadline" type="date" /></label>
+      <p class="field-hint">O valor guardado é acompanhado separadamente, sem descontar novamente das despesas.</p>
+      <div class="dialog-actions"><button class="button button-secondary close-dialog" type="button">Cancelar</button><button class="button button-primary" type="submit">Salvar</button></div>
+    </form>
+  </dialog>
+  <dialog id="csv-preview-dialog" class="form-dialog csv-preview-dialog">
+    <div class="dialog-heading"><div><span class="eyebrow">IMPORTAR CSV</span><h2>Conferir lançamentos</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+    <p id="csv-import-summary" class="csv-summary"></p>
+    <div id="csv-investment-list" class="csv-investment-list"></div>
+    <div id="csv-preview-table" class="csv-scroll"></div>
+    <p id="csv-import-warning" class="csv-warning"></p>
+    <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button type="button" id="csv-confirm-import" class="button button-primary">Importar</button></div>
+  </dialog>
+  <dialog id="reminder-dialog" class="form-dialog reminder-dialog">
+    <div class="dialog-heading"><div><span class="eyebrow">LEMBRETES</span><h2>🔔 Hora de guardar</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+    <p class="field-hint">Ao receber uma renda, lembre-se de fazer o aporte. Marcar como feito só confirma o lembrete; não movimenta dinheiro.</p>
+    <div id="reminder-list" class="proto-reminder-list"></div>
+    <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Fechar</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./csv.js" defer></script>
+  <script src="./analytics.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
