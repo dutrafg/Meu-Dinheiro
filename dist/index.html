@@ -35,13 +35,14 @@
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3"/></symbol>
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3m0 0-5 5m5-5 5 5M4 17v3h16v-3"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
   </svg>
   <div class="app-shell">
     <header class="header">
       <div class="prototype-heading"><span id="header-label">Resumo</span><strong id="header-balance">R$ 0,00</strong></div>
       <div class="proto-header-actions">
         <button type="button" id="reminder-button" class="icon-button quiet proto-reminder-button" aria-label="Lembretes de aporte" title="Lembretes de aporte"><svg><use href="#i-bell"/></svg><span id="reminder-count" class="proto-reminder-count hidden" aria-hidden="true"></span></button>
-        <button type="button" id="backup-menu-button" class="icon-button quiet" aria-label="Opções de backup" aria-expanded="false" title="Backup dos dados"><svg><use href="#i-ellipsis"/></svg></button>
+        <button type="button" id="backup-menu-button" class="icon-button quiet" aria-label="Opções de backup" aria-expanded="false" title="Backup dos dados"><svg><use href="#i-ellipsis"/></svg><span id="folder-backup-alert" class="folder-backup-alert hidden" aria-hidden="true"></span></button>
       </div>
       <div id="backup-menu" class="backup-menu hidden" role="menu">
         <button type="button" id="export-csv" role="menuitem"><svg><use href="#i-download"/></svg> Exportar CSV</button>
@@ -49,7 +50,11 @@
         <div class="backup-menu-divider"></div>
         <button type="button" id="export-data" role="menuitem"><svg><use href="#i-download"/></svg> Backup completo (JSON)</button>
         <button type="button" id="import-data" role="menuitem"><svg><use href="#i-upload"/></svg> Restaurar backup (JSON)</button>
-        <p>Os arquivos são processados no seu aparelho.</p>
+        <div class="backup-menu-divider"></div>
+        <button type="button" id="folder-backup-connect" role="menuitem"><svg><use href="#i-folder"/></svg> Escolher pasta de dados</button>
+        <button type="button" id="folder-backup-reconnect" class="hidden" role="menuitem"><svg><use href="#i-check"/></svg> Reautorizar / salvar agora</button>
+        <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
+        <p class="folder-backup-warning">Backup local em JSON, sem criptografia. Proteja a pasta no seu computador.</p>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
       <input type="file" id="csv-import-file" accept="text/csv,.csv,text/plain" hidden />
@@ -104,6 +109,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./csv.js" defer></script>
   <script src="./analytics.js" defer></script>
+  <script src="./folder-backup.js" defer></script>
   <script src="./app.js" defer></script>
 </body>
 </html>
