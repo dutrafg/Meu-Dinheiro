@@ -1,0 +1,15 @@
+{
+  "name": "meu-dinheiro-windows",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Aplicativo Windows x64 Meu Dinheiro",
+  "scripts": {
+    "prepare": "node scripts/prepare-frontend.cjs",
+    "icons": "tauri icon ../dist/icon-512.png",
+    "tauri": "tauri",
+    "build": "npm run icons && tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.0"
+  }
+}
