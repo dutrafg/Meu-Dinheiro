@@ -60,6 +60,42 @@ test('Análise com dois gráficos aparece somente em Resumo', () => {
   assert.match(css,/@media\(max-width:879px\)/);
 });
 
+test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizadas', () => {
+  const app=read('dist/app.js');
+  const percent=app.split('function goalProgressPercent(goal) {')[1].split('function progressLine(goal) {')[0];
+  const renderer=app.split('function renderGoal(g) {')[1].split('function openTransaction(type,id=')[0];
+  const sandbox={
+    money:value=>`R$ ${Number(value).toFixed(2)}`,
+    esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),
+    n2:value=>Math.round(value*100)/100,
+    icon:()=>'<svg></svg>',
+    parseDate:value=>new Date(`${value}T00:00:00Z`),
+    fmtDate:{format:()=> '30 nov. 2026'}
+  };
+  vm.runInNewContext(`function goalProgressPercent(goal) {${percent}function renderGoal(g) {${renderer}this.renderGoal=renderGoal;this.goalProgressPercent=goalProgressPercent;`,sandbox);
+  const makeGoal=(kind,saved,target=100)=>({id:`id-${kind}`,kind,name:kind==='goal'?'Reserva':'Carro',target,saved,deadline:''});
+  for(const kind of ['goal','dream']){
+    for(const [saved,expected] of [[0,0],[25,25],[100,100],[150,100]]){
+      const html=sandbox.renderGoal(makeGoal(kind,saved));
+      assert.match(html,new RegExp(`role="progressbar"[^>]*aria-valuenow="${expected}"`));
+      assert.match(html,new RegExp(`class="proto-goal-fill" style="width:${expected}%"`));
+      assert.match(html,new RegExp(`>${expected}%</strong>`));
+      assert.match(html,/data-action="edit-goal"/);
+      assert.match(html,/data-action="delete-goal"/);
+      assert.match(html,/class="button button-secondary"/);
+    }
+  }
+  assert.equal(sandbox.goalProgressPercent(makeGoal('goal',10,0)),0);
+  assert.equal(sandbox.goalProgressPercent(makeGoal('goal',50,200)),25);
+  const css=read('dist/prototype.css');
+  assert.match(css,/\.proto-goal-track\{[^}]*width:100%/);
+  assert.match(css,/\.proto-progress \.bar\{width:100%/);
+  assert.match(css,/\.proto-goal-card\.dream\{--goal-accent:var\(--purple\)/);
+  assert.match(app,/proto-goals-grid\$\{goals\.length===1\?' single':''\}/);
+  assert.match(css,/\.proto-goals-grid\.single\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(css,/@media\(max-width:879px\)[\s\S]*\.proto-goals-grid\{grid-template-columns:1fr\}/);
+});
+
 test('Service worker coloca todos os arquivos offline no cache e muda de versão', () => {
   const source = read('dist/sw.js');
   const assets=JSON.parse(source.match(/const ASSETS=(\[[^\]]+\])/)[1].replaceAll("'",'"'));
@@ -68,7 +104,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v6/);
+  assert.match(source, /meu-dinheiro-essencial-v7/);
 });
 
 test('Offline: navegação recupera a página; arquivo inexistente nunca vira HTML', async () => {
