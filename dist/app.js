@@ -282,8 +282,12 @@
   function entryList(items,emptyText) {
     return items.length?items.map(renderEntry).join(''):`<div class="proto-empty">${esc(emptyText)}</div>`;
   }
+  function goalProgressPercent(goal) {
+    const target=Number(goal.target),saved=Number(goal.saved);
+    return target>0&&Number.isFinite(target)&&Number.isFinite(saved)?Math.min(100,Math.max(0,Math.round(saved/target*100))):0;
+  }
   function progressLine(goal) {
-    const pct=Math.min(100,Math.max(0,Math.round(goal.saved/goal.target*100)));
+    const pct=goalProgressPercent(goal);
     const isDream=goal.kind==='dream';
     return `<div class="proto-progress"><div class="proto-progress-top"><span>${isDream?'✨':'🛡️'} ${esc(goal.name)}</span><strong>${pct}%</strong></div><div class="bar"><div style="width:${pct}%;background:${isDream?'var(--purple)':'var(--blue)'}"></div></div><small>${money(goal.saved)} de ${money(goal.target)}</small></div>`;
   }
@@ -333,7 +337,7 @@
     return `${header(isDream?'Sonho':'Metas','',null)}
       <section class="card proto-total-card"><h3>${isDream?'✨ Seu sonho':'🎯 Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
-      ${goals.length?`<div class="proto-goals-grid">${goals.map(g=>renderGoal(g)).join('')}</div>`:
+      ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:
       `<div class="card proto-empty-card">${empty(isDream?'Qual sonho você quer realizar? Toque em + para criar.':'Crie sua reserva ou uma meta de economia pelo botão +.',isDream?'sparkles':'target')}</div>`}
       ${renderAllocations(kind)}
       <p class="proto-note">Os valores guardados são informados por você e não alteram o saldo automaticamente.</p>`;
@@ -363,11 +367,19 @@
       }).join('')}</details>`;
   }
   function renderGoal(g) {
-    const pct=Math.min(100,Math.max(0,g.saved/g.target*100));
+    const pct=goalProgressPercent(g);
     const left=Math.max(0,n2(g.target-g.saved));
     const deadline=g.deadline?fmtDate.format(parseDate(g.deadline)):'Sem prazo definido';
     const isDream=g.kind==='dream';
-    return `<article class="card proto-goal-card ${isDream?'dream':''}"><div class="proto-goal-icon" aria-hidden="true">${isDream?'✨':'🎯'}</div><h2>${esc(g.name)}</h2><div class="bar"><div style="width:${pct}%;background:${isDream?'var(--purple)':'var(--blue)'}"></div></div><div class="proto-goal-info"><span>${money(g.saved)} de ${money(g.target)}</span><strong>${Math.round(pct)}%</strong></div><div class="proto-goal-foot"><span>${left===0?'Objetivo alcançado!':`Faltam ${money(left)}`}</span><span>${esc(deadline)}</span></div><div class="proto-goal-actions"><button type="button" class="btn btn-secondary" data-action="edit-goal" data-id="${esc(g.id)}">Atualizar valor</button><button type="button" class="btn btn-danger" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir ${esc(g.name)}">${icon('trash')}</button></div></article>`;
+    return `<article class="card proto-goal-card ${isDream?'dream':''}">
+      <div class="proto-goal-header"><span class="proto-goal-icon" aria-hidden="true">${isDream?'✨':'🎯'}</span><div class="proto-goal-heading"><span class="proto-goal-type">${isDream?'SONHO':'META / RESERVA'}</span><h2>${esc(g.name)}</h2></div></div>
+      <div class="proto-goal-progress"><div class="proto-goal-progress-label"><span>Progresso</span><strong>${pct}%</strong></div>
+        <div class="proto-goal-track" role="progressbar" aria-label="Progresso de ${esc(g.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span class="proto-goal-fill" style="width:${pct}%"></span></div>
+        <div class="proto-goal-info"><strong>${money(g.saved)}</strong><span>de ${money(g.target)}</span></div>
+      </div>
+      <div class="proto-goal-foot"><span>${left===0?'Objetivo alcançado!':`Faltam ${money(left)}`}</span><span>${esc(deadline)}</span></div>
+      <div class="proto-goal-actions"><button type="button" class="button button-secondary" data-action="edit-goal" data-id="${esc(g.id)}">Atualizar valor</button><button type="button" class="button button-danger" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir ${esc(g.name)}">${icon('trash')}</button></div>
+    </article>`;
   }
   function openTransaction(type,id='') {
     const existing=id?data.transactions.find(t=>t.id===id):null;
