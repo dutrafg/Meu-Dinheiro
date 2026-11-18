@@ -62,8 +62,8 @@ main{max-width:960px;margin:0 auto;padding-bottom:125px}
 .proto-progress:last-child{margin-bottom:0}
 .proto-progress-top{display:flex;gap:12px;justify-content:space-between;align-items:baseline;font-size:.93rem;font-weight:650}
 .proto-progress-top strong{font-size:.9rem;white-space:nowrap}
-.proto-progress .bar,.proto-goal-card .bar{height:10px;border-radius:99px;background:var(--border);overflow:hidden;margin-top:10px}
-.proto-progress .bar>div,.proto-goal-card .bar>div{height:100%;border-radius:99px;transition:width .25s}
+.proto-progress .bar{width:100%;min-width:0;height:10px;border-radius:99px;background:var(--border);overflow:hidden;margin-top:10px}
+.proto-progress .bar>div{height:100%;border-radius:99px;transition:width .25s}
 .proto-progress small{display:block;color:var(--sub);font-size:.82rem;margin-top:7px}
 .proto-empty{padding:25px 10px;text-align:center;color:var(--sub);font-size:.9rem;line-height:1.6}
 .proto-list-card{padding-top:18px;padding-bottom:7px}
@@ -115,16 +115,28 @@ main{max-width:960px;margin:0 auto;padding-bottom:125px}
 .proto-goal-total{font-size:1.65rem;font-weight:780;letter-spacing:-.035em;color:var(--green)}
 .proto-goal-total span{font-size:.84rem;font-weight:500;letter-spacing:0;color:var(--sub)}
 .proto-goals-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
-.proto-goal-card{min-width:0;padding:22px}
-.proto-goal-card.dream{text-align:center}
-.proto-goal-icon{font-size:2.15rem;margin-bottom:10px}
-.proto-goal-card h2{font-size:1.13rem;font-weight:750;letter-spacing:-.02em;margin:0 0 18px;overflow-wrap:anywhere}
-.proto-goal-info{display:flex;justify-content:space-between;gap:10px;margin-top:11px;font-size:.88rem;color:var(--sub)}
-.proto-goal-info strong{color:var(--text)}
-.proto-goal-foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;font-size:.79rem;color:var(--sub)}
-.proto-goal-actions{display:flex;gap:10px;margin-top:18px}
-.proto-goal-actions .btn{min-height:41px;padding:10px 15px;font-size:.86rem}
-.proto-goal-actions .btn-danger{flex:0 0 49px;display:grid;place-items:center}
+.proto-goals-grid.single{grid-template-columns:minmax(0,1fr)}
+.proto-goal-card{display:flex;flex-direction:column;min-width:0;padding:21px;--goal-accent:var(--green);--goal-soft:var(--green-bg)}
+.proto-goal-card.dream{--goal-accent:var(--purple);--goal-soft:var(--purple-bg)}
+.proto-goal-header{display:flex;align-items:center;gap:12px;min-width:0}
+.proto-goal-icon{display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:13px;background:var(--goal-soft);font-size:1.45rem}
+.proto-goal-heading{min-width:0}
+.proto-goal-type{font-size:.73rem;letter-spacing:.05em;font-weight:750;color:var(--sub)}
+.proto-goal-card h2{font-size:1.04rem;line-height:1.35;font-weight:740;letter-spacing:-.02em;color:var(--text);margin:3px 0 0;overflow-wrap:anywhere}
+.proto-goal-progress{margin-top:22px}
+.proto-goal-progress-label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.84rem;color:var(--sub)}
+.proto-goal-progress-label strong{font-size:1.08rem;font-weight:780;color:var(--goal-accent)}
+.proto-goal-track{display:block;width:100%;min-width:0;height:12px;border-radius:99px;overflow:hidden;background:var(--border);margin-top:10px}
+.proto-goal-fill{display:block;height:100%;border-radius:inherit;background:var(--goal-accent);transition:width .25s ease}
+.proto-goal-info{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px;font-size:.87rem;color:var(--sub)}
+.proto-goal-info strong{color:var(--text);font-size:1rem;font-weight:740;overflow-wrap:anywhere}
+.proto-goal-foot{display:flex;justify-content:space-between;gap:12px;margin-top:17px;padding-top:14px;border-top:1px solid var(--border);font-size:.8rem;color:var(--sub)}
+.proto-goal-foot span:first-child{font-weight:650;color:var(--text)}
+.proto-goal-actions{display:flex;gap:9px;margin-top:auto;padding-top:18px;width:100%;max-width:370px}
+.proto-goal-actions .button{min-height:41px;padding:10px 14px;font-size:.87rem;border-radius:11px}
+.proto-goal-actions .button-secondary{flex:1}
+.proto-goal-actions .button-danger{flex:0 0 45px;display:grid;place-items:center;padding:9px}
+.proto-goal-actions .button-danger svg{width:19px;height:19px}
 .proto-empty-card{padding:25px}
 .fab{position:fixed;z-index:10;right:max(24px,calc((100vw - 1040px)/2 + 32px));bottom:26px;width:58px;height:58px;border-radius:50%;border:0;background:var(--green);color:#fff;font-size:2rem;font-weight:400;line-height:1;box-shadow:0 7px 19px #19a97455;transition:transform .18s,background .18s}
 .fab:hover{transform:translateY(-2px);background:#159c6b}
