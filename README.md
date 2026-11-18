@@ -1,6 +1,6 @@
 # Meu Dinheiro
 
-Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progressive Web App), preparado para publicar na Vercel.
+Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progressive Web App), preparado para publicar na Vercel e no GitHub Pages.
 
 ## Áreas do aplicativo
 
@@ -30,6 +30,12 @@ Acesse `http://localhost:4173`. O modo offline depende da instalação inicial d
 ## Publicação na Vercel
 
 Conecte este repositório a um projeto Vercel com a branch de produção `main`. O arquivo `vercel.json` seleciona o conteúdo estático de `dist/`, sem etapa de compilação. Após a publicação HTTPS, o app pode ser instalado pelo navegador como PWA.
+
+## Publicação no GitHub Pages
+
+O fluxo `.github/workflows/pages.yml` publica os arquivos de `dist/` diretamente na raiz do GitHub Pages, ao atualizar a branch `main`. Para habilitar o fluxo, em **Settings → Pages → Build and deployment → Source**, selecione **GitHub Actions**.
+
+Enquanto o Pages estiver configurado para publicar a raiz da branch, o `index.html` da raiz encaminha automaticamente para o aplicativo em `dist/`, sem mostrar o README.
 
 ## Testes automáticos
 
