@@ -38,6 +38,10 @@ python -m http.server 4173 --directory dist
 
 Acesse `http://localhost:4173`. O modo offline depende da instalação inicial do service worker, servido em `localhost` ou HTTPS.
 
+## Aplicativo nativo para Windows
+
+A versão experimental Windows 11 x64 está documentada em [`desktop/README.md`](desktop/README.md). Ela usa Tauri + WebView2, com banco SQLite local e seletor nativo de pasta. A compilação de um instalador `.exe` ocorre em uma branch separada (`windows-native`) pelo workflow `windows-native.yml`; a versão PWA na branch `main` permanece independente.
+
 ## Publicação na Vercel
 
 Conecte este repositório a um projeto Vercel com a branch de produção `main`. O arquivo `vercel.json` seleciona o conteúdo estático de `dist/`, sem etapa de compilação. Após a publicação HTTPS, o app pode ser instalado pelo navegador como PWA.
