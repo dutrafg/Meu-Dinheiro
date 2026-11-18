@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Meu Dinheiro",
+  "version": "0.1.0",
+  "identifier": "br.com.dutrafg.meudinheiro",
+  "build": {
+    "beforeBuildCommand": "node scripts/prepare-frontend.cjs",
+    "beforeDevCommand": "node scripts/prepare-frontend.cjs",
+    "frontendDist": "../frontend"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Meu Dinheiro",
+        "width": 1120,
+        "height": 800,
+        "minWidth": 390,
+        "minHeight": 620,
+        "resizable": true,
+        "backgroundColor": "#f6f7f9"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.bcb.gov.br; object-src 'none'; base-uri 'none'; frame-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/32x32.png", "icons/128x128.png"],
+    "windows": {
+      "nsis": {"languages": ["PortugueseBR"], "displayLanguageSelector": false}
+    }
+  }
+}
