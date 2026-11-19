@@ -1,0 +1,57 @@
+@media(max-width:879px){
+  .proto-expense-charts{grid-template-columns:minmax(0,1fr);gap:20px}
+  .proto-expense-divider{width:100%;height:1px}
+  .app-shell{padding:0 19px;max-width:520px}
+  .header{height:92px;padding:14px 0 8px}
+  .prototype-heading strong{font-size:1.8rem}
+  .desktop-nav{display:none}
+  main{padding-bottom:calc(115px + env(safe-area-inset-bottom))}
+  .mobile-nav{position:fixed;display:flex;bottom:0;left:0;right:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--card);padding:5px max(8px,calc((100vw - 500px)/2)) calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px #0000000a;backdrop-filter:none;z-index:9;gap:0}
+  .mobile-nav .nav-button{font-size:.72rem;font-weight:650;border-radius:11px;min-height:57px;padding:7px 3px 5px;gap:3px;color:var(--sub)}
+  .mobile-nav .nav-button svg{width:23px;height:23px;stroke-width:1.9}
+  .mobile-nav .nav-button.active{background:transparent;box-shadow:none;color:var(--green)}
+  .proto-overview{display:block}
+  .proto-donut-card{min-height:unset;padding:16px;margin-bottom:13px}
+  .proto-donut-card h3{margin-bottom:0}
+  .proto-donut-svg{height:175px;width:175px}
+  .proto-donut-legend{margin-top:0;margin-bottom:3px}
+  .fab{right:19px;bottom:calc(88px + env(safe-area-inset-bottom));width:54px;height:54px;font-size:1.85rem}
+  .proto-goals-grid{grid-template-columns:1fr}
+  .form-dialog{position:fixed;inset:auto 0 0;max-width:480px;width:100%;margin:0 auto;border-radius:21px 21px 0 0;max-height:90dvh;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
+  .form-dialog::backdrop{background:#00000074}
+  .dialog-actions .button{flex:1}
+}
+@media(max-width:600px){
+  .proto-saving-heading{align-items:flex-start;flex-wrap:wrap}
+  .proto-reminder-list{max-height:52dvh}
+  .app-shell{padding:0 16px}
+  .card{padding:16px;border-radius:16px;margin-bottom:13px}
+  .proto-total-card{padding:17px}
+  .grid2{gap:10px;margin-bottom:13px}
+  .minicard{padding:15px}
+  .minicard .lbl{font-size:.82rem}
+  .minicard .val{font-size:1.2rem}
+  .proto-page-meta{margin-bottom:12px}
+  .proto-item{gap:8px}
+  .proto-item-label strong{font-size:.86rem}
+  .proto-item-label small{font-size:.75rem}
+  .proto-item-value{font-size:.82rem}
+  .proto-category-icon{width:25px;font-size:1.16rem}
+  .proto-edit,.proto-delete{width:27px}
+  .proto-progress-top{font-size:.86rem}
+  .proto-goal-foot{flex-wrap:wrap}
+  .csv-investment-fields{grid-template-columns:1fr}
+  .csv-investment-info{display:block}
+  .csv-investment-info small{margin-top:5px}
+}
+@media(max-width:360px){
+  .mobile-nav .nav-button{font-size:.68rem}
+  .mobile-nav .nav-button svg{width:21px;height:21px}
+  .proto-item-value{font-size:.76rem}
+  .proto-item-label strong{font-size:.82rem}
+}
+@media(prefers-color-scheme:dark){
+  :root{color-scheme:dark;--bg:#131417;--card:#1d1e23;--text:#f0f1f3;--sub:#989ca6;--green-bg:#0f3328;--red-bg:#3a1c19;--blue-bg:#122340;--purple-bg:#28183b;--amber-bg:#3a2c0f;--border:#2a2b31}
+  .desktop-nav{background:#27292f}
+  .mobile-nav{box-shadow:0 -4px 20px #00000038}
+}

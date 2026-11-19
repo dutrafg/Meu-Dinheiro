@@ -43,30 +43,35 @@ test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   }
   const html = read('dist/index.html');
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
-  assert.ok(html.indexOf('src="./csv.js"') < html.indexOf('src="./analytics.js"'));
-  assert.ok(html.indexOf('src="./analytics.js"') < html.indexOf('src="./app.js"'));
-  assert.ok(html.indexOf('src="./folder-backup.js"') < html.indexOf('src="./app.js"'));
+  assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
+  const app=read('dist/app.js');
+  for(const dependency of ['csv.js','analytics.js','folder-backup.js',
+    'modules/resumo.js','modules/lancamentos.js','modules/objetivos.js','modules/backup.js','modules/csv-interface.js','modules/validacao.js','modules/atualizador.js']) {
+    assert.ok(app.includes(`from './${dependency}'`)||app.includes(`import './${dependency}'`),`Import ausente: ${dependency}`);
+  }
   assert.match(html, /id="folder-backup-connect"/);
   assert.match(html, /id="folder-backup-reconnect"/);
+  assert.match(html, /id="check-update"/);
+  assert.match(html, /id="install-update" class="hidden"/);
+  assert.match(html, /id="app-update-alert" class="app-update-alert hidden"/);
   assert.match(html, /name="viewport"/);
 });
 
 test('Análise com dois gráficos aparece somente em Resumo', () => {
-  const app=read('dist/app.js');
-  const summary=app.split('function renderSummary() {')[1].split('function renderTransactions(type) {')[0];
-  const expenses=app.split('function renderTransactions(type) {')[1].split('function renderEntry(t) {')[0];
+  const summary=read('dist/modules/resumo.js').split('function renderSummary() {')[1];
+  const expenses=read('dist/modules/lancamentos.js');
   assert.equal((summary.match(/renderExpenseCharts\(\)/g)||[]).length,1);
   assert.equal((expenses.match(/renderExpenseCharts\(\)/g)||[]).length,0);
-  const css=read('dist/prototype.css');
+  const css=read('dist/css/resumo.css')+read('dist/css/responsivo.css');
   assert.match(css,/\.proto-expense-charts\{display:grid/);
   assert.match(css,/\.proto-expense-divider\{/);
   assert.match(css,/@media\(max-width:879px\)/);
 });
 
 test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizadas', () => {
-  const app=read('dist/app.js');
+  const app=read('dist/modules/objetivos.js');
   const percent=app.split('function goalProgressPercent(goal) {')[1].split('function progressLine(goal) {')[0];
-  const renderer=app.split('function renderGoal(g) {')[1].split('function openTransaction(type,id=')[0];
+  const renderer=app.split('function renderGoal(g) {')[1].split('function openGoal(kind,id=')[0];
   const sandbox={
     money:value=>`R$ ${Number(value).toFixed(2)}`,
     esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),
@@ -90,7 +95,7 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
   }
   assert.equal(sandbox.goalProgressPercent(makeGoal('goal',10,0)),0);
   assert.equal(sandbox.goalProgressPercent(makeGoal('goal',50,200)),25);
-  const css=read('dist/prototype.css');
+  const css=read('dist/css/resumo.css')+read('dist/css/objetivos.css')+read('dist/css/responsivo.css');
   assert.match(css,/\.proto-goal-track\{[^}]*width:100%/);
   assert.match(css,/\.proto-progress \.bar\{width:100%/);
   assert.match(css,/\.proto-goal-card\.dream\{--goal-accent:var\(--purple\)/);
@@ -107,8 +112,11 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v8/);
+  assert.match(source, /meu-dinheiro-essencial-v11/);
   assert.ok(assets.includes('./folder-backup.js'));
+  assert.ok(assets.includes('./modules/csv-interface.js'));
+  assert.ok(assets.includes('./modules/atualizador.js'));
+  assert.ok(assets.includes('./css/responsivo.css'));
 });
 
 test('Offline: navegação recupera a página; arquivo inexistente nunca vira HTML', async () => {

@@ -1,0 +1,27 @@
+.proto-goal-info strong{color:var(--text);font-size:1rem;font-weight:740;overflow-wrap:anywhere}
+.proto-goal-foot{display:flex;justify-content:space-between;gap:12px;margin-top:17px;padding-top:14px;border-top:1px solid var(--border);font-size:.8rem;color:var(--sub)}
+.proto-goal-foot span:first-child{font-weight:650;color:var(--text)}
+.proto-goal-actions{display:flex;gap:9px;margin-top:auto;padding-top:18px;width:100%;max-width:370px}
+.proto-goal-actions .button{min-height:41px;padding:10px 14px;font-size:.87rem;border-radius:11px}
+.proto-goal-actions .button-secondary{flex:1}
+.proto-goal-actions .button-danger{flex:0 0 45px;display:grid;place-items:center;padding:9px}
+.proto-goal-actions .button-danger svg{width:19px;height:19px}
+.proto-empty-card{padding:25px}
+.fab{position:fixed;z-index:10;right:max(24px,calc((100vw - 1040px)/2 + 32px));bottom:26px;width:58px;height:58px;border-radius:50%;border:0;background:var(--green);color:#fff;font-size:2rem;font-weight:400;line-height:1;box-shadow:0 7px 19px #19a97455;transition:transform .18s,background .18s}
+.fab:hover{transform:translateY(-2px);background:#159c6b}
+.fab:active{transform:scale(.96)}
+.button-primary,.btn-primary{background:var(--green);color:#fff;box-shadow:none}
+.button-primary:hover{background:#159c6b}
+.button-secondary,.btn-secondary{background:var(--border);color:var(--text)}
+.btn-danger{background:var(--red-bg);color:var(--red)}
+.form-dialog{background:var(--card);color:var(--text);box-shadow:0 22px 70px #12121238;border-color:var(--border)}
+.form-dialog{overflow-y:auto}
+.form-dialog input,.form-dialog select{background:var(--bg);border-color:var(--border);color:var(--text);font-size:1rem}
+.form-dialog label{font-size:.91rem;color:var(--text)}
+.form-dialog .eyebrow{color:var(--sub)}
+.dialog-heading h2{color:var(--text)}
+.tipo-toggle{display:flex;gap:9px;margin:0 0 3px}
+.tipo-toggle button{flex:1;padding:12px 8px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.91rem;font-weight:650}
+.tipo-toggle button.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.form-dialog::backdrop{background:#0a101b77;backdrop-filter:blur(3px)}
+.toast{background:#20282d}

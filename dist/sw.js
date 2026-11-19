@@ -1,6 +1,7 @@
-const CACHE='meu-dinheiro-essencial-v8';
-const ASSETS=['./','./index.html','./styles.css','./prototype.css','./csv.js','./analytics.js','./folder-backup.js','./app.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
+const CACHE='meu-dinheiro-essencial-v11';
+const ASSETS=['./','./index.html','./styles.css','./prototype.css','./css/estrutura.css','./css/resumo.css','./css/objetivos.css','./css/dialogos.css','./css/responsivo.css','./csv.js','./analytics.js','./folder-backup.js','./app.js','./modules/resumo.js','./modules/lancamentos.js','./modules/objetivos.js','./modules/backup.js','./modules/csv-interface.js','./modules/validacao.js','./modules/atualizador.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));});
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')void self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;

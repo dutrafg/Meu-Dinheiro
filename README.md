@@ -12,6 +12,30 @@ Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progre
 
 O aplicativo também oferece importação e exportação CSV, backup/restauração JSON, **backup automático em pasta escolhida no computador** e confirmação obrigatória de Reserva, Meta ou Sonho para aplicações identificadas no extrato bancário.
 
+## Atualizações do aplicativo
+
+O aplicativo instalado no navegador verifica automaticamente se há novas versões **ao abrir, ao voltar para a aba e periodicamente enquanto estiver em uso**. Um ponto azul nos três pontos (`⋯`) do cabeçalho e um aviso informam quando existe uma versão pronta. Abra o menu e toque em **Atualizar agora** para ativá-la. A página **só é recarregada após sua confirmação**, para não interromper formulários em andamento; salve lançamentos ainda não enviados antes de atualizar.
+
+O menu oferece também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
+
+## Estrutura modular do código
+
+O aplicativo continua sendo um PWA estático, sem etapa de compilação. A página `dist/index.html` contém a estrutura HTML e os diálogos; `dist/app.js` inicializa os serviços, o estado local e os controladores. As telas, o backup e o CSV agora ficam em arquivos independentes em `dist/modules/`.
+
+| Área | Arquivo principal |
+| --- | --- |
+| Resumo e gráficos | `dist/modules/resumo.js` |
+| Renda e Despesas | `dist/modules/lancamentos.js` |
+| Metas, Reserva e Sonho | `dist/modules/objetivos.js` |
+| Backup JSON e pasta do PC | `dist/modules/backup.js` |
+| Importação/exportação CSV | `dist/modules/csv-interface.js` |
+| Validação e recuperação de dados | `dist/modules/validacao.js` |
+| Verificação de versões e aviso de atualização | `dist/modules/atualizador.js` + `dist/sw.js` |
+| Aparência, layout e responsividade | `dist/css/` (carregado por `dist/prototype.css`) |
+| Estado, persistência, navegação e lembretes | `dist/app.js` |
+
+Consulte [ARQUITETURA.md](ARQUITETURA.md) antes de alterar um módulo. Mantenha o formato de dados e o fluxo de gravação sem mudanças silenciosas: usuários existentes precisam continuar acessando seus lançamentos e seus arquivos de backup.
+
 ## Salvar automaticamente em uma pasta do PC
 
 1. Abra o aplicativo no **Chrome ou Edge no computador** (HTTPS ou `localhost`).
@@ -51,3 +75,11 @@ Enquanto o Pages estiver configurado para publicar a raiz da branch, o `index.ht
 ## Testes automáticos
 
 Os testes são executados com `node --test tests/*.test.cjs`. O workflow do GitHub verifica o código em atualizações da branch `main` e em pull requests.
+
+Para gerar uma cópia HTML única de homologação, sem dependências de servidor:
+
+```bash
+node scripts/gerar-html-teste.cjs meu-dinheiro-teste.html
+```
+
+Essa cópia abre offline como arquivo HTML, mas **não instala o PWA nem recebe atualizações por Service Worker**. Para usar os recursos instaláveis e o atualizador, sirva a pasta `dist/` em HTTPS ou `localhost`.
