@@ -15,7 +15,7 @@ test('HTML único de homologação contém os estilos e scripts sem dependência
     assert.match(html, /<title>Meu Dinheiro<\/title>/);
     assert.doesNotMatch(html, /<script[^>]+src=/);
     assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/);
-    for(const module of ['criarModuloResumo','criarModuloLancamentos','criarModuloObjetivos','iniciarModuloBackup','iniciarModuloCsv','iniciarAtualizador','validarBackup']) {
+    for(const module of ['criarModuloResumo','criarModuloLancamentos','criarModuloObjetivos','iniciarModuloBackup','iniciarModuloCsv','iniciarAtualizador','validarBackup','criarRelatorioDiagnostico','verificarIntegridade','iniciarDialogos','registrarEvento']) {
       assert.ok(html.includes(module),module);
     }
     const inline=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];

@@ -5,18 +5,36 @@ Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progre
 ## Áreas do aplicativo
 
 - **Resumo:** visão financeira, últimas transações e dois gráficos de gastos por categoria em um único card.
-- **Renda:** salário base, Personal e demais entradas; lembretes de aporte de 10% para as duas fontes de salário.
+- **Renda:** salário base, Personal e demais entradas; lembretes de aporte configuráveis (padrão de 10% sobre Salário, Salário base e Personal).
 - **Despesas:** lançamentos e categorias de gastos.
 - **Metas:** reserva, objetivos de economia e estimativa ilustrativa de CDB a 100% do CDI a partir de dados do Banco Central.
 - **Sonho:** acompanhamento de objetivos pessoais.
 
 O aplicativo também oferece importação e exportação CSV, backup/restauração JSON, **backup automático em pasta escolhida no computador** e confirmação obrigatória de Reserva, Meta ou Sonho para aplicações identificadas no extrato bancário.
 
+## Ajustes e aparência (Etapa 2)
+
+Nos três pontos (`⋯`) do cabeçalho, selecione **Abrir Ajustes e diagnósticos**. Escolha tema **claro, escuro ou automático**, seis cores de destaque, percentual de aporte (0%–100%), categorias de renda consideradas e qual meta é a reserva principal. A cor de destaque não altera as cores financeiras de entradas ou saídas.
+
+As preferências ficam em uma chave própria do navegador, sem regravar lançamentos. O planejamento em **Metas** e o sino usam as regras selecionadas; nenhum aporte é transferido automaticamente. Backups JSON e em pasta incluem preferências e são compatíveis com os arquivos antigos.
+
+CSV, backups, atualização e diagnóstico ficam centralizados em seções expansíveis de Ajustes. Também há metadados para adicionar à tela inicial no iOS.
+
+## Diagnóstico e integridade (Etapas 1–2)
+
+Em **Ajustes → Atualizações e integridade → Executar diagnóstico completo**, o aplicativo verifica, sem modificar registros, dezenas de itens independentes: datas, valores, IDs, categorias, vínculos, lembretes, limites de backup, bibliotecas, interface, cada módulo, preferências, armazenamento, cache PWA, atualização e pasta de backup.
+
+Cada módulo em `dist/modules/` deve constar no catálogo com uma autoverificação funcional. Testes de arquitetura impedem que arquivos novos fiquem sem registro. Não há limite fixo para a quantidade de verificações. A **animação** da barra segue 5 segundos iniciais e mais 0,5 segundo por verificação acima das 9 primeiras, limitada a **25 segundos**. O relógio não interrompe testes: todos são executados, mesmo quando a análise demorar mais do que a animação. O relatório JSON só é liberado após concluir.
+
+O relatório é gerado **apenas no dispositivo**, sem envio automático. Contém contagens, estado técnico, datas de registros, versão do navegador e códigos de erros; **não contém nomes, descrições, valores financeiros, saldos nem nomes/caminhos de pastas**. Se precisar reproduzir uma falha, marque **Registrar eventos técnicos detalhados nesta sessão**. Esta opção começa desligada, registra somente códigos de ação permitidos e não captura conteúdo de formulários. Os últimos 50 eventos técnicos ficam em `sessionStorage`, com fallback para memória caso esse armazenamento falhe.
+
+Exclusões e restauração de backup agora usam confirmações visuais do aplicativo. Edições de lançamentos recorrentes avisam que a mudança afeta a série inteira. Falhas de sincronização da pasta exibem um aviso além do indicador no menu.
+
 ## Atualizações do aplicativo
 
 O aplicativo instalado no navegador verifica automaticamente se há novas versões **ao abrir, ao voltar para a aba e periodicamente enquanto estiver em uso**. Um ponto azul nos três pontos (`⋯`) do cabeçalho e um aviso informam quando existe uma versão pronta. Abra o menu e toque em **Atualizar agora** para ativá-la. A página **só é recarregada após sua confirmação**, para não interromper formulários em andamento; salve lançamentos ainda não enviados antes de atualizar.
 
-O menu oferece também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
+Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
 ## Estrutura modular do código
 
@@ -31,21 +49,31 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Importação/exportação CSV | `dist/modules/csv-interface.js` |
 | Validação e recuperação de dados | `dist/modules/validacao.js` |
 | Verificação de versões e aviso de atualização | `dist/modules/atualizador.js` + `dist/sw.js` |
+| Registro técnico sanitizado e privacidade | `dist/modules/log.js` |
+| Regras puras de integridade | `dist/modules/integridade.js` |
+| Painel e relatório de diagnóstico | `dist/modules/diagnostico.js` |
+| Diálogos de confirmação e avisos | `dist/modules/dialogos.js` |
+| Aparência e painel de Ajustes | `dist/modules/ajustes.js` + `dist/css/ajustes.css` |
+| Preferências persistidas e validadas | `dist/modules/preferencias.js` |
+| Regras puras de aporte | `dist/modules/regras-financeiras.js` |
+| Inventário e testes obrigatórios por módulo | `dist/modules/catalogo-diagnostico.js` + `dist/modules/registro-modulos.js` |
 | Aparência, layout e responsividade | `dist/css/` (carregado por `dist/prototype.css`) |
 | Estado, persistência, navegação e lembretes | `dist/app.js` |
 
 Consulte [ARQUITETURA.md](ARQUITETURA.md) antes de alterar um módulo. Mantenha o formato de dados e o fluxo de gravação sem mudanças silenciosas: usuários existentes precisam continuar acessando seus lançamentos e seus arquivos de backup.
 
+**Regra de manutenção:** novas funcionalidades, componentes, verificações e serviços devem permanecer em módulos separados. `app.js` apenas inicializa e conecta os módulos. Evite concentrar lógica de diferentes áreas no arquivo principal.
+
 ## Salvar automaticamente em uma pasta do PC
 
 1. Abra o aplicativo no **Chrome ou Edge no computador** (HTTPS ou `localhost`).
-2. Clique nos três pontos (`⋯`) no cabeçalho e selecione **Escolher pasta de dados**.
+2. Clique nos três pontos (`⋯`) e abra **Ajustes → Arquivos, importação e backup → Escolher pasta de dados**.
 3. Escolha uma pasta que será usada pelo aplicativo e autorize a gravação.
 4. A partir de então, cada alteração bem-sucedida nos dados é salva automaticamente no arquivo `meu-dinheiro-dados.json`, após uma pequena pausa de 350 ms. Uma cópia do dia também fica em `historico/`.
 
 O acesso à pasta é lembrado no navegador, mas a permissão de escrita pode expirar: nesse caso, um indicador aparece no botão de backup e o menu oferece **Reautorizar / salvar agora**. Se a pasta já contiver um backup com dados diferentes, o aplicativo **pede confirmação** e preserva uma cópia do arquivo anterior antes de substituí-lo. Se alguém editar o arquivo fora do app enquanto ele estiver aberto, a gravação é interrompida para evitar perda de dados.
 
-O backup contém receitas, despesas, metas, reservas, sonhos, aplicações e lembretes de aportes. Ele usa o **mesmo formato JSON** da opção **Restaurar backup (JSON)**. Os arquivos não são criptografados: mantenha a pasta em local seguro. A sincronização por pasta é específica de cada navegador e origem; as versões Vercel e GitHub Pages mantêm dados locais e permissões separados. Em navegadores sem acesso direto a pastas, o backup manual JSON continua disponível.
+O backup contém receitas, despesas, metas, reservas, sonhos, aplicações, lembretes de aportes e preferências. Ele usa o **mesmo formato JSON** da opção **Restaurar backup (JSON)**. Os arquivos não são criptografados: mantenha a pasta em local seguro. A sincronização por pasta é específica de cada navegador e origem; as versões Vercel e GitHub Pages mantêm dados locais e permissões separados. Em navegadores sem acesso direto a pastas, o backup manual JSON continua disponível.
 
 ## Privacidade
 

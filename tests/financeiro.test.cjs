@@ -10,13 +10,16 @@ const section = source.slice(source.indexOf('  function occurrenceDate(t, ym) {'
 function model(data) {
   const sandbox = {
     data,
+    preferencias:{obter:()=>({tema:'auto',cor:'verde',percentual:10,categoriasAporte:['Salário base','Salário','Personal'],reservaGoalId:''})},
     n2: value => Math.round((Number(value) + Number.EPSILON) * 100) / 100,
     isoDate: date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`,
     shiftMonth: (ym,diff) => {const [y,m]=ym.split('-').map(Number);return new Date(Date.UTC(y,m-1+diff,1)).toISOString().slice(0,7);},
     validCdiQuote: () => ({dailyPercent:0.04}), money: value => `R$ ${Number(value).toFixed(2)}`,
   };
   vm.createContext(sandbox);
-  vm.runInContext(`${section}\nthis.api={occurrenceDate,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
+  const rules=fs.readFileSync(path.join(__dirname,'..','dist','modules','regras-financeiras.js'),'utf8').replace(/^export /gm,'');
+  vm.runInContext(`${rules}\n${section}\nthis.api={occurrenceDate,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
+  sandbox.api.setPreferences=prefs=>{sandbox.preferencias.obter=()=>prefs;};
   return sandbox.api;
 }
 
@@ -51,6 +54,17 @@ test('Plano de aporte soma 10% apenas de Salário/Salário base e Personal', () 
   assert.equal(plan.baseTen,500);
   assert.equal(plan.personalTen,135);
   assert.equal(plan.total,635);
+});
+
+test('Plano usa porcentagens/categorias escolhidas sem alterar lançamentos originais',()=>{
+  const entries=[tx('1','income','Salário base',1000,'2026-11-05'),tx('2','income','Renda extra',200,'2026-11-05')];
+  const m=model({transactions:entries,goals:[],allocations:[],completedAportes:[]});
+  m.setPreferences({percentual:25,categoriasAporte:['Renda extra'],reservaGoalId:''});
+  const plan=m.savingPlan('2026-11');
+  assert.equal(plan.total,50);
+  assert.equal(plan.grupos[0].categoria,'Renda extra');
+  assert.equal(plan.grupos[0].base,200);
+  assert.equal(entries[0].amount,1000);
 });
 
 test('Reserva inclui objetivos e aplicações sem vínculo, sem contar duas vezes as vinculadas', () => {

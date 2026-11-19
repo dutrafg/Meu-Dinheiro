@@ -1,5 +1,5 @@
 export function criarModuloResumo(ctx) {
-  const {getData, getMonth, shiftMonth, sums, monthLabel, money, esc,
+  const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
     shortMonth, currentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
     renderEntry, progressLine, header} = ctx;
 
@@ -70,7 +70,8 @@ export function criarModuloResumo(ctx) {
     const month = getMonth();
     const data = getData();
     const s=sums(month);
-    const goals=[data.goals.find(g=>g.kind==='goal'&&/reserva/i.test(g.name)),data.goals.find(g=>g.kind==='dream')].filter(Boolean);
+    const selected=getPreferences().reservaGoalId;
+    const goals=[data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name))),data.goals.find(g=>g.kind==='dream')].filter(Boolean);
     if(!goals.some(g=>g.kind==='goal')) {const another=data.goals.find(g=>g.kind==='goal');if(another)goals.unshift(another);}
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);

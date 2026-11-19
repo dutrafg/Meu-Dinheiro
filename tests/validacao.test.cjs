@@ -88,7 +88,8 @@ test('Falha na leitura bloqueia substituição automática e permite restauraç�
   const sandbox={
     KEY:'meu-dinheiro-essencial:v1', normalizarDadosLocais, storageLocked:false,
     localStorage:{getItem:key=>entries.get(key),setItem:(key,value)=>entries.set(key,value)},
-    alert:message=>warnings.push(message),console:{error:()=>{}},folderBackup:null,
+    dialogos:{informar:(_,message)=>{warnings.push(message);return Promise.resolve(true);}},
+    registrar:()=>{},console:{error:()=>{}},folderBackup:null,
   };
   vm.createContext(sandbox);
   vm.runInContext(`${code}\nthis.readData=readData;this.persist=persist;`,sandbox);

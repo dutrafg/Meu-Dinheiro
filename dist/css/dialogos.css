@@ -44,3 +44,20 @@
 .proto-reminder-item p{margin:0;font-size:.84rem;color:var(--text);line-height:1.55}
 .proto-reminder-item p b{color:var(--green)}
 .proto-reminder-item .button{flex:none;min-height:37px;padding:8px 12px;font-size:.8rem}
+.recurring-warning{margin:0;padding:11px 12px;border:1px solid var(--amber);border-radius:10px;background:var(--amber-bg);color:var(--text)}
+.confirmation-dialog{width:min(94vw,430px)}
+.confirmation-message{font-size:.92rem;line-height:1.6;color:var(--text);margin:15px 0 23px;overflow-wrap:anywhere}
+.confirmation-dialog .button-danger{background:var(--red);color:#fff}
+.diagnostics-dialog{width:min(94vw,600px);max-height:85dvh;overflow-y:auto}
+.diagnostics-privacy{padding:12px;border-radius:11px;background:var(--green-bg);font-size:.81rem;line-height:1.55;margin:8px 0 14px}
+.diagnostics-dialog #diagnostics-summary{font-weight:740;font-size:.9rem;margin:8px 0 13px}
+.diagnostics-checks{border:1px solid var(--border);border-radius:11px;padding:5px 13px;max-height:250px;overflow-y:auto}
+.diagnostics-check{margin:10px 0;font-size:.84rem;line-height:1.45}
+.diagnostics-ok{color:var(--green)}
+.diagnostics-aviso{color:var(--amber)}
+.diagnostics-erro{color:var(--red)}
+.diagnostics-toggle{display:flex!important;flex-direction:row!important;align-items:center;gap:9px;margin-top:16px;font-size:.85rem!important}
+.diagnostics-toggle input{width:18px!important;height:18px!important;flex:none;accent-color:var(--green)}
+.diagnostics-dialog .field-hint{margin:3px 0 12px}
+.diagnostics-actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 9px}
+.diagnostics-actions .button{flex:1}

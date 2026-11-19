@@ -28,11 +28,10 @@ export function criarModuloObjetivos(ctx) {
   }
   function renderMonthlyReserve() {
     const plan=savingPlan(currentMonth);
-    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>🛡️ Aporte planejado · 10%</h3><small>${esc(monthLabel(currentMonth))}</small></div>
-      <div class="proto-saving-row"><span>Salário base <small>(10% de ${money(plan.base)})</small></span><strong>${money(plan.baseTen)}</strong></div>
-      <div class="proto-saving-row"><span>Personal <small>(10% de ${money(plan.personal)})</small></span><strong>${money(plan.personalTen)}</strong></div>
+    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>🛡️ Aporte planejado · ${plan.percentual}%</h3><small>${esc(monthLabel(currentMonth))}</small></div>
+      ${plan.grupos.length?plan.grupos.map(g=>`<div class="proto-saving-row"><span>${esc(g.categoria)} <small>(${plan.percentual}% de ${money(g.base)})</small></span><strong>${money(g.aporte)}</strong></div>`).join(''):'<p class="proto-note">Escolha categorias de renda em Ajustes para calcular um aporte.</p>'}
       <div class="proto-saving-total"><span>Total a separar</span><strong>${money(plan.total)}</strong></div>
-      <p class="proto-note">Planejamento, não transferência automática. Para calcular, classifique suas entradas em Renda como Salário base ou Personal.</p>
+      <p class="proto-note">Planejamento, não transferência automática. Categorias e percentual podem ser alterados em Ajustes.</p>
       ${reserveYieldEstimate()}
     </section>`;
   }

@@ -7,24 +7,25 @@ const root = path.resolve(__dirname, '..', 'dist');
 const output = path.resolve(process.argv[2] || path.join(__dirname,'..','meu-dinheiro-teste.html'));
 const read = filename => fs.readFileSync(path.join(root,filename),'utf8');
 
-const cssFiles = ['styles.css','css/estrutura.css','css/resumo.css','css/objetivos.css','css/dialogos.css','css/responsivo.css'];
+const cssFiles = ['styles.css','css/estrutura.css','css/resumo.css','css/objetivos.css','css/dialogos.css','css/responsivo.css','css/ajustes.css'];
 const jsFiles = ['csv.js','analytics.js','folder-backup.js',
-  'modules/validacao.js','modules/lancamentos.js','modules/objetivos.js',
-  'modules/resumo.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js','app.js'];
+  'modules/log.js','modules/validacao.js','modules/preferencias.js','modules/regras-financeiras.js',
+  'modules/integridade.js','modules/catalogo-diagnostico.js','modules/lancamentos.js','modules/objetivos.js',
+  'modules/resumo.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
+  'modules/ajustes.js','modules/diagnostico.js','modules/registro-modulos.js','app.js'];
 
 const css = cssFiles.map(filename=>`/* ${filename} */\n${read(filename)}`).join('\n');
 const js = jsFiles.map(filename=>{
   const contents=read(filename);
   // Módulos nativos se tornam funções locais no HTML único, sem mudar seus corpos.
-  const inline=filename==='app.js'
-    ? contents.split('\n').filter(line=>!/^import\s/.test(line)).join('\n')
-    : contents.replace(/^export\s+/gm,'');
+  const inline=contents.split('\n').filter(line=>!/^import\s/.test(line)).join('\n').replace(/^export\s+/gm,'');
   return `// ${filename}\n${inline}`;
 }).join('\n\n');
 
 let html=read('index.html')
   .replace(/\s*<link rel="manifest"[^>]*>/,'')
   .replace(/\s*<link rel="icon"[^>]*>/,'')
+  .replace(/\s*<link rel="apple-touch-icon"[^>]*>/,'')
   .replace(/\s*<link rel="stylesheet" href="\.\/styles\.css"\s*\/>/,'')
   .replace(/\s*<link rel="stylesheet" href="\.\/prototype\.css"\s*\/>/,'')
   .replace('</head>',`  <style>\n${css.replace(/<\/style/gi,'<\\/style')}\n  </style>\n</head>`);

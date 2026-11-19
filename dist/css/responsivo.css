@@ -51,7 +51,7 @@
   .proto-item-label strong{font-size:.82rem}
 }
 @media(prefers-color-scheme:dark){
-  :root{color-scheme:dark;--bg:#131417;--card:#1d1e23;--text:#f0f1f3;--sub:#989ca6;--green-bg:#0f3328;--red-bg:#3a1c19;--blue-bg:#122340;--purple-bg:#28183b;--amber-bg:#3a2c0f;--border:#2a2b31}
-  .desktop-nav{background:#27292f}
-  .mobile-nav{box-shadow:0 -4px 20px #00000038}
+  :root:not([data-theme="claro"]){color-scheme:dark;--bg:#131417;--card:#1d1e23;--text:#f0f1f3;--sub:#989ca6;--green-bg:#0f3328;--red-bg:#3a1c19;--blue-bg:#122340;--purple-bg:#28183b;--amber-bg:#3a2c0f;--border:#2a2b31}
+  :root:not([data-theme="claro"]) .desktop-nav{background:#27292f}
+  :root:not([data-theme="claro"]) .mobile-nav{box-shadow:0 -4px 20px #00000038}
 }

@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const read = filename => fs.readFileSync(path.join(root, filename), 'utf8');
-const load = async filename => import(`data:text/javascript;base64,${Buffer.from(read(filename)).toString('base64')}`);
+const load = async filename => import(`data:text/javascript;base64,${Buffer.from(read(filename).replace(/^import .*$/gm,'')).toString('base64')}`);
 
 function context(data) {
   const money = amount => `R$ ${Number(amount).toFixed(2)}`;
@@ -21,7 +21,7 @@ function context(data) {
     return {income, expense, balance: income - expense, count: list.length};
   };
   return {
-    getData: () => data, getMonth: () => month, getSearch: () => '', getFilterCategory: () => '',
+    getData: () => data, getPreferences:()=>({reservaGoalId:''}), getMonth: () => month, getSearch: () => '', getFilterCategory: () => '',
     money, esc, n2: value => Math.round(Number(value) * 100) / 100,
     header: () => '<header>Resumo</header>', empty: text => `<p>${esc(text)}</p>`,
     icon: () => '<svg></svg>', currentMonth: month, sums, transactionsInMonth,
@@ -34,7 +34,7 @@ function context(data) {
     isoDate: value => value.toISOString().slice(0,10),
     parseDate: value => new Date(`${value}T12:00:00Z`),
     fmtDate: {format: date => date.toISOString().slice(0,10)},
-    savingPlan: () => ({base: 100, personal: 0, baseTen: 10, personalTen: 0, total: 10}),
+    savingPlan: () => ({percentual:10,grupos:[{categoria:'Salário base',base:100,aporte:10}],base: 100, personal: 0, baseTen: 10, personalTen: 0, total: 10}),
     reserveYieldEstimate: () => '',
   };
 }
@@ -85,7 +85,7 @@ test('Resumo, Renda, Despesas, Metas e Sonho renderizam com os mesmos dados', as
 test('Todas as folhas CSS são carregadas na ordem e incluídas no cache offline', () => {
   const css = read('dist/prototype.css');
   const assets = read('dist/sw.js');
-  for (const name of ['estrutura','resumo','objetivos','dialogos','responsivo']) {
+  for (const name of ['estrutura','resumo','objetivos','dialogos','responsivo','ajustes']) {
     assert.ok(css.includes(`./css/${name}.css`), name);
     assert.ok(assets.includes(`./css/${name}.css`), name);
     assert.ok(read(`dist/css/${name}.css`).length > 50, name);

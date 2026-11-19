@@ -4,10 +4,19 @@
   const FILE = 'meu-dinheiro-dados.json';
   const HISTORY = 'historico';
   const FIELDS = ['transactions', 'goals', 'allocations', 'completedAportes'];
+  const DEFAULT_PREFERENCES = {tema:'auto',cor:'verde',percentual:10,categoriasAporte:['Salário base','Salário','Personal'],reservaGoalId:''};
+
+  function samePreferences(a,b) {
+    const left=a||DEFAULT_PREFERENCES,right=b||DEFAULT_PREFERENCES;
+    return ['tema','cor','percentual','reservaGoalId'].every(key=>left[key]===right[key]) &&
+      Array.isArray(left.categoriasAporte)&&Array.isArray(right.categoriasAporte)&&
+      JSON.stringify([...left.categoriasAporte].sort())===JSON.stringify([...right.categoriasAporte].sort());
+  }
 
   function sameData(saved, current) {
     return saved && saved.app === 'meu-dinheiro-essencial' && saved.version === 1 &&
-      FIELDS.every(field => JSON.stringify(saved[field] || []) === JSON.stringify(current[field] || []));
+      FIELDS.every(field => JSON.stringify(saved[field] || []) === JSON.stringify(current[field] || [])) &&
+      samePreferences(saved.preferences,current.preferences);
   }
   function parseExisting(text) {
     try {
@@ -80,7 +89,7 @@
     async function protectExisting(handle, ask) {
       const text = await readExisting(handle);
       if (text !== null && !sameData(parseExisting(text), getSnapshot())) {
-        if (!ask || !confirmReplace('Esta pasta já tem dados diferentes do aplicativo. Deseja guardar uma cópia do arquivo antigo e substituí-lo pelos dados atuais?')) return {allowed:false};
+        if (!ask || !await confirmReplace('Esta pasta já tem dados diferentes do aplicativo. Deseja guardar uma cópia do arquivo antigo e substituí-lo pelos dados atuais?')) return {allowed:false};
         const history = await handle.getDirectoryHandle(HISTORY, {create:true});
         const old = await history.getFileHandle(`meu-dinheiro-anterior-${timestamp(now())}.json`, {create:true});
         await writeFile(old, text);

@@ -9,15 +9,25 @@ import { iniciarModuloBackup } from './modules/backup.js';
 import { iniciarModuloCsv } from './modules/csv-interface.js';
 import { validarDataISO, validarBackup, normalizarDadosLocais } from './modules/validacao.js';
 import { iniciarAtualizador } from './modules/atualizador.js';
+import { iniciarDialogos } from './modules/dialogos.js';
+import { iniciarDiagnostico } from './modules/diagnostico.js';
+import { registrar, registrarEvento, configurarDetalhado, modoDetalhado, obterLogs } from './modules/log.js';
+import { criarGestorPreferencias } from './modules/preferencias.js';
+import { calcularAporte, calcularPlanoAporte } from './modules/regras-financeiras.js';
+import { iniciarAjustes, aplicarAparencia } from './modules/ajustes.js';
+import { registrarModulosDoApp } from './modules/registro-modulos.js';
 
 (() => {
   'use strict';
   const KEY = 'meu-dinheiro-essencial:v1';
   const CDI_KEY = 'meu-dinheiro-essencial:cdi-oficial';
+  const dialogos = iniciarDialogos();
   const CATEGORIES = {
     income: ['Salário base', 'Personal', 'Salário', 'Renda extra', 'Vendas', 'Benefícios', 'Outros'],
     expense: ['Moradia', 'Alimentação', 'Contas', 'Internet', 'Telefone', 'Cartão de crédito', 'Faculdade', 'Farmácia', 'Cursos', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Compras', 'Outros']
   };
+  const preferencias = criarGestorPreferencias({storage:localStorage,categoriasRenda:CATEGORIES.income});
+  aplicarAparencia(preferencias.obter());
   const NAV = [
     ['resumo', 'Resumo', 'chart-pie'], ['renda', 'Renda', 'wallet'], ['despesas', 'Despesas', 'receipt'],
     ['metas', 'Metas', 'target'], ['sonho', 'Sonho', 'sparkles']
@@ -65,14 +75,16 @@ import { iniciarAtualizador } from './modules/atualizador.js';
       return normalizarDadosLocais(JSON.parse(raw));
     } catch (error) {
       storageLocked = true;
+      registrar('erro','DADOS_LEITURA_FALHOU','dados');
       console.error('Não foi possível ler os dados locais:', error);
-      alert('Os dados locais parecem inconsistentes. A gravação foi bloqueada para preservar o arquivo original. Restaure um backup JSON válido para recuperar o aplicativo.');
+      void dialogos.informar('Dados locais protegidos','Os dados locais parecem inconsistentes. A gravação foi bloqueada para preservar o arquivo original. Restaure um backup JSON válido para recuperar o aplicativo.');
       return { transactions: [], goals: [], allocations: [], completedAportes: [] };
     }
   }
   function persist(next, {allowRecovery = false} = {}) {
     if (storageLocked && !allowRecovery) {
-      alert('Os dados originais estão protegidos. Restaure um backup JSON válido antes de gravar novamente.');
+      registrar('aviso','DADOS_GRAVACAO_BLOQUEADA','dados');
+      void dialogos.informar('Gravação protegida','Os dados originais estão protegidos. Restaure um backup JSON válido antes de gravar novamente.');
       return false;
     }
     try {
@@ -82,8 +94,9 @@ import { iniciarAtualizador } from './modules/atualizador.js';
       folderBackup?.schedule();
       return true;
     } catch (error) {
+      registrar('erro','DADOS_GRAVACAO_FALHOU','dados');
       console.error('Falha ao salvar:', error);
-      alert('Não foi possível salvar. Verifique o espaço disponível e as permissões do navegador.');
+      void dialogos.informar('Falha ao salvar','Não foi possível salvar. Verifique o espaço disponível e as permissões do navegador.');
       return false;
     }
   }
@@ -153,14 +166,11 @@ import { iniciarAtualizador } from './modules/atualizador.js';
     return { income, expense, balance:n2(income-expense), count:list.length };
   }
   function savingPlan(ym) {
-    const income=transactionsInMonth(ym,'income');
-    const base=n2(income.filter(t=>['Salário base','Salário'].includes(t.category)).reduce((s,t)=>s+t.amount,0));
-    const personal=n2(income.filter(t=>t.category==='Personal').reduce((s,t)=>s+t.amount,0));
-    const baseTen=n2(base*0.1),personalTen=n2(personal*0.1);
-    return {base,personal,baseTen,personalTen,total:n2(baseTen+personalTen)};
+    return calcularPlanoAporte(transactionsInMonth(ym,'income'),preferencias.obter());
   }
   function reservePrincipal() {
-    const fromGoals=data.goals.filter(g=>g.kind==='goal'&&/reserva|emerg[eê]ncia/i.test(g.name)).reduce((sum,g)=>sum+g.saved,0);
+    const goalId=preferencias.obter().reservaGoalId;
+    const fromGoals=data.goals.filter(g=>g.kind==='goal'&&(goalId?g.id===goalId:/reserva|emerg[eê]ncia/i.test(g.name))).reduce((sum,g)=>sum+g.saved,0);
     const unlinked=(data.allocations||[]).filter(a=>a.kind==='reserve'&&!data.goals.some(g=>g.id===a.goalId)).reduce((sum,a)=>sum+a.amount,0);
     return Math.max(0,n2(fromGoals+unlinked));
   }
@@ -184,7 +194,7 @@ import { iniciarAtualizador } from './modules/atualizador.js';
         if(!date||date>todayText||date<threshold)continue;
         const key=`${t.id}@${date}`;
         if(done.has(key))continue;
-        const tenPercent=['Salário base','Salário','Personal'].includes(t.category)?n2(t.amount*.1):null;
+        const tenPercent=calcularAporte(t,preferencias.obter());
         items.push({key,date,description:t.description,category:t.category,tenPercent});
       }
     }
@@ -199,7 +209,7 @@ import { iniciarAtualizador } from './modules/atualizador.js';
   }
   function renderReminderDialog() {
     const reminders=dueAportes();
-    document.getElementById('reminder-list').innerHTML=reminders.length?reminders.map(a=>`<div class="proto-reminder-item"><div><strong>${esc(a.description)}</strong><small>${esc(a.category)} · ${fmtDate.format(parseDate(a.date))}</small><p>${a.tenPercent===null?'Lembre-se de verificar se fará um aporte com esta entrada.':`Separe <b>${money(a.tenPercent)}</b> (10% desta renda) para sua reserva.`}</p></div><button type="button" class="button button-secondary" data-action="mark-aporte" data-id="${esc(a.key)}">Já fiz</button></div>`).join(''):`<div class="proto-empty">Tudo em dia! Seus novos recebimentos aparecerão aqui. ✓</div>`;
+    document.getElementById('reminder-list').innerHTML=reminders.length?reminders.map(a=>`<div class="proto-reminder-item"><div><strong>${esc(a.description)}</strong><small>${esc(a.category)} · ${fmtDate.format(parseDate(a.date))}</small><p>${a.tenPercent===null?'Lembre-se de verificar se fará um aporte com esta entrada.':`Separe <b>${money(a.tenPercent)}</b> (${preferencias.obter().percentual}% desta renda) para sua reserva.`}</p></div><button type="button" class="button button-secondary" data-action="mark-aporte" data-id="${esc(a.key)}">Já fiz</button></div>`).join(''):`<div class="proto-empty">Tudo em dia! Seus novos recebimentos aparecerão aqui. ✓</div>`;
   }
   function changeView(next) {
     view = next; search=''; filterCategory='';
@@ -232,6 +242,8 @@ import { iniciarAtualizador } from './modules/atualizador.js';
   const common = {
     CATEGORIES, CATEGORY_ICONS, EXPENSE_COLORS, currentMonth,
     getData: () => data, getMonth: () => month, getSearch: () => search,
+    getPreferences:()=>preferencias.obter(),salvarPreferencias:valor=>preferencias.salvar(valor),
+    aplicarPreferencias:()=>aplicarAparencia(preferencias.obter()),
     getFilterCategory: () => filterCategory,
     setMonth: next => { month = next; },
     resetToSummary: () => { view = 'resumo'; month = currentMonth; renderNav(); render(); },
@@ -239,13 +251,17 @@ import { iniciarAtualizador } from './modules/atualizador.js';
     shiftMonth, monthLabel, shortMonth, header, empty,
     sums, savingPlan, transactionsInMonth, reserveYieldEstimate,
     transactionDialog, transactionForm, goalDialog, goalForm,
-    persist, render, renderNav, notify, uniqueId
+    persist, render, renderNav, notify, uniqueId,
+    confirmar:dialogos.confirmar,registrar,registrarEvento
   };
-  const {renderTransactions, renderEntry, openTransaction, setTransactionType} = criarModuloLancamentos(common);
-  const {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates} = criarModuloObjetivos(common);
-  const {renderSummary} = criarModuloResumo({...common, renderEntry, progressLine});
+  const moduloLancamentos=criarModuloLancamentos(common);
+  const {renderTransactions, renderEntry, openTransaction, setTransactionType} = moduloLancamentos;
+  const moduloObjetivos=criarModuloObjetivos(common);
+  const {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates} = moduloObjetivos;
+  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine});
+  const {renderSummary} = moduloResumo;
 
-  document.addEventListener('click',event=>{
+  document.addEventListener('click',async event=>{
     const nav=event.target.closest('[data-view]');
     if(nav){changeView(nav.dataset.view);return;}
     const typeButton=event.target.closest('[data-trans-type]');
@@ -275,12 +291,12 @@ import { iniciarAtualizador } from './modules/atualizador.js';
     }
     else if(button.dataset.action==='delete'){
       const t=data.transactions.find(v=>v.id===id);
-      if(t&&confirm(`Excluir "${t.description}"${t.recurring?' de todos os meses':''}?`)){
+      if(t&&await dialogos.confirmar({titulo:'Excluir lançamento',mensagem:`Excluir "${t.description}"${t.recurring?' de todos os meses':''}?`,acao:'Excluir lançamento',perigoso:true})){
         if(persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
       }
     } else if(button.dataset.action==='delete-goal'){
       const g=data.goals.find(v=>v.id===id);
-      if(g&&confirm(`Excluir "${g.name}"? O valor registrado como guardado também será removido desta meta.`)){
+      if(g&&await dialogos.confirmar({titulo:'Excluir meta',mensagem:`Excluir "${g.name}"? O valor registrado como guardado também será removido desta meta.`,acao:'Excluir meta',perigoso:true})){
         const allocations=(data.allocations||[]).map(a=>a.goalId===id?{...a,goalId:''}:a);
         if(persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
       }
@@ -319,7 +335,7 @@ import { iniciarAtualizador } from './modules/atualizador.js';
     const previous=data.transactions.find(t=>t.id===id);
     const entry={id:id||uniqueId(),type,description,amount,date,category,recurring:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
     const next={...data,transactions:id?data.transactions.map(t=>t.id===id?entry:t):[...data.transactions,entry]};
-    if(persist(next)){transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
+    if(persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
   });
   goalForm.addEventListener('submit',event=>{
     event.preventDefault();
@@ -333,12 +349,21 @@ import { iniciarAtualizador } from './modules/atualizador.js';
     const id=f.namedItem('id').value;
     const entry={id:id||uniqueId(),kind,name,target,saved,deadline};
     const next={...data,goals:id?data.goals.map(g=>g.id===id?entry:g):[...data.goals,entry]};
-    if(persist(next)){goalDialog.close();render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
+    if(persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
   });
   const backup = iniciarModuloBackup(common);
   folderBackup = backup.folderBackup;
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
-  iniciarAtualizador({notify});
+  const atualizador=iniciarAtualizador({notify,registrar});
+  const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
+    onSave:()=>folderBackup?.schedule()});
+  const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
+    getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
+    getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
+    obterLogs,configurarDetalhado,modoDetalhado});
+  registrarModulosDoApp({dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,preferencias,
+    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
   refreshCdiSilently();
 })();

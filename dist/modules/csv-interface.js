@@ -1,6 +1,6 @@
 export function iniciarModuloCsv(ctx) {
   const {getData, setMonth, goalCandidates, hideBackupMenu, isoDate, notify,
-    esc, fmtDate, parseDate, money, CATEGORIES, uniqueId, n2, persist, render} = ctx;
+    esc, fmtDate, parseDate, money, CATEGORIES, uniqueId, n2, persist, render, registrar=()=>{}, registrarEvento=()=>{}} = ctx;
   let pendingCsv = null;
   let pendingAllocations = null;
   let csvSelections = new Map();
@@ -51,13 +51,13 @@ export function iniciarModuloCsv(ctx) {
   });
   csvFile.addEventListener('change',async event=>{
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
-    if(file.size>10*1024*1024){notify('O CSV deve ter até 10 MB.');return;}
+    if(file.size>10*1024*1024){registrar('aviso','CSV_ARQUIVO_GRANDE','csv');notify('O CSV deve ter até 10 MB.');return;}
     try{
       csvAnalysis=window.MeuDinheiroCSV.importCSV(await file.text(),CATEGORIES);
       csvSelections=new Map();
       refreshCSVPreview();
       csvDialog.showModal();
-    }catch(error){pendingCsv=null;pendingAllocations=null;csvAnalysis=null;notify(error.message||'Não foi possível ler o CSV.');}
+    }catch{pendingCsv=null;pendingAllocations=null;csvAnalysis=null;registrar('erro','CSV_IMPORTACAO_FALHOU','csv');notify('Não foi possível ler o CSV. Confira o arquivo.');}
   });
   document.getElementById('csv-confirm-import').addEventListener('click',()=>{
     const data=getData();
@@ -72,6 +72,7 @@ export function iniciarModuloCsv(ctx) {
     }
     const next={...data,goals,transactions:[...data.transactions,...added],allocations:[...(data.allocations||[]),...addedAllocations]};
     if(persist(next)){
+      registrarEvento('IMPORTAR_CSV','csv');
       const newest=[...added,...addedAllocations].map(t=>t.date).sort().at(-1);if(newest)setMonth(newest.slice(0,7));
       pendingCsv=null;pendingAllocations=null;csvDialog.close();render();notify(`${added.length} lançamentos e ${addedAllocations.length} aplicações importados.${added.some(t=>t.type==='income')?' 🔔 Confira seus aportes.':''}`);
     }

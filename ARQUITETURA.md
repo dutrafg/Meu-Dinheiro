@@ -16,8 +16,9 @@ dist/
     resumo.css             # Painéis, gráficos e cartões
     objetivos.css          # Metas, sonho e componentes de progresso
     dialogos.css           # Formulários, CSV, reserva e lembretes
-    responsivo.css         # Smartphone, tablet e tema escuro
-  app.js                   # Inicialização, estado, finanças e eventos globais
+    responsivo.css         # Smartphone, tablet e tema do sistema
+    ajustes.css            # Tema, cores e janela de Ajustes
+  app.js                   # Orquestração, persistência e eventos legados
   modules/
     resumo.js              # Tela Resumo e gráficos por categoria
     lancamentos.js         # Renda/Despesas, linhas e formulário
@@ -26,6 +27,15 @@ dist/
     csv-interface.js       # Visualização, classificação e importação CSV
     validacao.js           # Datas, integridade e restauração segura
     atualizador.js         # Detecção de versões e confirmação do usuário
+    log.js                 # Eventos técnicos sanitizados e limite de 50 registros
+    integridade.js         # Regras puras de verificação dos dados
+    diagnostico.js         # Painel e relatório JSON sem valores pessoais
+    dialogos.js            # Confirmações visuais acessíveis
+    preferencias.js        # Validação e armazenamento isolado de preferências
+    regras-financeiras.js  # Percentuais e plano de aporte configuráveis
+    ajustes.js             # Controlador da interface de configurações
+    catalogo-diagnostico.js # Inventário e execução de autoverificações
+    registro-modulos.js    # Registro de cada módulo do aplicativo
   analytics.js             # Cálculo dos gráficos (independente do DOM)
   csv.js                   # Parser e exportador CSV
   folder-backup.js         # Gerenciador de arquivos/pasta
@@ -39,10 +49,16 @@ dist/
 3. Cada tela devolve HTML, mas **não grava dados por conta própria**.
 4. Os controladores alteram os registros por `persist(next)`, que atualiza `localStorage` e agenda o backup automático em pasta, quando habilitado.
 5. `render()` atualiza a tela corrente. Os módulos recebem o estado atualizado via `getData()` e `getMonth()`, evitando referências obsoletas após restauração.
+6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 
 ## Regras de manutenção
 
 - **Não altere** a chave `meu-dinheiro-essencial:v1` nem o formato JSON v1 sem criar uma migração compatível.
+- **Regra permanente:** cada funcionalidade, verificador, serviço e controle de interface deve ocupar seu próprio módulo em `dist/modules/`, com dependências explícitas e testes próprios. `app.js` permanece como orquestrador, sem concentrar lógica nova.
+- Logs aceitam apenas códigos técnicos predefinidos e indicação de módulo. Nunca registre valores, nomes, descrições, objetos completos de erro, stacks, conteúdo CSV/JSON ou caminhos de pasta.
+- Diagnósticos são operações somente leitura sobre os dados financeiros. O log usa somente a sessão, limitado a 50 códigos técnicos. Preferências são armazenadas separadamente dos registros financeiros.
+- **Registro obrigatório do Diagnóstico:** ao criar/renomear módulo em `dist/modules/`, adicione seu nome em `MODULOS_OBRIGATORIOS` (`catalogo-diagnostico.js`) e uma autoverificação executável em `registro-modulos.js`. Inclua verificações específicas do comportamento e possíveis falhas. `tests/arquitetura.test.cjs` falha quando falta registro.
+- A barra do Diagnóstico segue **5 s para até 9 verificações +0,5 s por verificação adicional, com teto de 25 s somente para a animação**. O catálogo não tem limite de verificações e a execução real nunca é interrompida pelo relógio visual. Todos os resultados são coletados antes da animação; se os testes demorarem mais, a interface continua aguardando. O JSON só fica disponível ao final.
 - Mantenha `completedAportes`, `allocations`, `transactions` e `goals` ao importar/exportar.
 - Para modificar somente a interface, altere o arquivo da área em `dist/modules/` e/ou `dist/css/` correspondente.
 - Ao criar, renomear ou remover qualquer script/CSS/ícone, atualize `ASSETS` em `dist/sw.js` e incremente a versão de `CACHE`.
@@ -62,3 +78,4 @@ Abrir `http://localhost:4173` em um navegador moderno. Testar as cinco áreas, f
 
 O teste `tests/modulos.test.cjs` exercita os renderizadores separadamente e verifica os arquivos CSS; `tests/pwa.test.cjs` garante que todos os módulos estejam no cache offline.
 O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão, instalação inicial e a exigência de confirmação antes do recarregamento. `tests/validacao.test.cjs` cobre dados antigos, backups e recuperação de falhas. `tests/standalone.test.cjs` verifica a prévia HTML independente.
+`tests/diagnostico.test.cjs` valida integridade, privacidade e duração; `tests/registro-diagnostico.test.cjs` exige autoverificações; `tests/preferencias.test.cjs` cobre validação e isolamento; `tests/dialogos.test.cjs` comprova cancelamento seguro; `tests/recorrencia-formulario.test.cjs` verifica aviso sobre séries mensais. Toda mudança de interface deve ser conferida também em desktop e smartphone antes da publicação.

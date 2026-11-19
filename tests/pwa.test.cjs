@@ -45,15 +45,23 @@ test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
   const app=read('dist/app.js');
+  const moduleImports=app+'\n'+read('dist/modules/diagnostico.js');
   for(const dependency of ['csv.js','analytics.js','folder-backup.js',
-    'modules/resumo.js','modules/lancamentos.js','modules/objetivos.js','modules/backup.js','modules/csv-interface.js','modules/validacao.js','modules/atualizador.js']) {
-    assert.ok(app.includes(`from './${dependency}'`)||app.includes(`import './${dependency}'`),`Import ausente: ${dependency}`);
+    'modules/resumo.js','modules/lancamentos.js','modules/objetivos.js','modules/backup.js','modules/csv-interface.js','modules/validacao.js','modules/atualizador.js','modules/dialogos.js','modules/diagnostico.js','modules/integridade.js','modules/log.js','modules/preferencias.js','modules/regras-financeiras.js','modules/ajustes.js','modules/catalogo-diagnostico.js','modules/registro-modulos.js']) {
+    assert.ok(moduleImports.includes(`from './${dependency}'`)||moduleImports.includes(`import './${dependency}'`)||
+      moduleImports.includes(`from './${dependency.replace('modules/','')}'`),`Import ausente: ${dependency}`);
   }
   assert.match(html, /id="folder-backup-connect"/);
   assert.match(html, /id="folder-backup-reconnect"/);
   assert.match(html, /id="check-update"/);
   assert.match(html, /id="install-update" class="hidden"/);
   assert.match(html, /id="app-update-alert" class="app-update-alert hidden"/);
+  assert.match(html, /id="diagnostics-dialog"/);
+  assert.match(html, /id="confirmation-dialog"/);
+  assert.match(html, /id="transaction-recurring-warning"/);
+  assert.match(html, /id="settings-dialog"/);
+  assert.match(html, /id="diagnostics-progress"/);
+  assert.match(html, /rel="apple-touch-icon"/);
   assert.match(html, /name="viewport"/);
 });
 
@@ -112,10 +120,11 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v11/);
+  assert.match(source, /meu-dinheiro-essencial-v13/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));
+  for (const name of ['log','integridade','diagnostico','dialogos']) assert.ok(assets.includes(`./modules/${name}.js`));
   assert.ok(assets.includes('./css/responsivo.css'));
 });
 

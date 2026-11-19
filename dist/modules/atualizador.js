@@ -1,5 +1,5 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
-export function iniciarAtualizador({notify}) {
+export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');
   const status = document.getElementById('app-update-status');
@@ -33,6 +33,7 @@ export function iniciarAtualizador({notify}) {
       if (worker.state === 'installed') {
         if (!mostrarAtualizacao()) mostrarEstado('Aplicativo pronto para uso offline.');
       } else if (worker.state === 'redundant') {
+        registrar('erro','PWA_INSTALACAO_FALHOU','pwa');
         mostrarEstado('A instalação da atualização falhou. Tente novamente.', 'error');
       } else if (worker.state === 'installing') {
         mostrarEstado('Preparando nova versão…');
@@ -57,6 +58,7 @@ export function iniciarAtualizador({notify}) {
         mostrarEstado(registration.installing ? 'Baixando atualização…' : 'Você está usando a versão mais recente.');
       }
     } catch {
+      registrar('aviso','PWA_VERIFICACAO_FALHOU','pwa');
       if (!mostrarAtualizacao()) mostrarEstado('Não foi possível verificar. Confira sua conexão e tente novamente.', 'error');
     } finally {
       verificando = false;
@@ -82,6 +84,7 @@ export function iniciarAtualizador({notify}) {
       if (!mostrarAtualizacao()) mostrarEstado('Atualizações automáticas ativadas.');
       await verificarAtualizacoes();
     } catch {
+      registrar('erro','PWA_REGISTRO_FALHOU','pwa');
       mostrarEstado('Não foi possível ativar as atualizações. Tente verificar novamente.', 'error');
     }
   }
@@ -110,5 +113,5 @@ export function iniciarAtualizador({notify}) {
   if (document.readyState === 'complete') void iniciar();
   else window.addEventListener('load', () => void iniciar(), {once:true});
 
-  return {verificarAtualizacoes};
+  return {verificarAtualizacoes,getStatus:()=>({ultimaVerificacao,atualizacaoPendente:Boolean(registration?.waiting)})};
 }

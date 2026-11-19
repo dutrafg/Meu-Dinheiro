@@ -39,6 +39,7 @@ export function criarModuloLancamentos(ctx) {
     form.namedItem('amount').value=existing?.amount??'';
     form.namedItem('date').value=existing?.date||(month===currentMonth?isoDate(new Date()):`${month}-01`);
     form.namedItem('recurring').checked=!!existing?.recurring;
+    document.getElementById('transaction-recurring-warning').classList.toggle('hidden',!existing?.recurring);
     setTransactionType(effectiveType,existing?.category);
     document.getElementById('transaction-type-toggle').classList.toggle('hidden',!!existing);
     document.getElementById('transaction-title').textContent=`${existing?'Editar':'Adicionar'} ${effectiveType==='income'?'renda':'despesa'}`;
