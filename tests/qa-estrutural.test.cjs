@@ -76,7 +76,12 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   const media=read('dist/css/responsivo.css');
   const impressao=read('dist/css/impressao.css');
   const html=read('dist/index.html');
-  assert.match(css,/\.desktop-toolbar\{display:grid/);
+  assert.match(css,/\.desktop-toolbar\{display:flex/);
+  assert.match(css,/\.desktop-toolbar\{[^\n]*margin:0 calc\(0px - clamp\(18px,2\.5vw,48px\)\) 16px/,
+    'A barra ultrapassa somente o recuo horizontal do app-shell');
+  assert.match(css,/\.desktop-toolbar \.desktop-nav\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.desktop-nav \.nav-button\.active\{[^\n]*color:var\(--accent-text\)/,
+    'A navegação deve seguir a cor de destaque configurada');
   assert.match(css,/@media\(min-width:880px\)\{[\s\S]*?\.desktop-toolbar\{position:sticky;top:0;z-index:11\}/);
   assert.match(css,/\.desktop-create-menu\{position:absolute/);
   assert.match(css,/\.fab\{display:none\}/);
@@ -87,6 +92,11 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   assert.match(html,/data-create-kind="investment"/);
   assert.match(read('dist/modules/objetivos.js'),/data-action="add-investment"/);
   assert.match(html,/id="investment-category-suggestions"/);
+  assert.match(html,/id="calendar-day-dialog"/);
+  const calendario=read('dist/css/calendario.css');
+  assert.match(calendario,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
+  assert.match(calendario,/data-flow-tone="mixed"/);
+  assert.match(calendario,/@media\(max-width:700px\)/);
 });
 
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{

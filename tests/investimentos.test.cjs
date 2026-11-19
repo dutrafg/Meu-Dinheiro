@@ -7,7 +7,7 @@ const read=name=>fs.readFileSync(path.join(__dirname,'../dist/modules',name),'ut
 const carregar=()=>{
   const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('investimentos.js')
     .replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
-  return import(`data:text/javascript;base64,${Buffer.from(`${codigo}\nexport {adicionarInvestimentoVinculado,encontrarSalarioAnterior,iniciarInvestimentos,CATEGORIAS_INVESTIMENTO,normalizarDadosLocais,validarBackup};`).toString('base64')}`);
+  return import(`data:text/javascript;base64,${Buffer.from(`${codigo}\nexport {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior,iniciarInvestimentos,CATEGORIAS_INVESTIMENTO,normalizarDadosLocais,validarBackup};`).toString('base64')}`);
 };
 const base=()=>({transactions:[],goals:[{id:'g',name:'Reserva',kind:'goal',target:1000,saved:20,deadline:''},
   {id:'d',name:'Viagem',kind:'dream',target:2000,saved:50,deadline:''}],allocations:[],completedAportes:[]});
@@ -71,10 +71,11 @@ test('Dados históricos sem categoria continuam legíveis e categoria inválida 
 test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apenas após persistência',async()=>{
   const {iniciarInvestimentos}=await carregar();
   const listeners={};
-  const campos=new Map(['goalId','description','amount','date','category','origin'].map(name=>[name,{value:'',addEventListener:()=>{}}]));
+  const campos=new Map(['id','goalId','description','amount','date','category','origin'].map(name=>[name,{value:'',addEventListener:()=>{}}]));
   const form={elements:{namedItem:name=>campos.get(name)},addEventListener:(nome,fn)=>listeners[nome]=fn};
-  const sugestoes={innerHTML:''},nota={textContent:''};
-  const documento={getElementById:id=>id==='investment-category-suggestions'?sugestoes:id==='investment-origin-note'?nota:null};
+  const sugestoes={innerHTML:''},nota={textContent:''},titulo={textContent:''},salvar={textContent:''};
+  const documento={getElementById:id=>({'investment-category-suggestions':sugestoes,'investment-origin-note':nota,
+    'investment-title':titulo,'investment-submit':salvar})[id]};
   let conteudo=base();conteudo.allocations=[{id:'import',goalId:'',description:'Importado',amount:1,date:'2026-11-19',kind:'goal',category:'Minha categoria'}];
   const avisos=[],eventos=[];
   const dialog={showModal:()=>eventos.push('abrir'),close:()=>eventos.push('fechar'),addEventListener:()=>{}};
@@ -96,6 +97,14 @@ test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apen
   assert.equal(conteudo.allocations.at(-1).category,'Minha categoria');
   assert.deepEqual(eventos.slice(-3),['log','fechar','render']);
   assert.equal(avisos.at(-1),'Investimento adicionado ao objetivo.');
+  assert.equal(api.editar('novo-id'),true);
+  assert.equal(titulo.textContent,'Editar investimento');
+  assert.equal(campos.get('id').value,'novo-id');
+  campos.get('amount').value='35';
+  listeners.submit({preventDefault(){}});
+  assert.equal(conteudo.goals[0].saved,55,'edita apenas a diferença de 10');
+  assert.equal(conteudo.allocations.length,2,'não cria outro registro ao editar');
+  assert.equal(avisos.at(-1),'Investimento atualizado sem duplicar o aporte.');
 });
 
 test('Salário é localizado pela data efetiva, inclusive recorrência no fim do mês',async()=>{
@@ -122,4 +131,56 @@ test('Aporte do salário vincula lançamento e é validado no armazenamento loca
   assert.throws(()=>adicionarInvestimentoVinculado(dados,aporte({origin:'salary',date:'2026-11-01'})),/Nenhum salário/);
   const ruim={...novo,allocations:[{...novo.allocations[0],salaryDate:'2026-02-30'}]};
   assert.throws(()=>normalizarDadosLocais(ruim));
+});
+
+test('Editar investimento corrige o valor sem duplicar registro ou alterar lançamentos',async()=>{
+  const {adicionarInvestimentoVinculado,editarInvestimentoVinculado}=await carregar();
+  const original=base(),aporteInicial=adicionarInvestimentoVinculado(original,aporte({amount:30}));
+  const alterado=editarInvestimentoVinculado(aporteInicial,aporte({amount:35,category:'Ações',description:'Reclassificado'}));
+  assert.equal(aporteInicial.goals[0].saved,50);
+  assert.equal(alterado.goals[0].saved,55);
+  assert.equal(alterado.allocations.length,1);
+  assert.equal(alterado.allocations[0].id,'a');
+  assert.equal(alterado.allocations[0].category,'Ações');
+  assert.equal(alterado.transactions.length,0);
+  const diminuido=editarInvestimentoVinculado(alterado,aporte({amount:10}));
+  assert.equal(diminuido.goals[0].saved,30);
+  assert.equal(diminuido.allocations[0].amount,10);
+});
+
+test('Mover investimento de meta para sonho ajusta os dois saldos, preservando histórico',async()=>{
+  const {adicionarInvestimentoVinculado,editarInvestimentoVinculado,normalizarDadosLocais}=await carregar();
+  const inicial=adicionarInvestimentoVinculado(base(),aporte({amount:40}));
+  const movido=editarInvestimentoVinculado(inicial,aporte({goalId:'d',amount:50,date:'2026-11-18',category:'Poupança'}));
+  assert.equal(movido.goals[0].saved,20);
+  assert.equal(movido.goals[1].saved,100);
+  assert.equal(movido.allocations[0].kind,'dream');
+  assert.equal(movido.allocations[0].goalId,'d');
+  assert.equal(normalizarDadosLocais(movido).allocations.length,1);
+  assert.equal(inicial.goals[0].saved,60,'edição não altera estado anterior');
+});
+
+test('Editar pode alterar origem de salário para investimento antigo e vice-versa',async()=>{
+  const {adicionarInvestimentoVinculado,editarInvestimentoVinculado}=await carregar();
+  const dados=base();
+  dados.transactions.push({id:'sal',type:'income',description:'Salário mensal',category:'Salário base',amount:3000,date:'2026-11-05',recurring:false});
+  const inicial=adicionarInvestimentoVinculado(dados,aporte({amount:200,origin:'salary'}));
+  const historico=editarInvestimentoVinculado(inicial,aporte({amount:200,origin:'previous'}));
+  assert.equal(historico.allocations[0].origin,'previous');
+  assert.equal(historico.allocations[0].salaryId,undefined);
+  assert.equal(historico.allocations[0].salaryDate,undefined);
+  assert.equal(historico.goals[0].saved,220);
+  const restaurado=editarInvestimentoVinculado(historico,aporte({amount:200,origin:'salary'}));
+  assert.equal(restaurado.allocations[0].salaryId,'sal');
+});
+
+test('Editar rejeita dados inválidos ou meta com saldo já menor que o aporte original',async()=>{
+  const {adicionarInvestimentoVinculado,editarInvestimentoVinculado}=await carregar();
+  const inicial=adicionarInvestimentoVinculado(base(),aporte({amount:30}));
+  assert.throws(()=>editarInvestimentoVinculado(inicial,aporte({id:'inexistente'})),/não encontrado/);
+  assert.throws(()=>editarInvestimentoVinculado(inicial,aporte({date:'2026-02-30'})),/Confira/);
+  assert.throws(()=>editarInvestimentoVinculado(inicial,aporte({goalId:'falso'})),/Escolha/);
+  const insuficiente={...inicial,goals:inicial.goals.map(g=>g.id==='g'?{...g,saved:10}:g)};
+  assert.throws(()=>editarInvestimentoVinculado(insuficiente,aporte()),/menor que o aporte/);
+  assert.equal(inicial.goals[0].saved,50);
 });

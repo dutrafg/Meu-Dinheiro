@@ -6,7 +6,8 @@ import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.
 import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
 import {normalizarTipoRelatorioPdf} from './relatorio-pdf.js';
 import {acaoMovelParaVisao,TIPOS_CRIACAO_RAPIDA} from './acao-rapida.js';
-import {adicionarInvestimentoVinculado,encontrarSalarioAnterior} from './investimentos.js';
+import {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior} from './investimentos.js';
+import {calcularCalendarioFinanceiro,compactarValorCalendario} from './calendario-financeiro.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
@@ -14,7 +15,7 @@ import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,limpeza,acaoRapida,investimentos,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
+    atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
@@ -32,10 +33,20 @@ export function registrarModulosDoApp(api) {
   registrar('investimentos',()=>{
     const base={goals:[{id:'m',kind:'dream',saved:10}],transactions:[],allocations:[]};
     const next=adicionarInvestimentoVinculado(base,{id:'i',goalId:'m',description:'Exemplo',amount:5,date:'2026-11-19',category:'Poupança'});
-    return typeof investimentos.abrir==='function'&&next.goals[0].saved===15&&next.allocations.length===1&&
+    const alterado=editarInvestimentoVinculado(next,{id:'i',goalId:'m',description:'Exemplo corrigido',amount:7,date:'2026-11-19',category:'CDB'});
+    return typeof investimentos.abrir==='function'&&typeof investimentos.editar==='function'&&next.goals[0].saved===15&&next.allocations.length===1&&
+      alterado.allocations.length===1&&alterado.goals[0].saved===17&&
       next.allocations[0].kind==='dream'&&base.goals[0].saved===10&&
       encontrarSalarioAnterior([{id:'s',type:'income',category:'Salário base',date:'2026-11-05'}],'2026-11-19')?.id==='s'&&
       Boolean(document.getElementById('investment-dialog'));
+  });
+  registrar('calendario-financeiro',()=>{
+    const mes=calcularCalendarioFinanceiro('2026-11',[
+      {type:'income',amount:100,date:'2026-11-10'},{type:'expense',amount:40,date:'2026-11-10'}]);
+    return typeof calendarioFinanceiro.renderCalendario==='function'&&typeof calendarioFinanceiro.abrirDia==='function'&&
+      mes.days.length===30&&mes.days[9].tone==='mixed'&&mes.days[9].netCents===6000&&
+      mes.days[9].level===5&&compactarValorCalendario(150000)==='1,5mil'&&
+      Boolean(document.getElementById('calendar-day-dialog'));
   });
   registrar('limpeza-dados',()=>typeof limpeza.abrir==='function'&&typeof apagarDadosLocais==='function'&&
     validarFraseLimpeza('APAGAR')&&!validarFraseLimpeza('apagar')&&!validarFraseLimpeza('APAGAR ')&&

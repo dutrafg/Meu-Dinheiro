@@ -4,4 +4,5 @@
 .proto-goal-actions .goal-invest-button{display:inline-flex;align-items:center;justify-content:center;gap:5px;background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-text)}
 .proto-goal-actions .goal-invest-button svg{width:16px;height:16px}
 .proto-allocation-row .investment-category-label{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:7px;background:var(--surface-2,rgba(100,116,139,.1));font-size:.76rem;color:var(--muted)}
+.proto-allocation-edit{display:inline-flex;margin-top:8px;min-height:38px;padding:7px 12px;font-size:.78rem}
 @media(max-width:479px){.proto-goal-actions{flex-wrap:wrap}.proto-goal-actions .goal-invest-button{flex:1 0 100%}}

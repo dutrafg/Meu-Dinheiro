@@ -197,6 +197,7 @@ test('Diagnóstico trata proposta como categoria separada de erros e avisa sobre
 test('Relatório principal incorpora o checklist sem classificar propostas pendentes como falhas',async()=>{
   const {avaliarRequisitosProposta}=await carregar();
   const codigo=read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+    read('dist/modules/calendario-financeiro.js').replace(/^export /gm,'')+'\n'+
     read('dist/modules/diagnostico.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const verificar=()=>({itens:[],erros:0,avisos:0});
   const gerar=async(comProposta)=>{

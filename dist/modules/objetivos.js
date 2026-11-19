@@ -46,6 +46,7 @@ export function criarModuloObjetivos(ctx) {
         const linked=data.goals.find(g=>g.id===a.goalId);
         const candidates=goalCandidates(a.kind);
         return `<div class="proto-allocation-row"><div class="proto-allocation-top"><div><strong>${esc(label(a))} · ${esc(a.description)}</strong><small>${fmtDate.format(parseDate(a.date))} · ${linked?`Vinculado a ${esc(linked.name)}`:'Sem objetivo vinculado'}${a.origin==='salary'?' · Do salário':a.origin==='previous'?' · Investimento antigo':''}${a.category?` <span class="investment-category-label">${esc(a.category)}</span>`:''}</small></div><b style="color:${a.amount>=0?'var(--green)':'var(--red)'}">${a.amount>=0?'+':'−'}${money(Math.abs(a.amount))}</b></div>
+          ${a.amount>0?`<button type="button" class="button button-secondary proto-allocation-edit" data-action="edit-investment" data-id="${esc(a.id)}">Editar investimento</button>`:''}
           ${!linked?(candidates.length?`<div class="proto-link-box"><select data-allocation-goal="${esc(a.id)}" aria-label="Escolher objetivo para ${esc(a.description)}">${candidates.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select><button type="button" class="button button-secondary" data-action="link-allocation" data-id="${esc(a.id)}">Vincular</button></div>`:`<p class="proto-note">Crie primeiro um objetivo correspondente para vincular este aporte.</p>`):''}
         </div>`;
       }).join('')}</details>`;

@@ -6,7 +6,8 @@ import { verificarPropostaInterface } from './diagnostico-proposta.js';
 import { calcularSaldoDisponivelHoje } from './resumo.js';
 import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 import { apagarDadosLocais, validarFraseLimpeza } from './limpeza-dados.js';
-import { adicionarInvestimentoVinculado, encontrarSalarioAnterior } from './investimentos.js';
+import { adicionarInvestimentoVinculado, editarInvestimentoVinculado, encontrarSalarioAnterior } from './investimentos.js';
+import { calcularCalendarioFinanceiro, compactarValorCalendario } from './calendario-financeiro.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -131,6 +132,25 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('INVESTIMENTO_SALDO_DISPONIVEL',calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporteSalario.allocations)===7&&
     calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporte.allocations)===10,
     'Somente aporte do salário reduz dinheiro disponível','Investimento antigo e salário não foram separados no saldo','resumo');
+  const aporteEditado=editarInvestimentoVinculado(aporte,{id:'diag-i',goalId:'diag-g',description:'Aporte corrigido',amount:15,date:'2026-11-19',category:'Tesouro Direto'});
+  conferir('INVESTIMENTO_EDICAO_DELTA',aporteEditado.goals[0].saved===25&&aporteEditado.allocations.length===1&&
+    aporteEditado.allocations[0].amount===15&&aporte.goals[0].saved===22.34,
+    'Edição altera apenas diferença sem duplicar investimento','Edição de investimento distorceu a meta ou o histórico','investimentos');
+  const mesTeste=calcularCalendarioFinanceiro('2026-11',[
+    {type:'income',amount:100,occurrence:'2026-11-05'},
+    {type:'expense',amount:40,occurrence:'2026-11-05'},
+    {type:'expense',amount:200,occurrence:'2026-11-06'},
+    {type:'income',amount:80,occurrence:'2026-11-07'}]);
+  conferir('CALENDARIO_DIAS_E_DATAS',mesTeste.days.length===30&&mesTeste.days[4].day===5&&
+    mesTeste.days[4].date==='2026-11-05'&&mesTeste.offset===6,
+    'Calendário exibe dias reais do mês na semana correta','Calendário apresenta datas ou dias incorretos','calendario-financeiro');
+  conferir('CALENDARIO_MISTURA_CORES',mesTeste.days[4].tone==='mixed'&&mesTeste.days[4].incomeShare===71&&
+    mesTeste.days[5].tone==='expense'&&mesTeste.days[6].tone==='income'&&
+    mesTeste.days[5].level===5&&mesTeste.days[6].level<5,
+    'Cinco intensidades representam renda, despesa e dias mistos','Tonalidades do calendário não correspondem ao fluxo diário','calendario-financeiro');
+  conferir('CALENDARIO_CENTAVOS',mesTeste.totalIncomeCents===18000&&mesTeste.totalExpenseCents===24000&&
+    compactarValorCalendario(150000)==='1,5mil',
+    'Calendário soma centavos e resume valores pequenos para telas compactas','Soma ou formato diário incorreto','calendario-financeiro');
   let rejeitouMeta=false;try{adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'inexistente',description:'Aporte',amount:5,date:'2026-11-19',category:'CDB'});}catch{rejeitouMeta=true;}
   conferir('INVESTIMENTO_META_EXISTENTE',rejeitouMeta,'Aporte exige objetivo existente','Aporte aceito sem objetivo','investimentos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
@@ -224,7 +244,8 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     for(const [codigo,ids] of Object.entries({
       NAVEGACAO:['desktop-toolbar','desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
       ACAO_RAPIDA:['desktop-create-wrap','desktop-create-trigger','desktop-create-menu','quick-add'],
-      OBJETIVOS:['goal-dialog','goal-form'],INVESTIMENTOS:['investment-dialog','investment-form','investment-category-suggestions','investment-origin-note'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
+      OBJETIVOS:['goal-dialog','goal-form'],INVESTIMENTOS:['investment-dialog','investment-form','investment-category-suggestions','investment-origin-note','investment-submit'],
+      CALENDARIO:['calendar-day-dialog','calendar-day-title','calendar-day-content'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
       PDF:['export-pdf','pdf-report-type','print-report'],SAUDE:['main-content'],
@@ -255,6 +276,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       conferir('NAVEGACAO_FIXA_DESKTOP',estilo.position==='sticky'&&estilo.top==='0px',
         'Navegação permanece no topo durante a rolagem no desktop',
         'Barra de navegação não está fixada no topo do desktop','interface');
+      const dimensoes=barraDesktop.getBoundingClientRect?.();
+      if(dimensoes?.width>0)conferir('NAVEGACAO_LARGURA_DESKTOP',dimensoes.width>=window.innerWidth*.9,
+        'Barra dos módulos ocupa a largura disponível da tela',
+        'Barra desktop está estreita demais para o espaço disponível','interface');
     }
   }
   // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.

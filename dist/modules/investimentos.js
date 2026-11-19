@@ -48,6 +48,24 @@ export function adicionarInvestimentoVinculado(dados,{goalId,description,amount,
     allocations:[...dados.allocations,investimento]};
 }
 
+// Reverte o aporte antigo em centavos antes de aplicar o novo. Mantém o ID, a
+// posição no histórico e os campos de importação, sem mexer nas transações.
+export function editarInvestimentoVinculado(dados,{id,...campos}){
+  const anterior=dados.allocations.find(a=>a.id===id);
+  if(!anterior||!Number.isFinite(anterior.amount)||anterior.amount<=0)throw Error('Investimento não encontrado ou não editável.');
+  const original=dados.goals.find(g=>g.id===anterior.goalId);
+  const antigoCentavos=Math.round(anterior.amount*100);
+  if(original&&Math.round(original.saved*100)<antigoCentavos)
+    throw Error('O valor guardado atual é menor que o aporte anterior. Corrija a meta antes de editar.');
+  const base={...dados,goals:dados.goals.map(g=>g.id===anterior.goalId?
+    {...g,saved:(Math.round(g.saved*100)-antigoCentavos)/100}:g),
+    allocations:dados.allocations.filter(a=>a.id!==id)};
+  const atualizado=adicionarInvestimentoVinculado(base,{...campos,id});
+  const {salaryId:_anteriorSalario,salaryDate:_anteriorData,...metadados}=anterior;
+  const novo={...metadados,...atualizado.allocations.at(-1)};
+  return {...atualizado,allocations:dados.allocations.map(a=>a.id===id?novo:a)};
+}
+
 export function iniciarInvestimentos({getData,persist,render,notify,registrarEvento,uniqueId,isoDate,esc,dialog,form,documento=document}){
   function atualizarOrigem(){
     const date=form.elements.namedItem('date').value;
@@ -58,38 +76,48 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
     nota.textContent=salario?`Salário encontrado em ${salario.date.split('-').reverse().join('/')}. Confirme a origem; se o dinheiro já estava guardado, escolha “Investimento antigo”.`:
       'Nenhum salário localizado nos 45 dias anteriores à data. Se já era dinheiro guardado, mantenha “Investimento antigo”.';
   }
-  function abrir(goalId=''){
-    const goals=getData().goals;
+  function abrir(goalId='',investmentId=''){
+    const dados=getData();
+    const goals=dados.goals;
     if(!goals.length){notify('Crie uma meta ou sonho antes de adicionar um investimento.');return false;}
+    const existente=investmentId?dados.allocations.find(a=>a.id===investmentId&&a.amount>0):null;
+    if(investmentId&&!existente){notify('Investimento não encontrado para edição.');return false;}
     const seletor=form.elements.namedItem('goalId');
     seletor.innerHTML=goals.map(g=>`<option value="${esc(g.id)}">${esc(g.kind==='dream'?'Sonho':'Meta')} · ${esc(g.name)}</option>`).join('');
-    if(goalId&&goals.some(g=>g.id===goalId))seletor.value=goalId;
-    form.elements.namedItem('description').value='';
-    form.elements.namedItem('amount').value='';
-    form.elements.namedItem('date').value=isoDate(new Date());
-    form.elements.namedItem('category').value='';
+    const alvo=existente?.goalId||goalId;
+    if(alvo&&goals.some(g=>g.id===alvo))seletor.value=alvo;
+    form.elements.namedItem('id').value=existente?.id||'';
+    form.elements.namedItem('description').value=existente?.description||'';
+    form.elements.namedItem('amount').value=existente?.amount??'';
+    form.elements.namedItem('date').value=existente?.date||isoDate(new Date());
+    form.elements.namedItem('category').value=existente?.category||'';
     atualizarOrigem();
+    if(existente)form.elements.namedItem('origin').value=existente.origin||'previous';
+    documento.getElementById('investment-title').textContent=existente?'Editar investimento':'Adicionar investimento';
+    documento.getElementById('investment-submit').textContent=existente?'Salvar alterações':'Salvar investimento';
     const categorias=[...new Set([...CATEGORIAS_INVESTIMENTO,...(getData().allocations||[]).map(a=>a.category).filter(Boolean)])];
     documento.getElementById('investment-category-suggestions').innerHTML=categorias.map(c=>`<option value="${esc(c)}"></option>`).join('');
     dialog.showModal();
     form.elements.namedItem('description').focus();
     return true;
   }
+  const editar=id=>abrir('',id);
   form.elements.namedItem('date').addEventListener('change',atualizarOrigem);
   form.addEventListener('submit',event=>{
     event.preventDefault();
     const f=form.elements;
     try{
-      const next=adicionarInvestimentoVinculado(getData(),{
-        id:uniqueId(),goalId:f.namedItem('goalId').value,description:f.namedItem('description').value,
+      const id=f.namedItem('id').value;
+      const campos={id:id||uniqueId(),goalId:f.namedItem('goalId').value,description:f.namedItem('description').value,
         amount:Number(f.namedItem('amount').value),date:f.namedItem('date').value,category:f.namedItem('category').value,
-        origin:f.namedItem('origin').value
-      });
+        origin:f.namedItem('origin').value};
+      const next=id?editarInvestimentoVinculado(getData(),campos):adicionarInvestimentoVinculado(getData(),campos);
       if(persist(next)){
-        registrarEvento('CRIAR_INVESTIMENTO','dados');dialog.close();render();notify('Investimento adicionado ao objetivo.');
+        registrarEvento(id?'EDITAR_INVESTIMENTO':'CRIAR_INVESTIMENTO','dados');dialog.close();render();
+        notify(id?'Investimento atualizado sem duplicar o aporte.':'Investimento adicionado ao objetivo.');
       }
     }catch(erro){notify(erro.message||'Não foi possível salvar o investimento.');}
   });
   dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
-  return {abrir};
+  return {abrir,editar};
 }

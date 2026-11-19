@@ -21,6 +21,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
 import { iniciarInvestimentos } from './modules/investimentos.js';
+import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -75,6 +76,7 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
   const goalForm = document.getElementById('goal-form');
   const investmentDialog = document.getElementById('investment-dialog');
   const investmentForm = document.getElementById('investment-form');
+  const calendarDayDialog = document.getElementById('calendar-day-dialog');
   const reminderDialog = document.getElementById('reminder-dialog');
 
   function readData() {
@@ -275,9 +277,10 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
   const investimentos=iniciarInvestimentos({...common,dialog:investmentDialog,form:investmentForm,documento:document});
   const acaoRapida=iniciarAcaoRapida({getView:()=>view,openTransaction,openGoal,openInvestment:investimentos.abrir});
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
+  const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,documento:document});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
     fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
-  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
+  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude,renderCalendario:calendarioFinanceiro.renderCalendario});
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
@@ -287,6 +290,8 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
     if(typeButton){setTransactionType(typeButton.dataset.transType);return;}
     const monthButton=event.target.closest('[data-month]');
     if(monthButton){month=shiftMonth(month,Number(monthButton.dataset.month));render();return;}
+    const calendarDay=event.target.closest('[data-calendar-day]');
+    if(calendarDay){calendarioFinanceiro.abrirDia(calendarDay.dataset.calendarDay);return;}
     const button=event.target.closest('[data-action]');
     if(!button)return;
     const id=button.dataset.id;
@@ -295,6 +300,7 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
     else if(button.dataset.action==='add-goal')openGoal(button.dataset.type);
     else if(button.dataset.action==='edit-goal')openGoal(null,id);
     else if(button.dataset.action==='add-investment')investimentos.abrir(id);
+    else if(button.dataset.action==='edit-investment')investimentos.editar(id);
     else if(button.dataset.action==='mark-aporte'){
       if(!notificacoes.pendentes().some(a=>a.key===id))return;
       const completedAportes=[...(data.completedAportes||[]),id];
@@ -384,7 +390,7 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
         if(prefs.reservaGoalId)preferencias.salvar({...prefs,reservaGoalId:''});
-        for(const modal of [transactionDialog,goalDialog,investmentDialog,reminderDialog])if(modal?.open)modal.close();
+        for(const modal of [transactionDialog,goalDialog,investmentDialog,calendarDayDialog,reminderDialog])if(modal?.open)modal.close();
         view='resumo';month=currentMonth;
         registrar('info','DADOS_APAGADOS','dados');
         renderNav();render();
@@ -395,7 +401,7 @@ import { iniciarInvestimentos } from './modules/investimentos.js';
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,preferencias,notificacoes,relatorioPdf,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
   if(typeof MutationObserver==='function')

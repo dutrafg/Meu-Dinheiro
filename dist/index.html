@@ -139,6 +139,7 @@
   </dialog>
   <dialog id="investment-dialog" class="form-dialog investment-dialog" aria-labelledby="investment-title">
     <form id="investment-form" autocomplete="off">
+      <input name="id" type="hidden" />
       <div class="dialog-heading"><div><span class="eyebrow">APORTE EM OBJETIVO</span><h2 id="investment-title">Adicionar investimento</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
       <p class="investment-intro">Registre o dinheiro guardado para uma meta ou sonho. O aporte aumenta o valor guardado sem criar renda ou despesa. Se o valor já foi incluído em “Quanto já guardou”, ajuste-o antes para não registrar duas vezes.</p>
       <label>Meta ou sonho <select name="goalId" required></select></label>
@@ -149,8 +150,13 @@
       <p class="investment-category-hint">Digite uma nova categoria ou escolha uma já usada.</p>
       <label>Origem do dinheiro <select name="origin" required><option value="salary">Do salário registrado</option><option value="previous">Investimento antigo / já guardado</option></select></label>
       <p class="investment-category-hint" id="investment-origin-note" role="status"></p>
-      <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button type="submit" class="button button-primary">Salvar investimento</button></div>
+      <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button id="investment-submit" type="submit" class="button button-primary">Salvar investimento</button></div>
     </form>
+  </dialog>
+  <dialog id="calendar-day-dialog" class="form-dialog finance-day-dialog" aria-labelledby="calendar-day-title">
+    <div class="dialog-heading"><div><span class="eyebrow">MOVIMENTAÇÕES DO DIA</span><h2 id="calendar-day-title">Resumo diário</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+    <div id="calendar-day-content"></div>
+    <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Fechar</button></div>
   </dialog>
   <dialog id="csv-preview-dialog" class="form-dialog csv-preview-dialog">
     <div class="dialog-heading"><div><span class="eyebrow">IMPORTAR CSV</span><h2>Conferir lançamentos</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>

@@ -41,6 +41,13 @@ async function verificar(){
     await page.goto(`http://127.0.0.1:${servidor.address().port}/`);
     await page.locator('#desktop-create-trigger').waitFor();
     assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>getComputedStyle(el).position),'sticky');
+    assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>el.getBoundingClientRect().width>=window.innerWidth*.9),true,
+      'A barra dos seis módulos ocupa a largura útil do desktop');
+    assert.equal(await page.locator('.finance-calendar-day').count(),30);
+    await page.locator('[data-calendar-day="2026-11-05"]').click();
+    assert.equal(await page.locator('#calendar-day-dialog').evaluate(el=>el.open),true);
+    assert.match(await page.locator('#calendar-day-content').innerText(),/Salário fictício/);
+    await page.locator('#calendar-day-dialog .close-dialog').first().click();
     await page.evaluate(()=>window.scrollTo(0,850));
     assert.equal(Math.round((await page.locator('#desktop-toolbar').boundingBox()).y),0);
     await page.evaluate(()=>window.scrollTo(0,0));
@@ -76,15 +83,27 @@ async function verificar(){
     assert.equal(gravado.goals[1].saved,70);
     assert.equal(gravado.allocations[1].origin,'previous');
 
+    await page.locator('[data-action="edit-investment"][data-id]').last().click();
+    assert.equal(await form.locator('[name="description"]').inputValue(),'Aporte antigo para viagem');
+    assert.equal(await form.locator('[name="origin"]').inputValue(),'previous');
+    await form.locator('[name="description"]').fill('Aporte antigo corrigido');
+    await form.locator('[name="amount"]').fill('90');
+    await form.getByRole('button',{name:'Salvar alterações'}).click();
+    gravado=await page.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
+    assert.equal(gravado.goals[1].saved,110,'A edição aplica somente a diferença de 40 reais');
+    assert.equal(gravado.allocations.length,2,'A edição não duplica investimentos');
+    assert.equal(gravado.allocations[1].description,'Aporte antigo corrigido');
+
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.locator('#desktop-toolbar').isVisible(),false);
     assert.equal(await page.locator('#quick-add').isVisible(),true);
     await page.locator('.mobile-nav [data-view="resumo"]').click();
     assert.equal(await page.locator('[aria-label="Resumo da reserva"]').count(),1);
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
+    assert.equal(await page.locator('.finance-calendar-day').count(),30);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
-    console.log('E2E desktop + mobile: navegação fixa, criação de aporte, vínculo, origem salarial, patrimônio e saldo validados.');
+    console.log('E2E desktop + mobile: navegação larga, calendário, criação e edição de investimento, origem salarial, saldo e layout validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));
