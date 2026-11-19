@@ -23,7 +23,7 @@ function simular(){
   const navBotoes=['resumo','renda','despesas','metas','sonho','ajustes'].map(nome=>({dataset:{view:nome},classList:classList(`nav-${nome}`),setAttribute(){}}));
   const dots=[criar('dot1',['hidden']),criar('dot2',['hidden'])];
   const document={getElementById:id=>elementos.get(id),querySelectorAll:selector=>selector==='.nav-button'?navBotoes:dots};
-  const variables={view:'resumo',ultimaVisaoFinanceira:'resumo',search:'',filterCategory:'',month:'2026-11',
+  const variables={view:'resumo',search:'',filterCategory:'',month:'2026-11',
     NAV:[['resumo','Resumo','chart-pie'],['renda','Renda','wallet'],['despesas','Despesas','receipt'],['metas','Metas','target'],['sonho','Sonho','sparkles'],['ajustes','Ajustes','settings']],
     document,window:{scrollTo:()=>eventos.push('rolar')},viewContent:elementos.get('view-content'),settingsPage:elementos.get('settings-page'),
     ajustes:{abrir:()=>eventos.push('abrir'),descartar:()=>eventos.push('descartar')},
@@ -55,7 +55,7 @@ test('Abrir Ajustes preserva controles, esconde FAB e descartar restaura o modo 
   assert.equal(t.elementos.get('quick-add').classList.contains('hidden'),false);
   assert.match(t.elementos.get('view-content').innerHTML,/expense/);
   assert.ok(t.eventos.includes('descartar'));
-  assert.equal(t.variables.ultimaVisaoFinanceira,'despesas');
+  assert.equal(t.variables.view,'despesas');
 });
 
 test('Alertas de backup e PWA são espelhados nos indicadores da aba Ajustes',()=>{

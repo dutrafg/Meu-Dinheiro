@@ -148,7 +148,8 @@ test('A nova área permanece no DOM durante a troca de telas e possui controles 
   assert.match(app,/\['ajustes', 'Ajustes', 'settings'\]/);
   assert.match(app,/if\(view==='ajustes'\)ajustes\.abrir\(\)/);
   assert.match(app,/fab\.classList\.toggle\('hidden',view==='ajustes'\)/);
-  assert.match(app,/getView:\(\)=>ultimaVisaoFinanceira/);
+  assert.doesNotMatch(app,/ultimaVisaoFinanceira/);
+  assert.match(html,/id="pdf-report-type"/);
   assert.doesNotMatch(html,/id="backup-menu-button"|id="settings-dialog"/);
 });
 

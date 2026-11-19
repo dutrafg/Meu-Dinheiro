@@ -59,7 +59,6 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
   let storageLocked = false;
   let data = readData();
   let view = 'resumo';
-  let ultimaVisaoFinanceira = 'resumo';
   let month = currentMonth;
   let search = '';
   let filterCategory = '';
@@ -215,7 +214,6 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
   function changeView(next) {
     if(!NAV.some(item=>item[0]===next))return;
     if(view==='ajustes'&&next!=='ajustes')ajustes.descartar();
-    if(next!=='ajustes')ultimaVisaoFinanceira=next;
     view = next; search=''; filterCategory='';
     document.querySelectorAll('.nav-button').forEach(el => { const active = el.dataset.view === view; el.classList.toggle('active',active); el.setAttribute('aria-current',active?'page':'false'); });
     if(view==='ajustes')ajustes.abrir();
@@ -260,7 +258,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
     aplicarPreferencias:()=>aplicarAparencia(preferencias.obter()),
     getFilterCategory: () => filterCategory,
     setMonth: next => { month = next; },
-    resetToSummary: () => { view = 'resumo'; ultimaVisaoFinanceira='resumo'; month = currentMonth; renderNav(); render(); },
+    resetToSummary: () => { view = 'resumo'; month = currentMonth; renderNav(); render(); },
     categorySet, esc, icon, money, n2, fmtDate, parseDate, isoDate, validarBackup,
     shiftMonth, monthLabel, shortMonth, header, empty,
     sums, savingPlan, transactionsInMonth, reserveYieldEstimate,
@@ -388,11 +386,11 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
         const prefs=preferencias.obter();
         if(prefs.reservaGoalId)preferencias.salvar({...prefs,reservaGoalId:''});
         for(const modal of [transactionDialog,goalDialog,reminderDialog])if(modal?.open)modal.close();
-        view='resumo';ultimaVisaoFinanceira='resumo';month=currentMonth;
+        view='resumo';month=currentMonth;
         registrar('info','DADOS_APAGADOS','dados');
         renderNav();render();
       }})});
-  const relatorioPdf=iniciarRelatorioPdf({...common,getView:()=>ultimaVisaoFinanceira,hideBackupMenu:backup.hideBackupMenu,registrar});
+  const relatorioPdf=iniciarRelatorioPdf({...common,hideBackupMenu:backup.hideBackupMenu,registrar});
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),

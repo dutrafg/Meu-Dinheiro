@@ -33,7 +33,7 @@
 .nav-button[data-view="ajustes"]{position:relative}
 .nav-status-dot{position:absolute;right:16px;top:8px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--card)}
 .nav-status-dot.hidden{display:none}
-.settings-page{max-width:960px;margin:auto}
+.settings-page{width:100%;max-width:none;margin:auto}
 .settings-page.hidden{display:none}
 .settings-page #settings-form{display:block}
 .settings-page>.settings-heading{position:sticky;top:110px;z-index:7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;background:var(--bg);padding:13px 0 12px;border-bottom:1px solid var(--border)}
@@ -67,6 +67,10 @@
 .settings-section .settings-check-option input{flex:none;width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent)}
 .settings-color-dot{width:30px;height:30px;flex:none;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border)}
 .settings-tools summary{font-size:.94rem;font-weight:750;cursor:pointer}
+.settings-report-options{display:grid;gap:8px;margin:14px 0 16px}
+.settings-report-options label{font-size:.88rem;font-weight:700;color:var(--text)}
+.settings-report-options select{width:100%;min-height:44px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:9px 12px}
+.settings-report-options .field-hint{margin:0}
 .settings-tool-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
 .settings-tool-buttons button{min-height:42px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:10px 12px;font-size:.85rem;font-weight:650}
 .settings-tool-buttons button svg{width:18px;height:18px;vertical-align:middle;margin-right:6px}

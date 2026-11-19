@@ -8,7 +8,7 @@
   --positive:var(--green);--negative:var(--red);--shadow:none;
 }
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Inter,"Segoe UI",Roboto,Arial,sans-serif}
-.app-shell{max-width:1080px;margin:0 auto;padding:0 26px}
+.app-shell{width:100%;max-width:none;margin:0 auto;padding:0 clamp(18px,2.5vw,48px)}
 .header{height:110px;position:sticky;top:0;z-index:8;background:var(--bg);justify-content:space-between;padding:14px 0 8px}
 .prototype-heading{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .prototype-heading span{text-transform:uppercase;letter-spacing:.065em;font-size:.87rem;font-weight:700;color:var(--sub)}
@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .desktop-nav .nav-button.active{background:var(--card);color:var(--green);box-shadow:0 3px 10px #1212120c}
 .desktop-nav .nav-button:hover{color:var(--green)}
 .mobile-nav{display:none}
-main{max-width:960px;margin:0 auto;padding-bottom:125px}
+main{width:100%;max-width:none;margin:0 auto;padding-bottom:125px}
 .proto-page-meta{display:flex;justify-content:flex-end;align-items:center;min-height:39px;margin:0 0 16px;color:var(--sub);font-size:.88rem}
 .proto-page-meta p{margin:0;width:100%;font-size:.88rem;color:var(--sub)}
 .month-control{padding:2px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:none;gap:2px}

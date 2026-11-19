@@ -210,7 +210,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
-      PDF:['export-pdf','print-report'],SAUDE:['main-content'],
+      PDF:['export-pdf','pdf-report-type','print-report'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
       CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel'],
       LIMPEZA_DADOS:['delete-all-data','delete-data-dialog','delete-data-form','delete-data-phrase','delete-data-confirm','delete-data-cancel']})) {
@@ -222,6 +222,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       botao.closest?.('form')?.id==='delete-data-form'&&Boolean(document.getElementById('delete-data-dialog')?.getAttribute('aria-labelledby')),
       'Confirmação final exige campo obrigatório em diálogo identificado',
       'Confirmação final da limpeza está incompleta','limpeza-dados');
+    const seletorRelatorio=document.getElementById('pdf-report-type');
+    if(seletorRelatorio)conferir('PDF_TIPO_SELECIONADO',['resumo','renda','despesas','metas','sonho'].includes(seletorRelatorio.value),
+      'Relatório PDF possui seleção explícita e válida',
+      'Tipo do relatório PDF ausente ou inválido','relatorio-pdf');
   }
   // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.
   // Os achados são sugestões, sem remoção automática ou leitura dos dados pessoais.

@@ -68,7 +68,8 @@ export function montarRelatorioFinanceiro({visao='resumo',mes,mesExtenso,transac
   const metasVisiveis=visao==='sonho'?objetivos.filter(g=>g.kind==='dream'):
     visao==='metas'?objetivos.filter(g=>g.kind==='goal'):objetivos;
   const metasRelatorio=['resumo','metas','sonho'].includes(visao);
-  const aplicacoesVisiveis=aplicacoesRegistradas.filter(a=>visao==='sonho'?a.kind==='dream':a.kind==='goal'||a.kind==='reserve');
+  const aplicacoesVisiveis=aplicacoesRegistradas.filter(a=>visao==='sonho'?a.kind==='dream':
+    visao==='metas'?a.kind==='goal'||a.kind==='reserve':true);
   const geral=['resumo','renda','despesas'].includes(visao);
   const referencia=geral?mesExtenso||mes:'Situação atual dos objetivos';
   const quantidade=geral?filtros.length:metasVisiveis.length;
@@ -89,7 +90,7 @@ export function montarRelatorioFinanceiro({visao='resumo',mes,mesExtenso,transac
     ${visao==='resumo'||visao==='renda'?tabelaCategorias('Receitas por categoria',renda,money):''}
     ${geral?tabelaMovimentacoes(filtros,money):''}
     ${metasRelatorio?metas(metasVisiveis,money):''}
-    ${visao==='metas'||visao==='sonho'?aplicacoes(aplicacoesVisiveis,objetivos,money):''}
+    ${visao==='resumo'||visao==='metas'||visao==='sonho'?aplicacoes(aplicacoesVisiveis,objetivos,money):''}
     <section class="pdf-observacoes"><h2>Sobre este relatório</h2><p>Gerado exclusivamente no dispositivo a partir dos registros do Meu Dinheiro. ${geral?'O saldo é a diferença entre receitas e despesas do mês. Recorrências são apresentadas no período selecionado.':'As metas mostram a posição atual, e o histórico de aplicações reúne todos os períodos.'} Aportes e valores guardados são acompanhados separadamente, sem desconto duplicado. Este documento é informativo e não substitui extratos bancários.</p></section>
     <footer class="pdf-footer"><span>MEU DINHEIRO · RELATÓRIO LOCAL</span><span>${escapar(referencia)}</span></footer>
   </article>`;

@@ -1,7 +1,7 @@
 @media(max-width:879px){
   .proto-expense-charts{grid-template-columns:minmax(0,1fr);gap:20px}
   .proto-expense-divider{width:100%;height:1px}
-  .app-shell{padding:0 19px;max-width:520px}
+  .app-shell{padding:0 19px;max-width:none}
   .header{height:92px;padding:14px 0 8px}
   .prototype-heading strong{font-size:1.8rem}
   .desktop-nav{display:none}
@@ -21,10 +21,14 @@
   .form-dialog::backdrop{background:#00000074}
   .dialog-actions .button{flex:1}
 }
+@media(min-width:650px) and (max-width:879px){
+  .proto-overview{display:grid;grid-template-columns:minmax(235px,.85fr) minmax(0,1.15fr)}
+  .proto-donut-card{margin-bottom:0}
+}
 @media(max-width:600px){
   .proto-saving-heading{align-items:flex-start;flex-wrap:wrap}
   .proto-reminder-list{max-height:52dvh}
-  .app-shell{padding:0 16px}
+  .app-shell{padding:0 16px;max-width:520px}
   .card{padding:16px;border-radius:16px;margin-bottom:13px}
   .proto-total-card{padding:17px}
   .grid2{gap:10px;margin-bottom:13px}

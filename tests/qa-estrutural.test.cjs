@@ -60,6 +60,17 @@ test('Layout pequeno empilha os indicadores e impressão preserva contraste no e
   assert.match(print,/break-inside:avoid/);
 });
 
+test('Desktop e tablet utilizam largura disponível sem restringir o app a uma coluna central',()=>{
+  const estrutura=read('dist/css/estrutura.css');
+  const responsive=read('dist/css/responsivo.css');
+  const ajustes=read('dist/css/ajustes.css');
+  assert.match(estrutura,/\.app-shell\{width:100%;max-width:none/);
+  assert.match(estrutura,/main\{width:100%;max-width:none/);
+  assert.match(responsive,/@media\(min-width:650px\) and \(max-width:879px\)/);
+  assert.match(responsive,/\.app-shell\{padding:0 19px;max-width:none\}/);
+  assert.match(ajustes,/\.settings-page\{width:100%;max-width:none/);
+});
+
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{
   const resumo=read('dist/modules/resumo.js');
   assert.match(resumo,/aria-label="Total \$\{money\(stats\.currentTotal\)\}\. \$\{esc\(stats\.current\.map/);

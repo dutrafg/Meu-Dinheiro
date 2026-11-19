@@ -4,6 +4,7 @@ import {validarDataISO} from './validacao.js';
 import {calcularSaudeFinanceira} from './saude.js';
 import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.js';
 import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
+import {normalizarTipoRelatorioPdf} from './relatorio-pdf.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
@@ -32,10 +33,19 @@ export function registrarModulosDoApp(api) {
     calcularSaudeFinanceira({renda:100,despesas:85,saldo:15,reserva:300,despesasPeriodo:90,diasPeriodo:30}).situacao==='crescendo');
   registrar('auditoria-codigo',()=>typeof auditarCodigoPublicado==='function'&&
     analisarCodigoEstatico({fontesCss:{'teste.css':'.sem-uso{}'},fontesJs:{'teste.js':'function usada(){} usada();'}}).cssNaoUsados.length===1);
-  registrar('relatorio-pdf',()=>typeof relatorioPdf.imprimir==='function'&&Boolean(document.getElementById('export-pdf')));
-  registrar('relatorio-pdf-conteudo',()=>montarRelatorioFinanceiro({visao:'resumo',mes:'2026-11',
-    mesExtenso:'novembro de 2026',transacoes:[{type:'expense',amount:10,category:'Teste',description:'Exemplo',date:'2026-11-01'}],
-    money:n=>String(n)}).includes('Despesas por categoria'));
+  registrar('relatorio-pdf',()=>typeof relatorioPdf.imprimir==='function'&&typeof relatorioPdf.obterTipo==='function'&&
+    Boolean(document.getElementById('export-pdf'))&&Boolean(document.getElementById('pdf-report-type'))&&
+    normalizarTipoRelatorioPdf('invalido')==='resumo'&&normalizarTipoRelatorioPdf('sonho')==='sonho');
+  registrar('relatorio-pdf-conteudo',()=>{
+    const exemplo=montarRelatorioFinanceiro({visao:'resumo',mes:'2026-11',mesExtenso:'novembro de 2026',
+      transacoes:[{type:'income',amount:150,category:'Salário',description:'Receita de teste',date:'2026-11-01'},
+        {type:'expense',amount:10,category:'Teste',description:'Despesa de teste',date:'2026-11-02'}],
+      objetivos:[{id:'meta',kind:'goal',name:'Objetivo de teste',target:100,saved:10}],
+      aplicacoesRegistradas:[{id:'ap',goalId:'meta',kind:'reserve',description:'Aplicação de teste',amount:5,date:'2026-11-03'}],
+      money:n=>String(n)});
+    return ['Despesas por categoria','Receitas por categoria','Receita de teste','Despesa de teste',
+      'Objetivo de teste','Aplicação de teste','140'].every(valor=>exemplo.includes(valor));
+  });
   registrar('preferencias',()=>['auto','claro','escuro'].includes(preferencias.obter().tema));
   registrar('regras-financeiras',()=>regras.calcularAporte({type:'income',category:'Salário base',amount:100},{percentual:10,categoriasAporte:['Salário base']})===10);
   registrar('log',()=>Array.isArray(logger.obterLogs()));

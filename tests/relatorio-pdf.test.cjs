@@ -6,23 +6,24 @@ const vm=require('node:vm');
 const read=rel=>fs.readFileSync(path.join(__dirname,'..',rel),'utf8');
 
 function iniciar({semImpressao=false,erroAoImprimir=false,erroAoPreparar=false}={}){
-  const eventos=[];const logs=[];const callbacks={};
+  const eventos=[];const logs=[];const callbacks={};const montagens=[];
   const destino={innerHTML:'',replaceChildren(){this.innerHTML='';eventos.push('limpar');},hasChildNodes(){return !!this.innerHTML;}};
   const botao={addEventListener:(nome,cb)=>{callbacks[nome]=cb;}};
-  const document={getElementById:id=>({'export-pdf':botao,'print-report':destino}[id])};
+  const seletor={value:'resumo'};
+  const document={getElementById:id=>({'export-pdf':botao,'pdf-report-type':seletor,'print-report':destino}[id])};
   const window={addEventListener:(nome,cb)=>{callbacks[nome]=cb;},requestAnimationFrame:cb=>{eventos.push('agendar');cb();}};
   if(!semImpressao)window.print=()=>{if(erroAoImprimir)throw Error('Impressora bloqueada');eventos.push('imprimir');};
-  const montarRelatorioFinanceiro=()=>'<article class="pdf-document">Meu Dinheiro</article>';
+  const montarRelatorioFinanceiro=opcoes=>{montagens.push(opcoes);return '<article class="pdf-document">Meu Dinheiro</article>';};
   const code=read('dist/modules/relatorio-pdf.js').replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
   const context={document,window,montarRelatorioFinanceiro};
   vm.runInNewContext(`${code}\nthis.iniciarPdf=iniciarRelatorioPdf;`,context);
   const api=context.iniciarPdf({
     hideBackupMenu:()=>eventos.push('fechar menu'),registrar:(...args)=>logs.push(args),
-    getData:()=>({goals:[],allocations:[]}),getView:()=> 'resumo',getMonth:()=> '2026-11',
+    getData:()=>({goals:[],allocations:[]}),getMonth:()=> '2026-11',
     monthLabel:()=> 'novembro de 2026',transactionsInMonth:()=>{if(erroAoPreparar)throw Error('Sem dados');return [];},
     money:n=>`R$ ${n.toFixed(2)}`
   });
-  return {api,eventos,logs,callbacks,destino};
+  return {api,eventos,logs,callbacks,destino,seletor,montagens};
 }
 
 test('PDF prepara conteúdo financeiro sem alterar a aba Ajustes e limpa depois',()=>{
@@ -43,6 +44,23 @@ test('Imprimir pelo atalho do sistema também prepara o relatório',()=>{
   callbacks.beforeprint();
   callbacks.afterprint();
   assert.equal(destino.innerHTML,'');
+});
+
+test('PDF sempre começa no resumo financeiro e usa seleção explícita em Ajustes',()=>{
+  const {api,callbacks,seletor,montagens}=iniciar();
+  assert.equal(api.obterTipo(),'resumo');
+  callbacks.click();
+  assert.equal(montagens.at(-1).visao,'resumo');
+  assert.equal(montagens.at(-1).mes,'2026-11');
+  seletor.value='sonho';
+  callbacks.click();
+  assert.equal(montagens.at(-1).visao,'sonho');
+  seletor.value='renda';
+  callbacks.click();
+  assert.equal(montagens.at(-1).visao,'renda');
+  seletor.value='desconhecido';
+  callbacks.click();
+  assert.equal(montagens.at(-1).visao,'resumo','Tipo inválido volta ao relatório geral');
 });
 
 test('Sem API de impressão registra aviso e não expõe dados na tela',()=>{
@@ -83,6 +101,7 @@ test('PDF possui identidade própria, paginação A4 e tabelas repetidas entre p
   assert.match(css,/dialog/);
   assert.match(html,/id="print-report"/);
   assert.match(html,/id="export-pdf"/);
-  assert.match(app,/getView:\(\)=>ultimaVisaoFinanceira/);
+  assert.match(html,/id="pdf-report-type"/);
+  assert.doesNotMatch(app,/getView:\(\)=>ultimaVisaoFinanceira/);
   assert.doesNotMatch(app,/print-report-title/);
 });

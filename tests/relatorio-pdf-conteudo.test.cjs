@@ -72,6 +72,19 @@ test('Metas e sonhos apresentam progresso, prazo, valores restantes e aplicaçõ
   assert.match(sonho,/25% concluído/);
 });
 
+test('Resumo completo também inclui aplicações de todos os tipos, sem ocultar movimentações',async()=>{
+  const {montarRelatorioFinanceiro}=await carregar();
+  const registros=[
+    {id:'a1',kind:'reserve',description:'CDB Reserva',date:'2026-10-04',amount:300,goalId:'g1'},
+    {id:'a2',kind:'dream',description:'Aplicação sonho',date:'2026-09-10',amount:120,goalId:'g2'}
+  ];
+  const html=montarRelatorioFinanceiro(base({aplicacoesRegistradas:registros}));
+  for(const descricao of ['Salário mensal','Mercado','CDB Reserva','Aplicação sonho','Reserva de emergência','Viagem'])
+    assert.match(html,new RegExp(descricao));
+  assert.match(html,/Histórico de aplicações e resgates/);
+  assert.match(html,/2 registros · todos os períodos/);
+});
+
 test('Dados financeiros e nomes são escapados antes de inserir no HTML de impressão',async()=>{
   const {montarRelatorioFinanceiro}=await carregar();
   const html=montarRelatorioFinanceiro(base({transacoes:[{...transacoes[1],category:'<script>alert(1)</script>',description:'"Mercado" & <b>teste</b>'}],
