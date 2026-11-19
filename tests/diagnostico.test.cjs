@@ -88,6 +88,11 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
   assert.equal(report.integridade.erros,0);
   for(const codigo of ['LIMPEZA_CHAVE_EXCLUSIVA','LIMPEZA_ORDEM_BACKUP','LIMPEZA_FALHA_SEGURA','LIMPEZA_FRASE_EXATA'])
     assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
+  for(const codigo of ['CALENDARIO_DIAS_E_DATAS','CALENDARIO_MISTURA_CORES','CALENDARIO_CENTAVOS',
+    'CALENDARIO_SELETOR_MES','CALENDARIO_NAVEGACAO_MENSAL','CALENDARIO_MES_SEM_MOVIMENTO',
+    'INVESTIMENTO_EDICAO_DELTA','INVESTIMENTO_EDICAO_ORIGEM',
+    'INVESTIMENTO_EDICAO_OBJETIVO','INVESTIMENTO_EDICAO_SALDO_NEGATIVO'])
+    assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
   assert.equal(report.dados.lancamentos,1);
   assert.equal(report.dados.metas,1);
   assert.equal(report.backup.pastaConectada,true);
@@ -108,6 +113,26 @@ test('Diagnóstico não falha se armazenamento, Cache API e Service Worker não 
   assert.equal(result.dados.tamanhoDadosBytes,null);
   assert.equal(result.ambiente.recursos.localStorage,false);
   assert.equal(result.atualizador.registrado,false);
+});
+
+test('Diagnóstico verifica que o calendário permanece recolhido e tem componentes separados',async()=>{
+  const modal={id:'finance-calendar-dialog',open:false};
+  const elementos={'finance-calendar-dialog':modal,'finance-calendar-content':{id:'finance-calendar-content'},
+    'calendar-day-dialog':{id:'calendar-day-dialog'},'calendar-day-title':{id:'calendar-day-title'},
+    'calendar-day-content':{id:'calendar-day-content'}};
+  const context={Date,Intl,Blob,verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Teste local'}),
+    navigator:{userAgent:'Teste',serviceWorker:{}},window:{},
+    document:{getElementById:id=>elementos[id]||{},querySelector:()=>null},
+    localStorage:{getItem:()=>null}};
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
+  const recolhido=await gerar();
+  assert.equal(recolhido.integridade.itens.find(item=>item.codigo==='UI_CALENDARIO_FECHADO').estado,'ok');
+  assert.equal(recolhido.integridade.itens.find(item=>item.codigo==='UI_CALENDARIO').estado,'ok');
+  modal.open=true;
+  const aberto=await gerar();
+  assert.equal(aberto.integridade.itens.find(item=>item.codigo==='UI_CALENDARIO_FECHADO').estado,'erro');
 });
 
 test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis',async()=>{

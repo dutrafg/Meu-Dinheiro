@@ -21,7 +21,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
 import { iniciarInvestimentos } from './modules/investimentos.js';
-import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro.js';
+import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -76,6 +76,7 @@ import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro
   const goalForm = document.getElementById('goal-form');
   const investmentDialog = document.getElementById('investment-dialog');
   const investmentForm = document.getElementById('investment-form');
+  const financeCalendarDialog = document.getElementById('finance-calendar-dialog');
   const calendarDayDialog = document.getElementById('calendar-day-dialog');
   const reminderDialog = document.getElementById('reminder-dialog');
 
@@ -239,7 +240,7 @@ import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro
   function header(subtitle='',monthPicker=false) {
     return `<div class="proto-page-meta">${monthPicker?monthControl():`<p>${esc(subtitle)}</p>`}</div>`;
   }
-  function monthControl() { return `<div class="month-control" aria-label="Mês selecionado"><button type="button" data-month="-1" aria-label="Mês anterior">${icon('chevron-left')}</button><span style="text-transform:none">${esc(monthLabel(month))}</span><button type="button" data-month="1" aria-label="Próximo mês">${icon('chevron-right')}</button></div>`; }
+  function monthControl() { return `<div class="month-control" aria-label="Mês selecionado"><button type="button" data-month="-1" aria-label="Mês anterior">${icon('chevron-left')}</button>${renderBotaoCalendario(month,monthLabel,esc)}<button type="button" data-month="1" aria-label="Próximo mês">${icon('chevron-right')}</button></div>`; }
   function empty(text, symbol='wallet') { return `<div class="empty-state">${icon(symbol)}<p>${esc(text)}</p></div>`; }
   function render() {
     renderReminderCount();
@@ -277,10 +278,10 @@ import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro
   const investimentos=iniciarInvestimentos({...common,dialog:investmentDialog,form:investmentForm,documento:document});
   const acaoRapida=iniciarAcaoRapida({getView:()=>view,openTransaction,openGoal,openInvestment:investimentos.abrir});
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
-  const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,documento:document});
+  const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,dialogoCalendario:financeCalendarDialog,documento:document});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
     fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
-  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude,renderCalendario:calendarioFinanceiro.renderCalendario});
+  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
@@ -290,6 +291,8 @@ import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro
     if(typeButton){setTransactionType(typeButton.dataset.transType);return;}
     const monthButton=event.target.closest('[data-month]');
     if(monthButton){month=shiftMonth(month,Number(monthButton.dataset.month));render();return;}
+    const abrirCalendario=event.target.closest('[data-calendar-open]');
+    if(abrirCalendario){calendarioFinanceiro.abrirCalendario();return;}
     const calendarDay=event.target.closest('[data-calendar-day]');
     if(calendarDay){calendarioFinanceiro.abrirDia(calendarDay.dataset.calendarDay);return;}
     const button=event.target.closest('[data-action]');
@@ -390,7 +393,7 @@ import { criarModuloCalendarioFinanceiro } from './modules/calendario-financeiro
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
         if(prefs.reservaGoalId)preferencias.salvar({...prefs,reservaGoalId:''});
-        for(const modal of [transactionDialog,goalDialog,investmentDialog,calendarDayDialog,reminderDialog])if(modal?.open)modal.close();
+        for(const modal of [transactionDialog,goalDialog,investmentDialog,financeCalendarDialog,calendarDayDialog,reminderDialog])if(modal?.open)modal.close();
         view='resumo';month=currentMonth;
         registrar('info','DADOS_APAGADOS','dados');
         renderNav();render();

@@ -80,18 +80,41 @@ test('Valores compactos mantêm leitura móvel e não incluem dados confidenciai
   assert.deepEqual(Object.keys(dia).filter(k=>['tone','level','alpha','incomeShare'].includes(k)),['level','tone','incomeShare','alpha']);
 });
 
-test('Cartão exibe todos os dias e o detalhe não modifica os lançamentos',async()=>{
+test('O seletor do mês abre diálogo identificado e escapa o nome do mês',async()=>{
+  const {renderBotaoCalendario,navegarMesCalendario}=await carregar();
+  const html=renderBotaoCalendario('2026-11',()=> 'novembro <2026>',s=>s.replaceAll('<','&lt;').replaceAll('>','&gt;'));
+  assert.match(html,/data-calendar-open/);
+  assert.match(html,/aria-haspopup="dialog"/);
+  assert.match(html,/aria-controls="finance-calendar-dialog"/);
+  assert.match(html,/novembro &lt;2026&gt;/);
+  assert.doesNotMatch(html,/<2026>/);
+  assert.equal(navegarMesCalendario('2026-12',1),'2027-01');
+  assert.equal(navegarMesCalendario('2026-01',-1),'2025-12');
+  assert.throws(()=>navegarMesCalendario('0001-01',-1),/intervalo/);
+  assert.throws(()=>navegarMesCalendario('2026-11',3),/inválidos/);
+});
+
+test('Calendário aparece apenas quando solicitado; navegação no diálogo e detalhe não alteram dados',async()=>{
   const {criarModuloCalendarioFinanceiro}=await carregar();
   const originais=[{type:'income',date:'2026-11-12',occurrence:'2026-11-12',description:'<Salário>',category:'Salário',amount:1500},
     {type:'expense',date:'2026-11-12',occurrence:'2026-11-12',description:'Farmácia & mercado',category:'Saúde',amount:40}];
   const antes=JSON.stringify(originais),elementos={
-    'calendar-day-title':{textContent:''},'calendar-day-content':{innerHTML:''}
+    'calendar-day-title':{textContent:''},'calendar-day-content':{innerHTML:''},'finance-calendar-content':{innerHTML:''}
   };
   const dialog={open:false,showModal(){this.open=true;},close(){this.open=false;},addEventListener:()=>{}};
-  const api=criarModuloCalendarioFinanceiro({getMonth:()=> '2026-11',transactionsInMonth:()=>originais,
-    monthLabel:()=> 'novembro de 2026',money:n=>`R$ ${n.toFixed(2)}`,esc:s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'),
+  const ouvintes={};let mes='2026-11',atualizacoes=0;
+  const dialogoCalendario={open:false,showModal(){this.open=true;},close(){this.open=false;},addEventListener:(tipo,fn)=>ouvintes[tipo]=fn};
+  const api=criarModuloCalendarioFinanceiro({getMonth:()=> mes,setMonth:novo=>{mes=novo;},
+    render:()=>{atualizacoes++;},transactionsInMonth:ym=>originais.filter(item=>item.occurrence.startsWith(ym)),
+    monthLabel:ym=>ym==='2026-11'?'novembro de 2026':'dezembro de 2026',
+    money:n=>`R$ ${n.toFixed(2)}`,esc:s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'),
     fmtDate:new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC'}),parseDate:s=>new Date(`${s}T12:00:00Z`),dialog,
-    documento:{getElementById:id=>elementos[id]}});
+    dialogoCalendario,documento:{getElementById:id=>elementos[id]}});
+  assert.equal(dialogoCalendario.open,false);
+  assert.equal(elementos['finance-calendar-content'].innerHTML,'','O calendário não é inserido no Resumo antecipadamente');
+  assert.equal(api.abrirCalendario(),true);
+  assert.equal(dialogoCalendario.open,true);
+  assert.equal((elementos['finance-calendar-content'].innerHTML.match(/data-calendar-day=/g)||[]).length,30);
   const html=api.renderCalendario();
   assert.equal((html.match(/data-calendar-day=/g)||[]).length,30);
   assert.match(html,/data-flow-tone="mixed"/);
@@ -102,6 +125,13 @@ test('Cartão exibe todos os dias e o detalhe não modifica os lançamentos',asy
   assert.match(elementos['calendar-day-content'].innerHTML,/&lt;Salário&gt;/);
   assert.match(elementos['calendar-day-content'].innerHTML,/Farmácia &amp; mercado/);
   assert.equal(api.abrirDia('2026-12-01'),false);
+  ouvintes.click({target:{closest:()=>({dataset:{calendarMonth:'1'}})}});
+  assert.equal(mes,'2026-12');
+  assert.equal(atualizacoes,1,'Mudar o mês no calendário atualiza os indicadores do Resumo');
+  assert.equal((elementos['finance-calendar-content'].innerHTML.match(/data-calendar-day=/g)||[]).length,31);
+  assert.match(elementos['finance-calendar-content'].innerHTML,/dezembro de 2026/);
+  ouvintes.click({target:dialogoCalendario});
+  assert.equal(dialogoCalendario.open,false,'Clique no fundo fecha o calendário');
   assert.equal(JSON.stringify(originais),antes);
 });
 

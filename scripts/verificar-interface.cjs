@@ -43,11 +43,19 @@ async function verificar(){
     assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>getComputedStyle(el).position),'sticky');
     assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>el.getBoundingClientRect().width>=window.innerWidth*.9),true,
       'A barra dos seis módulos ocupa a largura útil do desktop');
+    assert.equal(await page.locator('.finance-calendar-day').count(),0,'O calendário não ocupa a tela Resumo');
+    await page.locator('[data-calendar-open]').click();
+    assert.equal(await page.locator('#finance-calendar-dialog').evaluate(el=>el.open),true);
     assert.equal(await page.locator('.finance-calendar-day').count(),30);
     await page.locator('[data-calendar-day="2026-11-05"]').click();
     assert.equal(await page.locator('#calendar-day-dialog').evaluate(el=>el.open),true);
     assert.match(await page.locator('#calendar-day-content').innerText(),/Salário fictício/);
     await page.locator('#calendar-day-dialog .close-dialog').first().click();
+    await page.locator('#finance-calendar-dialog [data-calendar-month="1"]').click();
+    assert.equal(await page.locator('.finance-calendar-day').count(),31,'Navegação do diálogo avança para dezembro');
+    assert.match(await page.locator('#finance-calendar-content').innerText(),/dezembro de 2026/);
+    await page.locator('#finance-calendar-dialog [data-calendar-month="-1"]').click();
+    await page.locator('#finance-calendar-dialog .close-dialog').click();
     await page.evaluate(()=>window.scrollTo(0,850));
     assert.equal(Math.round((await page.locator('#desktop-toolbar').boundingBox()).y),0);
     await page.evaluate(()=>window.scrollTo(0,0));
@@ -100,7 +108,11 @@ async function verificar(){
     await page.locator('.mobile-nav [data-view="resumo"]').click();
     assert.equal(await page.locator('[aria-label="Resumo da reserva"]').count(),1);
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
+    assert.equal(await page.locator('.finance-calendar-day').count(),0,'No celular o calendário também fica recolhido');
+    await page.locator('[data-calendar-open]').click();
     assert.equal(await page.locator('.finance-calendar-day').count(),30);
+    assert.equal(await page.locator('#finance-calendar-dialog').isVisible(),true);
+    await page.locator('#finance-calendar-dialog .close-dialog').click();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
     console.log('E2E desktop + mobile: navegação larga, calendário, criação e edição de investimento, origem salarial, saldo e layout validados.');

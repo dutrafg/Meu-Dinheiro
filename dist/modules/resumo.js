@@ -29,7 +29,7 @@ export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
     shortMonth, currentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
-    renderEntry, progressLine, header, renderSaude=()=>'',renderCalendario=()=>''} = ctx;
+    renderEntry, progressLine, header, renderSaude=()=>''} = ctx;
 
   function renderChart() {
     const month = getMonth();
@@ -121,7 +121,6 @@ export function criarModuloResumo(ctx) {
           </div>
         </div>
       </div>
-      ${renderCalendario()}
       ${renderSaude()}
       <section class="card proto-list-card"><h3>Últimas transações</h3>${entryList(recent,'Nenhuma transação neste mês.')}</section>
       ${renderExpenseCharts()}

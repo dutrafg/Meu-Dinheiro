@@ -93,9 +93,16 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   assert.match(read('dist/modules/objetivos.js'),/data-action="add-investment"/);
   assert.match(html,/id="investment-category-suggestions"/);
   assert.match(html,/id="calendar-day-dialog"/);
+  assert.match(html,/id="finance-calendar-dialog"[^>]*aria-labelledby="finance-calendar-title"/);
+  assert.match(html,/id="finance-calendar-content"/);
+  assert.match(read('dist/modules/calendario-financeiro.js'),/data-calendar-open aria-haspopup="dialog"/);
+  assert.match(read('dist/app.js'),/if\(abrirCalendario\)\{calendarioFinanceiro\.abrirCalendario\(\)/);
+  assert.doesNotMatch(read('dist/modules/resumo.js'),/renderCalendario\(\)/,
+    'O calendário não deve ocupar espaço na tela inicial sem clique no mês');
   const calendario=read('dist/css/calendario.css');
   assert.match(calendario,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
   assert.match(calendario,/data-flow-tone="mixed"/);
+  assert.match(calendario,/\.form-dialog\.finance-calendar-dialog\{position:fixed/);
   assert.match(calendario,/@media\(max-width:700px\)/);
 });
 

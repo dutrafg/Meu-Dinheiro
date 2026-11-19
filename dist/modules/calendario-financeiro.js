@@ -1,4 +1,4 @@
-// Calendário de fluxo diário: apresentação e cálculo independentes do Resumo.
+// Calendário de fluxo diário: abre ao clicar no seletor de mês, fora do Resumo.
 // Inspirado no heatmap de 5 níveis do Reserva Simples, incluindo renda e dias mistos.
 const DIAS_SEMANA=Object.freeze(['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']);
 const INTENSIDADES=Object.freeze([0,18,26,35,45,56]);
@@ -13,6 +13,14 @@ function dataUTC(ano,mesIndice,dia){
   data.setUTCHours(12,0,0,0);
   data.setUTCFullYear(ano,mesIndice,dia);
   return data;
+}
+export function navegarMesCalendario(ym,passos){
+  if(!mesValido(ym)||![-1,1].includes(passos))throw Error('Mês ou direção inválidos.');
+  const [ano,mes]=ym.split('-').map(Number);
+  const posicao=ano*12+mes-1+passos;
+  const novoAno=Math.floor(posicao/12),novoMes=posicao%12+1;
+  if(novoAno<1||novoAno>9999)throw Error('Mês fora do intervalo permitido.');
+  return `${String(novoAno).padStart(4,'0')}-${String(novoMes).padStart(2,'0')}`;
 }
 
 export function calcularCalendarioFinanceiro(ym,registros=[]){
@@ -54,7 +62,12 @@ export function compactarValorCalendario(centavos){
   return valor.toLocaleString('pt-BR',{maximumFractionDigits:valor<10?2:0});
 }
 
-export function criarModuloCalendarioFinanceiro({getMonth,transactionsInMonth,monthLabel,money,esc,fmtDate,parseDate,dialog,documento=document}){
+export function renderBotaoCalendario(ym,monthLabel,esc){
+  const rotulo=esc(monthLabel(ym));
+  return `<button type="button" data-calendar-open aria-haspopup="dialog" aria-controls="finance-calendar-dialog" aria-label="Abrir calendário financeiro de ${rotulo}">${rotulo}</button>`;
+}
+
+export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transactionsInMonth,monthLabel,money,esc,fmtDate,parseDate,dialog,dialogoCalendario,documento=document}){
   function calendarioDoMes(){return calcularCalendarioFinanceiro(getMonth(),transactionsInMonth(getMonth()));}
   function renderCalendario(){
     const calendario=calendarioDoMes();
@@ -68,8 +81,13 @@ export function criarModuloCalendarioFinanceiro({getMonth,transactionsInMonth,mo
           ${temDespesa?`<span class="finance-expense"><span class="finance-value-full">−${money(dia.expenseCents/100)}</span><span class="finance-value-short" aria-hidden="true">−${compactarValorCalendario(dia.expenseCents)}</span></span>`:''}
         </span></button>`;
     };
-    return `<section class="card finance-calendar-card" aria-labelledby="finance-calendar-title">
-      <div class="finance-calendar-heading"><div><h3 id="finance-calendar-title">Calendário financeiro</h3><p>${esc(monthLabel(calendario.month))} · valores diários em reais</p></div>
+    return `<section class="finance-calendar-card" aria-labelledby="finance-calendar-title">
+      <div class="finance-calendar-heading"><div><h2 id="finance-calendar-title">Calendário financeiro</h2><p>Receitas e despesas de cada dia</p></div>
+        <div class="finance-calendar-navigation" role="group" aria-label="Navegar entre meses">
+          <button type="button" data-calendar-month="-1" aria-label="Mês anterior">‹</button>
+          <strong aria-live="polite">${esc(monthLabel(calendario.month))}</strong>
+          <button type="button" data-calendar-month="1" aria-label="Próximo mês">›</button>
+        </div>
         <div class="finance-calendar-legend" aria-label="Intensidade de 1 a 5: verde renda, vermelho despesas, degradê ambos"><span><i class="legend-income"></i> Renda</span><span><i class="legend-mixed"></i> Misto</span><span><i class="legend-expense"></i> Despesas</span></div></div>
       <div class="finance-calendar-grid" aria-label="Dias de ${esc(monthLabel(calendario.month))}">
         ${DIAS_SEMANA.map(dia=>`<span class="finance-calendar-weekday" aria-hidden="true">${dia}</span>`).join('')}
@@ -78,6 +96,8 @@ export function criarModuloCalendarioFinanceiro({getMonth,transactionsInMonth,mo
       </div><p class="finance-calendar-note">Cores mais fortes indicam maior movimentação no mês. A mistura acompanha a proporção entre renda e despesas. Selecione um dia para ver os lançamentos.</p>
     </section>`;
   }
+  function atualizarCalendario(){documento.getElementById('finance-calendar-content').innerHTML=renderCalendario();}
+  function abrirCalendario(){atualizarCalendario();dialogoCalendario.showModal();return true;}
   function abrirDia(date){
     const calendario=calendarioDoMes();
     const dia=calendario.days.find(d=>d.date===date);
@@ -92,5 +112,16 @@ export function criarModuloCalendarioFinanceiro({getMonth,transactionsInMonth,mo
     return true;
   }
   dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
-  return {renderCalendario,abrirDia,calendarioDoMes};
+  dialogoCalendario.addEventListener('click',event=>{
+    const controle=event.target.closest?.('[data-calendar-month]');
+    if(controle){
+      const passos=Number(controle.dataset.calendarMonth);
+      if(![-1,1].includes(passos))return;
+      try{setMonth(navegarMesCalendario(getMonth(),passos));}
+      catch{return;}
+      render();atualizarCalendario();return;
+    }
+    if(event.target===dialogoCalendario)dialogoCalendario.close();
+  });
+  return {renderCalendario,abrirCalendario,atualizarCalendario,abrirDia,calendarioDoMes};
 }

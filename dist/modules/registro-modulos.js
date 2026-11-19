@@ -7,7 +7,7 @@ import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
 import {normalizarTipoRelatorioPdf} from './relatorio-pdf.js';
 import {acaoMovelParaVisao,TIPOS_CRIACAO_RAPIDA} from './acao-rapida.js';
 import {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior} from './investimentos.js';
-import {calcularCalendarioFinanceiro,compactarValorCalendario} from './calendario-financeiro.js';
+import {calcularCalendarioFinanceiro,compactarValorCalendario,navegarMesCalendario,renderBotaoCalendario} from './calendario-financeiro.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
@@ -43,10 +43,15 @@ export function registrarModulosDoApp(api) {
   registrar('calendario-financeiro',()=>{
     const mes=calcularCalendarioFinanceiro('2026-11',[
       {type:'income',amount:100,date:'2026-11-10'},{type:'expense',amount:40,date:'2026-11-10'}]);
-    return typeof calendarioFinanceiro.renderCalendario==='function'&&typeof calendarioFinanceiro.abrirDia==='function'&&
+    return typeof calendarioFinanceiro.renderCalendario==='function'&&typeof calendarioFinanceiro.abrirCalendario==='function'&&
+      typeof calendarioFinanceiro.abrirDia==='function'&&typeof calendarioFinanceiro.atualizarCalendario==='function'&&
       mes.days.length===30&&mes.days[9].tone==='mixed'&&mes.days[9].netCents===6000&&
       mes.days[9].level===5&&compactarValorCalendario(150000)==='1,5mil'&&
-      Boolean(document.getElementById('calendar-day-dialog'));
+      navegarMesCalendario('2026-12',1)==='2027-01'&&
+      renderBotaoCalendario('2026-11',ym=>ym,x=>x).includes('data-calendar-open')&&
+      Boolean(document.getElementById('calendar-day-dialog'))&&
+      Boolean(document.getElementById('finance-calendar-dialog'))&&
+      Boolean(document.getElementById('finance-calendar-content'));
   });
   registrar('limpeza-dados',()=>typeof limpeza.abrir==='function'&&typeof apagarDadosLocais==='function'&&
     validarFraseLimpeza('APAGAR')&&!validarFraseLimpeza('apagar')&&!validarFraseLimpeza('APAGAR ')&&

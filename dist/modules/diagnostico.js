@@ -7,7 +7,7 @@ import { calcularSaldoDisponivelHoje } from './resumo.js';
 import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 import { apagarDadosLocais, validarFraseLimpeza } from './limpeza-dados.js';
 import { adicionarInvestimentoVinculado, editarInvestimentoVinculado, encontrarSalarioAnterior } from './investimentos.js';
-import { calcularCalendarioFinanceiro, compactarValorCalendario } from './calendario-financeiro.js';
+import { calcularCalendarioFinanceiro, compactarValorCalendario, navegarMesCalendario, renderBotaoCalendario } from './calendario-financeiro.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -136,6 +136,22 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('INVESTIMENTO_EDICAO_DELTA',aporteEditado.goals[0].saved===25&&aporteEditado.allocations.length===1&&
     aporteEditado.allocations[0].amount===15&&aporte.goals[0].saved===22.34,
     'Edição altera apenas diferença sem duplicar investimento','Edição de investimento distorceu a meta ou o histórico','investimentos');
+  const edicaoOrigem=editarInvestimentoVinculado(aporteSalario,{id:'diag-s',goalId:'diag-g',description:'Poupança anterior',amount:3,date:'2026-11-19',category:'Poupança',origin:'previous'});
+  conferir('INVESTIMENTO_EDICAO_ORIGEM',edicaoOrigem.allocations[0].origin==='previous'&&
+    !('salaryId' in edicaoOrigem.allocations[0])&&
+    calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',edicaoOrigem.allocations)===10,
+    'Edição recalcula origem do dinheiro e saldo sem retenção de salário antigo',
+    'Edição manteve vínculo salarial incorreto ou desconto duplicado','investimentos');
+  const duasMetas={...amostra,goals:[...amostra.goals,{id:'diag-d',name:'Sonho',kind:'dream',target:50,saved:4,deadline:''}]};
+  const antesDeMover=adicionarInvestimentoVinculado(duasMetas,{id:'diag-m',goalId:'diag-g',description:'Exemplo',amount:5,date:'2026-11-19',category:'CDB'});
+  const movido=editarInvestimentoVinculado(antesDeMover,{id:'diag-m',goalId:'diag-d',description:'Para sonho',amount:7,date:'2026-11-19',category:'Poupança'});
+  conferir('INVESTIMENTO_EDICAO_OBJETIVO',movido.goals[0].saved===10&&movido.goals[1].saved===11&&
+    movido.allocations.length===1&&movido.allocations[0].goalId==='diag-d'&&movido.allocations[0].kind==='dream',
+    'Edição transfere corretamente a aplicação entre meta e sonho','Edição duplicou saldo ao mudar objetivo','investimentos');
+  let bloqueouEdicaoInvalida=false;
+  try{editarInvestimentoVinculado({...aporte,goals:[{...aporte.goals[0],saved:2}]},{id:'diag-i',goalId:'diag-g',description:'Inválido',amount:5,date:'2026-11-19',category:'CDB'});}catch{bloqueouEdicaoInvalida=true;}
+  conferir('INVESTIMENTO_EDICAO_SALDO_NEGATIVO',bloqueouEdicaoInvalida,
+    'Edição impede retirar aporte maior que saldo guardado','Edição aceitou deixar objetivo com saldo negativo','investimentos');
   const mesTeste=calcularCalendarioFinanceiro('2026-11',[
     {type:'income',amount:100,occurrence:'2026-11-05'},
     {type:'expense',amount:40,occurrence:'2026-11-05'},
@@ -151,6 +167,16 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('CALENDARIO_CENTAVOS',mesTeste.totalIncomeCents===18000&&mesTeste.totalExpenseCents===24000&&
     compactarValorCalendario(150000)==='1,5mil',
     'Calendário soma centavos e resume valores pequenos para telas compactas','Soma ou formato diário incorreto','calendario-financeiro');
+  const disparador=renderBotaoCalendario('2026-11',ym=>ym,x=>x);
+  conferir('CALENDARIO_SELETOR_MES',disparador.includes('data-calendar-open')&&
+    disparador.includes('aria-haspopup="dialog"')&&disparador.includes('aria-controls="finance-calendar-dialog"'),
+    'Clique no mês abre calendário em diálogo acessível','Seletor do mês não abre o calendário corretamente','calendario-financeiro');
+  conferir('CALENDARIO_NAVEGACAO_MENSAL',navegarMesCalendario('2026-12',1)==='2027-01'&&
+    navegarMesCalendario('2026-01',-1)==='2025-12'&&
+    calcularCalendarioFinanceiro('2024-02',[]).days.length===29,
+    'Calendário navega entre meses e respeita ano bissexto','Navegação mensal ou fevereiro incorretos','calendario-financeiro');
+  conferir('CALENDARIO_MES_SEM_MOVIMENTO',calcularCalendarioFinanceiro('2026-11',[]).days.every(d=>d.level===0&&d.tone==='empty'),
+    'Mês sem lançamentos não recebe cores falsas','Mês vazio contém movimentações fictícias','calendario-financeiro');
   let rejeitouMeta=false;try{adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'inexistente',description:'Aporte',amount:5,date:'2026-11-19',category:'CDB'});}catch{rejeitouMeta=true;}
   conferir('INVESTIMENTO_META_EXISTENTE',rejeitouMeta,'Aporte exige objetivo existente','Aporte aceito sem objetivo','investimentos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
@@ -245,7 +271,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       NAVEGACAO:['desktop-toolbar','desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
       ACAO_RAPIDA:['desktop-create-wrap','desktop-create-trigger','desktop-create-menu','quick-add'],
       OBJETIVOS:['goal-dialog','goal-form'],INVESTIMENTOS:['investment-dialog','investment-form','investment-category-suggestions','investment-origin-note','investment-submit'],
-      CALENDARIO:['calendar-day-dialog','calendar-day-title','calendar-day-content'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
+      CALENDARIO:['finance-calendar-dialog','finance-calendar-content','calendar-day-dialog','calendar-day-title','calendar-day-content'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
       PDF:['export-pdf','pdf-report-type','print-report'],SAUDE:['main-content'],
@@ -254,6 +280,16 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       LIMPEZA_DADOS:['delete-all-data','delete-data-dialog','delete-data-form','delete-data-phrase','delete-data-confirm','delete-data-cancel']})) {
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');
     }
+    const modalCalendario=document.getElementById('finance-calendar-dialog');
+    if(typeof modalCalendario?.open==='boolean')conferir('UI_CALENDARIO_FECHADO',!modalCalendario.open,
+      'Calendário completo fica oculto até o usuário tocar no mês',
+      'Calendário está aberto enquanto o usuário acessa Ajustes','calendario-financeiro');
+    const seletorMes=document.querySelector?.('.month-control [data-calendar-open]');
+    if(seletorMes?.getAttribute)conferir('UI_CALENDARIO_ACESSIVEL',
+      seletorMes.getAttribute('aria-haspopup')==='dialog'&&
+      seletorMes.getAttribute('aria-controls')===modalCalendario?.id,
+      'Nome do mês aponta para o calendário expandido',
+      'Botão do mês não controla o diálogo correto','calendario-financeiro');
     const entrada=document.getElementById('delete-data-phrase');
     const botao=document.getElementById('delete-data-confirm');
     if(entrada&&botao)conferir('LIMPEZA_CONFIRMACAO_FINAL',entrada.required&&botao.type==='submit'&&

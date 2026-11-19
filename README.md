@@ -45,7 +45,7 @@ No desktop e tablet, o aplicativo ocupa a largura disponível, com margens propo
 
 No **desktop**, a navegação ocupa toda a largura útil da janela e fica presa ao topo ao rolar a página; o cabeçalho de saldo sai de cena para liberar espaço e os cartões passam por trás da barra. A criação de registros fica no botão **Novo** à direita da navegação, com ações para **renda, despesa, meta, sonho e investimento**. O menu pode ser fechado com Escape ou clique fora. No tablet e smartphone, a navegação inferior e o botão **+** continuam compactos e adaptados à tela.
 
-No **Resumo**, o **Calendário financeiro** mostra os dias de cada mês, com as rendas e despesas registradas em cada data. Os cinco níveis de intensidade são calculados relativamente à maior movimentação diária do próprio mês, seguindo a ideia do calendário do Reserva Simples. Verde representa renda, vermelho representa despesas e o degradê verde/vermelho representa dias com os dois tipos de lançamento, proporcionalmente aos valores. Clique em um dia para conferir as transações; no celular, os valores são abreviados para caber na grade.
+No **Resumo**, toque **no nome do mês entre as setas** para abrir o **Calendário financeiro**. Ele permanece fechado por padrão, sem ocupar espaço entre os cards. As setas do seletor continuam mudando o mês do Resumo; dentro do calendário há setas próprias para navegar entre os meses, mantendo o período selecionado sincronizado. O diálogo mostra os dias de cada mês, com as rendas e despesas registradas em cada data. Os cinco níveis de intensidade são calculados relativamente à maior movimentação diária do próprio mês, seguindo a ideia do calendário do Reserva Simples. Verde representa renda, vermelho representa despesas e o degradê verde/vermelho representa dias com os dois tipos de lançamento, proporcionalmente aos valores. Toque em um dia para conferir as transações; no celular, os valores são abreviados para caber na grade. Feche com o botão superior ou Escape.
 
 O teste de navegador, quando houver Playwright e Chromium no computador, pode ser executado com `node scripts/verificar-interface.cjs`. Ele cria apenas dados fictícios em um servidor local efêmero e verifica navegação, formulários, saldo, metas e layout móvel. Não faz parte da suíte Node padrão porque depende de um navegador instalado e permissões para executá-lo.
 
@@ -55,7 +55,7 @@ O **histórico de aplicações** agora inclui **Editar investimento** para corri
 
 ## Diagnóstico e integridade (Etapas 1–2)
 
-**Atualização v22:** a verificação de cores semânticas reconhece seletores CSS normalizados pelo navegador e valida metas e sonhos. A verificação de acessibilidade renderiza duas metas fictícias em um elemento desconectado, inspecionando rótulos e percentuais mesmo sem objetivos reais cadastrados. Nenhum dado é salvo ou alterado. O saldo disponível também possui teste de lógica com lançamentos de exemplo, inclusive recorrências e datas futuras.
+**Atualização v29:** além das verificações existentes de cores semânticas, metas, sonhos, saldo e lançamentos, o Diagnóstico inclui novos testes sintéticos do calendário (seletor acessível, mês fechado, navegação, ano bissexto, cores, centavos, mês vazio) e da edição de investimentos (diferença de valor, origem salarial, transferência entre meta e sonho, proteção contra saldo negativo). Nenhum dado real é alterado.
 
 Em **Ajustes → Executar diagnóstico completo**, o aplicativo verifica, sem modificar registros, dezenas de itens independentes: datas, valores, IDs, categorias, vínculos, lembretes, notificações dispensadas, estilo efetivo do tema e das cores, Saúde Financeira, PDF, limites de backup, bibliotecas, interface, cada módulo, preferências, armazenamento, cache PWA, atualização e pasta de backup.
 
@@ -75,7 +75,7 @@ O aplicativo instalado no navegador verifica automaticamente se há novas versõ
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
-Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v28`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v29`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
 
 ## Estrutura modular do código
 

@@ -1,8 +1,14 @@
-/* Calendário financeiro — cores de fluxo diário independentes das demais telas. */
-.finance-calendar-card{padding:23px;margin-top:15px}
-.finance-calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:15px}
-.finance-calendar-heading h3{margin:0 0 5px;font-size:.95rem;color:var(--text)}
+/* Calendário financeiro — diálogo acionado pelo seletor de mês. */
+.form-dialog.finance-calendar-dialog{position:fixed;inset:0;margin:auto;width:min(94vw,920px);max-width:none;max-height:90dvh;overflow-y:auto;overflow-x:hidden;padding:25px;background:var(--card);color:var(--text);border-radius:22px}
+.finance-calendar-close{position:absolute;right:15px;top:14px;z-index:1;color:var(--text)}
+.finance-calendar-card{padding:0;margin:0;border:0;box-shadow:none}
+.finance-calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-right:39px;margin-bottom:16px}
+.finance-calendar-heading h2{margin:0 0 5px;font-size:1.17rem;color:var(--text)}
 .finance-calendar-heading p{margin:0;color:var(--sub);font-size:.82rem}
+.finance-calendar-navigation{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:12px;padding:3px;background:var(--bg)}
+.finance-calendar-navigation button{border:0;border-radius:9px;background:transparent;color:var(--accent-text);width:34px;height:34px;font-size:1.5rem;cursor:pointer}
+.finance-calendar-navigation button:hover,.finance-calendar-navigation button:focus-visible{background:var(--accent-soft);outline:2px solid var(--accent-text);outline-offset:1px}
+.finance-calendar-navigation strong{min-width:145px;text-align:center;color:var(--text);font-size:.86rem;text-transform:capitalize}
 .finance-calendar-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;color:var(--sub);font-size:.78rem}
 .finance-calendar-legend span{display:inline-flex;align-items:center;gap:6px}
 .finance-calendar-legend i{display:inline-block;width:12px;height:12px;border-radius:4px}
@@ -46,6 +52,6 @@
 .finance-day-entry .finance-expense{color:var(--red)}
 .finance-day-empty{color:var(--sub);font-size:.88rem;text-align:center;padding:20px 0}
 @media(max-width:950px){.finance-calendar-grid{gap:5px}.finance-calendar-day{padding:7px;min-height:85px}.finance-calendar-values>span{font-size:.7rem}.finance-calendar-legend{gap:9px}}
-@media(max-width:700px){.finance-calendar-card{padding:15px}.finance-calendar-grid{gap:4px}.finance-calendar-day{padding:5px;min-height:66px;border-radius:9px;gap:4px}.finance-calendar-day.is-today{padding:4px}.finance-calendar-number{font-size:.79rem}.finance-calendar-values>span{font-size:.68rem}.finance-value-full{display:none}.finance-value-short{display:inline}.finance-calendar-values .finance-income::before,.finance-calendar-values .finance-expense::before{width:4px;height:4px;margin-right:2px}.finance-calendar-weekday{font-size:.71rem}.finance-day-totals{gap:5px}.finance-day-totals>div{padding:8px}.finance-day-totals strong{font-size:.8rem}}
-@media(max-width:390px){.finance-calendar-grid{gap:3px}.finance-calendar-card{padding:12px}.finance-calendar-day{padding:3px;min-height:60px}.finance-calendar-day.is-today{padding:2px}.finance-calendar-values>span{font-size:.6rem}.finance-calendar-number{font-size:.72rem}.finance-calendar-values .finance-income::before,.finance-calendar-values .finance-expense::before{display:none}}
+@media(max-width:700px){.form-dialog.finance-calendar-dialog{inset:auto 0 0;width:100%;max-width:100%;max-height:92dvh;margin:0 auto;padding:21px 13px calc(23px + env(safe-area-inset-bottom));border-radius:21px 21px 0 0}.finance-calendar-close{top:12px;right:10px}.finance-calendar-heading{gap:10px;padding-right:32px}.finance-calendar-heading h2{font-size:1.05rem}.finance-calendar-navigation{order:2}.finance-calendar-legend{order:3;width:100%}.finance-calendar-grid{gap:4px}.finance-calendar-day{padding:5px;min-height:66px;border-radius:9px;gap:4px}.finance-calendar-day.is-today{padding:4px}.finance-calendar-number{font-size:.79rem}.finance-calendar-values>span{font-size:.68rem}.finance-value-full{display:none}.finance-value-short{display:inline}.finance-calendar-values .finance-income::before,.finance-calendar-values .finance-expense::before{width:4px;height:4px;margin-right:2px}.finance-calendar-weekday{font-size:.71rem}.finance-day-totals{gap:5px}.finance-day-totals>div{padding:8px}.finance-day-totals strong{font-size:.8rem}}
+@media(max-width:390px){.finance-calendar-grid{gap:3px}.finance-calendar-day{padding:3px;min-height:60px}.finance-calendar-day.is-today{padding:2px}.finance-calendar-values>span{font-size:.6rem}.finance-calendar-number{font-size:.72rem}.finance-calendar-values .finance-income::before,.finance-calendar-values .finance-expense::before{display:none}}
 @media(prefers-reduced-motion:reduce){.finance-calendar-day{transition:none}}
