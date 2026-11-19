@@ -1,9 +1,13 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
+// Este número identifica o código da página aberta, não o Service Worker em espera.
+export const VERSAO_EM_EXECUCAO = 'v19';
 export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');
   const status = document.getElementById('app-update-status');
   const alertBadge = document.getElementById('app-update-alert');
+  const versaoElemento = document.getElementById('app-running-version');
+  versaoElemento.textContent = VERSAO_EM_EXECUCAO;
   const INTERVALO_VERIFICACAO = 30 * 60 * 1000;
   let registration = null;
   let ultimaVerificacao = 0;
@@ -117,5 +121,5 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
   if (document.readyState === 'complete') void iniciar();
   else window.addEventListener('load', () => void iniciar(), {once:true});
 
-  return {verificarAtualizacoes,getStatus:()=>({ultimaVerificacao,atualizacaoPendente:Boolean(registration?.waiting)})};
+  return {verificarAtualizacoes,getStatus:()=>({ultimaVerificacao,atualizacaoPendente:Boolean(registration?.waiting),versaoEmExecucao:VERSAO_EM_EXECUCAO})};
 }

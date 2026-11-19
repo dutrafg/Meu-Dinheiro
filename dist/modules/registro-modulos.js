@@ -14,7 +14,7 @@ export function registrarModulosDoApp(api) {
   registrar('objetivos',()=>typeof moduloObjetivos.renderGoals==='function'&&typeof moduloObjetivos.openGoal==='function');
   registrar('backup',()=>typeof moduloBackup.folderBackup?.getState==='function');
   registrar('csv-interface',()=>typeof moduloCsv==='function');
-  registrar('atualizador',()=>typeof atualizador.getStatus==='function');
+  registrar('atualizador',()=>typeof atualizador.getStatus==='function'&&/^v\d+$/.test(atualizador.getStatus().versaoEmExecucao));
   registrar('ajustes',()=>typeof ajustes.abrir==='function'&&typeof ajustes.aplicar==='function');
   registrar('notificacoes',()=>typeof notificacoes.pendentes==='function'&&Array.isArray(notificacoes.pendentes())&&
     Number.isSafeInteger(notificacoes.getStatus().ocultas));

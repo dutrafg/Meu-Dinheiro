@@ -84,6 +84,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   adicionar('ATUALIZADOR','ok',swEmEspera?'Nova versão disponível para instalar':'Estado da atualização consultado');
   conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
+  if(update.versaoEmExecucao!==undefined){
+    conferir('ATUALIZADOR_VERSAO',/^v\d+$/.test(update.versaoEmExecucao),
+      'Identificador da versão em execução válido','Identificador da versão em execução inválido','atualizador');
+    if(typeof document!=='undefined')conferir('ATUALIZADOR_VERSAO_VISIVEL',
+      document.getElementById('app-running-version')?.textContent===update.versaoEmExecucao,
+      'Versão em execução exibida corretamente nos Ajustes','Número da versão não corresponde ao código em execução','atualizador');
+  }
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
   const notificacoes=getNotificationStatus();
@@ -198,7 +205,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     },
     dados:resumo,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
-    atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
+    atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
     notificacoes:notificacoes?{ocultas:notificacoes.ocultas,armazenamentoOk:Boolean(notificacoes.armazenamentoOk)}:null,
     integridade,bibliotecas,logs:obterLogs(),

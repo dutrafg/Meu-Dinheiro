@@ -56,6 +56,8 @@ O aplicativo instalado no navegador verifica automaticamente se há novas versõ
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (por exemplo, `v19`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+
 ## Estrutura modular do código
 
 O aplicativo continua sendo um PWA estático, sem etapa de compilação. A página `dist/index.html` contém a estrutura HTML e os diálogos; `dist/app.js` inicializa os serviços, o estado local e os controladores. As telas, o backup e o CSV agora ficam em arquivos independentes em `dist/modules/`.

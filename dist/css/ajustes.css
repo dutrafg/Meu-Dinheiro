@@ -40,6 +40,8 @@
 .settings-dialog #install-update{background:var(--blue-bg);color:var(--blue);font-weight:750}
 .settings-dialog .folder-backup-status[data-state="error"],.settings-dialog .folder-backup-status[data-state="conflict"],.settings-dialog .folder-backup-status[data-state="permission"]{color:var(--red)}
 .settings-dialog .app-update-status[data-state="ready"]{color:var(--blue);font-weight:750}
+.app-current-version{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin:12px 0;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--sub);font-size:.88rem}
+.app-current-version strong{color:var(--text);font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums}
 .diagnostics-progress-area{margin:0 0 12px}
 .diagnostics-progress{height:13px;width:100%;background:var(--border);border-radius:99px;overflow:hidden}
 .diagnostics-progress span{height:100%;width:0%;display:block;border-radius:99px;background:var(--accent);transition:width .2s linear}

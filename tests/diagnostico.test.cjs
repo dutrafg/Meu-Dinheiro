@@ -180,6 +180,26 @@ test('Diagnóstico apresenta CSS e funções candidatas como avisos sem apagar c
   assert.ok(relatorio.duracaoPrevistaMs<=25000);
 });
 
+test('Diagnóstico informa a versão carregada e avisa se o indicador visual divergir',async()=>{
+  const versao={textContent:'v19'};
+  const context={Date,Intl,Blob,
+    verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Sem acesso a código no teste'}),
+    navigator:{userAgent:'Teste',serviceWorker:{}},window:{},
+    document:{getElementById:id=>id==='app-running-version'?versao:{}},
+    localStorage:{getItem:()=>null}
+  };
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
+    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v19'})});
+  const certo=await gerar();
+  assert.equal(certo.atualizador.versaoEmExecucao,'v19');
+  assert.equal(certo.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok');
+  versao.textContent='v18';
+  const errado=await gerar();
+  assert.equal(errado.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'erro');
+});
+
 test('PWA instalado verifica o cache de cada módulo separadamente',async()=>{
   const modulos=['resumo','integridade','ajustes'];
   const context={Date,Intl,Blob,
