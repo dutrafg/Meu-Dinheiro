@@ -1,6 +1,10 @@
 import { verificarIntegridade } from './integridade.js';
 import { executarVerificacoesModulos,MODULOS_OBRIGATORIOS,totalRegistros } from './catalogo-diagnostico.js';
-import { CORES,TEMAS } from './preferencias.js';
+import { CORES,TEMAS,preferenciasPadrao } from './preferencias.js';
+import { auditarCodigoPublicado } from './auditoria-codigo.js';
+import { verificarPropostaInterface } from './diagnostico-proposta.js';
+import { calcularSaldoDisponivelHoje } from './resumo.js';
+import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -65,6 +69,35 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   };
   const adicionar=(codigo,estado,descricao,modulo='ambiente')=>integridade.itens.push({codigo,estado,descricao,modulo});
   const conferir=(codigo,ok,correto,problema,modulo='ambiente',estadoRuim='erro')=>adicionar(codigo,ok?'ok':estadoRuim,ok?correto:problema,modulo);
+  // Cenário sintético: passado, recorrência mensal e transação futura, sem expor saldos.
+  const saldoExemplo=calcularSaldoDisponivelHoje([
+    {type:'income',date:'2026-02-10',amount:100,recurring:true},
+    {type:'expense',date:'2026-03-14',amount:30},
+    {type:'expense',date:'2026-03-20',amount:40},
+    {type:'expense',date:'2026-01-31',amount:10,recurring:true}
+  ],'2026-03-15');
+  conferir('SALDO_DISPONIVEL_HOJE',saldoExemplo===150,
+    'Saldo disponível calculado corretamente com recorrências e lançamentos futuros',
+    'Cálculo do saldo disponível não corresponde ao cenário de referência','resumo');
+  // Cenários artificiais: nenhuma alteração no armazenamento ou nos dados do usuário.
+  const amostra={transactions:[{id:'diag-t',description:'Exemplo',type:'income',amount:10,date:'2026-11-19',category:'Salário'}],
+    goals:[{id:'diag-g',name:'Reserva',kind:'goal',target:100,saved:10,deadline:''}],allocations:[],completedAportes:[]};
+  const rejeita=entrada=>{try{normalizarDadosLocais(entrada);return false;}catch{return true;}};
+  conferir('VALIDACAO_DADOS_VALIDOS',!rejeita(amostra),'Estrutura válida aceita na leitura local','Estrutura válida rejeitada na leitura local','validacao');
+  conferir('VALIDACAO_ID_DUPLICADO',rejeita({...amostra,transactions:[...amostra.transactions,{...amostra.transactions[0]}]}),
+    'IDs duplicados rejeitados na leitura local','Leitura local aceitou IDs de lançamentos duplicados','validacao');
+  conferir('VALIDACAO_ID_ENTRE_LISTAS',rejeita({...amostra,allocations:[{id:'diag-t',description:'Aporte',kind:'reserve',amount:1,date:'2026-11-19',goalId:''}]}),
+    'ID repetido entre lançamento e aplicação rejeitado','Leitura local aceitou ID repetido entre listas','validacao');
+  conferir('VALIDACAO_VINCULO_TIPO',rejeita({...amostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
+    'Vínculo com tipo incompatível rejeitado','Leitura local aceitou vínculo de tipo incompatível','validacao');
+  conferir('VALIDACAO_SEM_VINCULO',!rejeita({...amostra,allocations:[{id:'diag-a',description:'Aporte',kind:'reserve',amount:1,date:'2026-11-19',goalId:''}]}),
+    'Aplicação sem vínculo preservada','Aplicação legítima sem vínculo foi rejeitada','validacao');
+  const backupAmostra={app:'meu-dinheiro-essencial',version:1,transactions:amostra.transactions.map(t=>({...t,recurring:false,createdAt:'2026-11-19T12:00:00.000Z'})),goals:amostra.goals};
+  const rejeitaBackup=entrada=>{try{validarBackup(entrada,CATEGORIES);return false;}catch{return true;}};
+  conferir('BACKUP_VINCULO_TIPO',rejeitaBackup({...backupAmostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
+    'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
+  conferir('RESGATE_LIMITE',podeAplicarNoObjetivo(10,-5)&&podeAplicarNoObjetivo(10,-10)&&!podeAplicarNoObjetivo(10,-20),
+    'Limite de resgate de objetivo calculável','Limite de resgate de objetivo inconsistente','objetivos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');
@@ -77,7 +110,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     conferir('WINDOWS_PONTE',Boolean(nativo?.ponteOk),'Comunicação nativa disponível','Comunicação Tauri indisponível','windows');
     conferir('WINDOWS_SQLITE',Boolean(nativo?.sqliteOk),'Banco SQLite acessível','Banco SQLite indisponível ou inválido','windows');
     conferir('WINDOWS_GRAVACAO_PENDENTE',nativo?.pendente===false,'Sem gravação nativa pendente','Há gravação pendente de confirmação no SQLite','windows','aviso');
-    adicionar('PWA_NAO_APLICAVEL','ok','Service Worker e cache PWA não são necessários no executável Windows','windows');
+    adicionar('PWA_NAO_APLICAVEL','ok','O executável Windows não depende do Service Worker e cache PWA','windows');
   }else{
     conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
     conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
@@ -93,6 +126,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   adicionar('ATUALIZADOR','ok',swEmEspera?'Nova versão disponível para instalar':'Estado da atualização consultado');
   conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
+  if(update.versaoEmExecucao!==undefined){
+    conferir('ATUALIZADOR_VERSAO',/^v\d+$/.test(update.versaoEmExecucao),
+      'Identificador da versão em execução válido','Identificador da versão em execução inválido','atualizador');
+    if(typeof document!=='undefined')conferir('ATUALIZADOR_VERSAO_VISIVEL',
+      document.getElementById('app-running-version')?.textContent===update.versaoEmExecucao,
+      'Versão em execução exibida corretamente nos Ajustes','Número da versão não corresponde ao código em execução','atualizador');
+  }
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
   const notificacoes=getNotificationStatus();
@@ -141,16 +181,47 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     }catch{adicionar('APARENCIA_INSPECAO','aviso','O navegador não permitiu verificar os estilos aplicados','ajustes');}
   }
   if(typeof document!=='undefined'){
+    const quickAdd=document.getElementById('quick-add');
+    if(document.getElementById('header-label')?.textContent==='Resumo')
+      conferir('UI_ADICIONAR_RESUMO',Boolean(quickAdd?.getAttribute('aria-label')?.includes('renda ou despesa')),
+        'Ação rápida do resumo identifica renda e despesa','Ação rápida do resumo não identifica as duas opções','interface','aviso');
+    const saldoTitulo=document.querySelector?.('.proto-today-balance h3');
+    if(saldoTitulo)conferir('UI_SALDO_PERIODO',String(saldoTitulo.textContent||'').includes('acumulado'),
+      'Período acumulado do saldo indicado','Período do saldo de hoje não está claro','interface','aviso');
+    const editar=document.querySelector?.('.proto-edit');
+    if(editar&&typeof editar.getBoundingClientRect==='function'){
+      const tamanho=editar.getBoundingClientRect();
+      conferir('UI_TOQUE_EDICAO',tamanho.width>=40&&tamanho.height>=44,
+        'Área de toque para editar lançamento adequada','Área de toque para editar lançamento pequena','interface','aviso');
+    }
     for(const [codigo,ids] of Object.entries({
       NAVEGACAO:['desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
       OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
-      AJUSTES:['settings-dialog','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
-      PDF:['export-pdf','print-report-title'],SAUDE:['main-content'],
+      AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
+      PDF:['export-pdf','print-report'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
       CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel']})) {
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');
     }
+  }
+  // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.
+  // Os achados são sugestões, sem remoção automática ou leitura dos dados pessoais.
+  const auditoria=await auditarCodigoPublicado();
+  if(auditoria.disponivel){
+    conferir('AUDITORIA_FONTES',true,`${auditoria.arquivosInspecionados} arquivos CSS/JS inspecionados`,'Arquivos de código indisponíveis','auditoria-codigo');
+    adicionar('AUDITORIA_CSS_TOTAL','ok',`${auditoria.seletoresVerificados} classes CSS analisadas`,'auditoria-codigo');
+    adicionar('AUDITORIA_FUNCOES_TOTAL','ok',`${auditoria.funcoesVerificadas} funções privadas analisadas`,'auditoria-codigo');
+    for(const [i,item] of auditoria.cssNaoUsados.entries()){
+      adicionar(`CSS_POSSIVELMENTE_SEM_USO_${i+1}`,'aviso',
+        `Revisar .${item.nome} em ${item.arquivo}: classe sem referência estática`,'auditoria-codigo');
+    }
+    for(const [i,item] of auditoria.funcoesSemUso.entries()){
+      adicionar(`FUNCAO_POSSIVELMENTE_SEM_USO_${i+1}`,'aviso',
+        `Revisar ${item.nome}() em ${item.arquivo}: função sem chamada estática`,'auditoria-codigo');
+    }
+  }else{
+    adicionar('AUDITORIA_FONTES','aviso',auditoria.motivo,'auditoria-codigo');
   }
   // Cada arquivo em dist/modules/ é declarado e inspecionado nesta lista.
   if(typeof executarVerificacoesModulos==='function'){
@@ -171,10 +242,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       }catch{adicionar('CACHE_LEITURA','aviso','Não foi possível ler os arquivos do cache PWA','pwa');}
     }
   }
+  const propostaInterface=verificarPropostaInterface({documento:typeof document!=='undefined'?document:null,
+    janela:window,padrao:preferenciasPadrao()});
+  if(propostaInterface)integridade.itens.push(...propostaInterface.itens);
   integridade.erros=integridade.itens.filter(item=>item.estado==='erro').length;
   integridade.avisos=integridade.itens.filter(item=>item.estado==='aviso').length;
   return {
-    aplicativo:'meu-dinheiro-essencial',formatoRelatorio:2,geradoEm:new Date().toISOString(),
+    aplicativo:'meu-dinheiro-essencial',formatoRelatorio:3,geradoEm:new Date().toISOString(),
     duracaoPrevistaMs:calcularDuracaoDiagnostico(integridade.itens.length),
     modulosPrevistos:typeof MODULOS_OBRIGATORIOS!=='undefined'?MODULOS_OBRIGATORIOS.length:null,
     privacidade:'Diagnóstico local sem descrições, nomes, saldos, valores financeiros ou caminhos de pasta.',
@@ -190,10 +264,18 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     },
     dados:resumo,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
-    atualizador:{metodo:ponteWindows?'instalador-windows':'service-worker',registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
+    atualizador:{metodo:ponteWindows?'instalador-windows':'service-worker',registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
     notificacoes:notificacoes?{ocultas:notificacoes.ocultas,armazenamentoOk:Boolean(notificacoes.armazenamentoOk)}:null,
-    integridade,bibliotecas,logs:obterLogs()
+    integridade,bibliotecas,logs:obterLogs(),
+    propostaInterface:propostaInterface?{referencia:propostaInterface.referencia,total:propostaInterface.total,
+      implementados:propostaInterface.implementados,pendentes:propostaInterface.pendentes,
+      naoAvaliados:propostaInterface.naoAvaliados}:null,
+    auditoriaCodigo:auditoria.disponivel?{
+      arquivos:auditoria.arquivosInspecionados,classes:auditoria.seletoresVerificados,
+      funcoes:auditoria.funcoesVerificadas,candidatosCss:auditoria.cssNaoUsados.length,
+      candidatosFuncoes:auditoria.funcoesSemUso.length
+    }:{disponivel:false}
   };
 }
 
@@ -210,6 +292,28 @@ export function iniciarDiagnostico(ctx) {
   const exportarBotao=document.getElementById('diagnostics-export');
   let ultimoRelatorio=null;
   let rodada=0;
+  const grupos=new Map();
+  const sinais=Object.freeze({ok:'✓',aviso:'!',erro:'✕',pendente:'○',nao_avaliado:'−'});
+  function anexarResultado(item){
+    const nome=item.modulo||'dados';
+    let grupo=grupos.get(nome);
+    if(!grupo){
+      const elemento=document.createElement('details');elemento.className='diagnostics-group';
+      const titulo=document.createElement('summary');titulo.className='diagnostics-group-heading';
+      const conteudo=document.createElement('div');conteudo.className='diagnostics-group-items';
+      elemento.append(titulo,conteudo);lista.append(elemento);
+      grupo={elemento,titulo,conteudo,contagens:{ok:0,aviso:0,erro:0,pendente:0,nao_avaliado:0}};
+      grupos.set(nome,grupo);
+    }
+    const estado=Object.hasOwn(sinais,item.estado)?item.estado:'aviso';
+    grupo.contagens[estado]++;
+    const c=grupo.contagens;
+    grupo.titulo.textContent=`${nome.replaceAll('-',' ')} · ${c.ok} ok · ${c.erro} erros · ${c.aviso} avisos${c.pendente?` · ${c.pendente} pendentes`:''}`;
+    grupo.elemento.dataset.state=c.erro?'erro':c.aviso?'aviso':c.pendente?'pendente':'ok';
+    const linha=document.createElement('p');linha.className=`diagnostics-check diagnostics-${estado}`;
+    linha.textContent=`${sinais[estado]} ${item.descricao}`;
+    grupo.conteudo.append(linha);
+  }
   function desenharProgresso(porcentagem,concluidas,total,restam) {
     barra.setAttribute('aria-valuenow',String(porcentagem));
     preenchimento.style.width=`${porcentagem}%`;
@@ -219,7 +323,7 @@ export function iniciarDiagnostico(ctx) {
   async function executar() {
     const atual=++rodada;
     resumo.textContent='Analisando integridade, módulos e ambiente…';
-    ultimoRelatorio=null;lista.replaceChildren();desenharProgresso(0,0,0,0);
+    ultimoRelatorio=null;lista.replaceChildren();grupos.clear();desenharProgresso(0,0,0,0);
     executarBotao.disabled=true;exportarBotao.disabled=true;
     try {
       registrarEvento('INICIAR_VERIFICACAO','integridade');
@@ -240,10 +344,7 @@ export function iniciarDiagnostico(ctx) {
           const percentual=Math.min(100,Math.floor(decorrido/tempoRestante*100));
           const ate=Math.min(itens.length,Math.floor(decorrido/tempoRestante*itens.length));
           while(exibidas<ate){
-            const item=itens[exibidas++];
-            const linha=document.createElement('p');linha.className=`diagnostics-check diagnostics-${item.estado}`;
-            linha.textContent=`${item.estado==='ok'?'✓':item.estado==='aviso'?'!':'✕'} [${item.modulo||'dados'}] ${item.descricao}`;
-            lista.append(linha);
+            anexarResultado(itens[exibidas++]);
           }
           desenharProgresso(percentual,exibidas,itens.length,tempoRestante-decorrido);
           if(decorrido>=tempoRestante){clearInterval(timer);resolve();}
@@ -251,7 +352,7 @@ export function iniciarDiagnostico(ctx) {
       });
       if(atual!==rodada)return null;
       ultimoRelatorio=relatorio;
-      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s).`;
+      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
       if(integridade.erros)registrar('erro','INTEGRIDADE_FALHOU','integridade');
       else if(integridade.avisos)registrar('aviso','INTEGRIDADE_ALERTA','integridade');
       return relatorio;

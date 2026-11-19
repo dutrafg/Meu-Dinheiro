@@ -29,7 +29,7 @@ function fakeElement() {
 }
 
 function scenario({supported=true,controlled=true,protocol='https:',update}={}) {
-  const elements=Object.fromEntries(['check-update','install-update','app-update-status','app-update-alert'].map(id=>[id,fakeElement()]));
+  const elements=Object.fromEntries(['check-update','install-update','app-update-status','app-update-alert','app-running-version'].map(id=>[id,fakeElement()]));
   const registration=emitter({waiting:null,installing:null,updateCalls:0,async update(){
     this.updateCalls++;
     if (update) await update();
@@ -54,6 +54,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('Primeira instalação não avisa uma atualização inexistente', async () => {
   const app=scenario({controlled:false});
+  assert.equal(app.elements['app-running-version'].textContent,'v24');
+  assert.equal(app.updater.getStatus().versaoEmExecucao,'v24');
   await flush();
   assert.equal(app.serviceWorker.registerCalls,1);
   assert.equal(app.registration.updateCalls,1);
@@ -80,6 +82,7 @@ test('Nova versão avisa sem instalar; apenas o clique solicita ativação e rec
   assert.equal(app.elements['install-update'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-alert'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-status'].dataset.state,'ready');
+  assert.equal(app.elements['app-running-version'].textContent,'v24','Uma versão aguardando autorização não muda a versão da página');
   assert.equal(app.notifications.length,1);
   assert.equal(messages.length,0);
   app.serviceWorker.emit('controllerchange');
@@ -117,7 +120,20 @@ test('Prévia HTML local e browsers sem Service Worker não tentam registrar', (
     assert.equal(app.elements['check-update'].disabled,true);
     assert.equal(app.serviceWorker.registerCalls,0);
     assert.match(app.elements['app-update-status'].textContent,/aplicativo publicado/);
+    assert.equal(app.elements['app-running-version'].textContent,'v24','A versão precisa aparecer até no HTML de homologação');
   }
+});
+
+test('Versão exibida, cache PWA e relatório usam o mesmo identificador da release',()=>{
+  const codigo=read('dist/modules/atualizador.js');
+  const sw=read('dist/sw.js');
+  const html=read('dist/index.html');
+  const css=read('dist/css/ajustes.css');
+  const versao=codigo.match(/export const VERSAO_EM_EXECUCAO = '(v\d+)'/)[1];
+  assert.equal(sw.match(/const CACHE='meu-dinheiro-essencial-(v\d+)'/)[1],versao);
+  assert.match(html,/id="app-running-version"/);
+  assert.match(css,/\.app-current-version\{/);
+  assert.match(read('dist/modules/diagnostico.js'),/ATUALIZADOR_VERSAO_VISIVEL/);
 });
 
 test('Service Worker espera confirmação antes de skipWaiting', async () => {

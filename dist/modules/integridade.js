@@ -20,6 +20,11 @@ export function verificarIntegridade(dados, categorias) {
   const goalIds = new Set(metas.map(item=>item?.id));
   const vinculosInvalidos = aplicacoes.filter(item=>item?.goalId && !goalIds.has(item.goalId)).length;
   adicionar('VINCULOS',vinculosInvalidos?'aviso':'ok',vinculosInvalidos?'Existem aplicações vinculadas a metas ausentes':'Vínculos entre aplicações e metas consistentes');
+  const tiposIncompativeis=aplicacoes.some(a=>{
+    const g=metas.find(g=>g?.id===a?.goalId);
+    return g&&(a.kind==='dream'?g.kind!=='dream':g.kind!=='goal');
+  });
+  adicionar('VINCULOS_TIPO',tiposIncompativeis?'erro':'ok',tiposIncompativeis?'Aplicação vinculada a objetivo de tipo incompatível':'Tipos de aplicações e objetivos vinculados compatíveis');
 
   // Verificações independentes: uma falha não esconde o resultado das demais.
   const conferir=(codigo,correto,descricao,problema,estado='erro')=>adicionar(codigo,correto?'ok':estado,correto?descricao:problema);

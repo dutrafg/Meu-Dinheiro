@@ -1,9 +1,13 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
+// Este número identifica o código da página aberta, não o Service Worker em espera.
+export const VERSAO_EM_EXECUCAO = 'v24';
 export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');
   const status = document.getElementById('app-update-status');
   const alertBadge = document.getElementById('app-update-alert');
+  const versaoElemento = document.getElementById('app-running-version');
+  versaoElemento.textContent = VERSAO_EM_EXECUCAO;
   const INTERVALO_VERIFICACAO = 30 * 60 * 1000;
   let registration = null;
   let ultimaVerificacao = 0;
@@ -21,7 +25,7 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
     if (!registration?.waiting || !navigator.serviceWorker.controller) return false;
     installButton.classList.remove('hidden');
     alertBadge.classList.remove('hidden');
-    if (status.dataset.state !== 'ready') notify('Nova versão disponível! Abra os três pontos para atualizar.');
+    if (status.dataset.state !== 'ready') notify('Nova versão disponível! Abra Ajustes para atualizar.');
     mostrarEstado('Nova versão pronta. Salve o que estiver editando e toque em Atualizar agora.', 'ready');
     return true;
   }
@@ -117,5 +121,5 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
   if (document.readyState === 'complete') void iniciar();
   else window.addEventListener('load', () => void iniciar(), {once:true});
 
-  return {verificarAtualizacoes,getStatus:()=>({ultimaVerificacao,atualizacaoPendente:Boolean(registration?.waiting)})};
+  return {verificarAtualizacoes,getStatus:()=>({ultimaVerificacao,atualizacaoPendente:Boolean(registration?.waiting),versaoEmExecucao:VERSAO_EM_EXECUCAO})};
 }

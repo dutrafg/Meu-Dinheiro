@@ -44,7 +44,9 @@ export function criarModuloSaude({getMonth,currentMonth,shiftMonth,sums,transact
       apertado:['⚠️ Apertado','Saldo negativo, mas reserva cobre pelo menos 30 dias.'],
       atencao:['🔥 Atenção','Saldo negativo e reserva cobre menos de 30 dias.'],
       'sem-dados':['○ Sem dados','Registre renda e despesas para avaliar o mês.']};
-    const [titulo,detalhe]=situacoes[s.situacao];
+    const [titulo,descricao]=situacoes[s.situacao];
+    const detalhe=s.folego===null&&s.situacao!=='sem-dados'
+      ?`${descricao} Sem despesas no período para estimar a cobertura da reserva.`:descricao;
     const porcentagem=s.poupanca===null?'—':`${s.poupanca.toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
     const dias=s.folego===null?'—':`${s.folego.toLocaleString('pt-BR',{maximumFractionDigits:1})} dias`;
     return `<section class="card saude-card" id="saude-financeira" aria-labelledby="saude-title">

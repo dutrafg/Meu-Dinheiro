@@ -1,6 +1,6 @@
 # Meu Dinheiro — Windows nativo (x64)
 
-O beta **0.2.0** incorpora a interface modular do PWA v17, inclusive temas, cores, diagnóstico e notificações. Executa em uma janela Windows com WebView2, empacotada pelo Tauri 2. **É um aplicativo de desktop com núcleo nativo Rust**, não uma reescrita dos componentes visuais em WinUI/WPF.
+O beta **0.3.0** incorpora a interface modular do PWA **v24**, incluindo diagnóstico ampliado, saldo disponível hoje, relatórios PDF, correções de integridade, temas, cores e notificações. Executa em uma janela Windows com WebView2, empacotada pelo Tauri 2. **É um aplicativo de desktop com núcleo nativo Rust**, não uma reescrita dos componentes visuais em WinUI/WPF.
 
 ## Dados locais
 

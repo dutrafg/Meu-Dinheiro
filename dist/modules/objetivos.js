@@ -9,7 +9,7 @@ export function criarModuloObjetivos(ctx) {
   function progressLine(goal) {
     const pct=goalProgressPercent(goal);
     const isDream=goal.kind==='dream';
-    return `<div class="proto-progress"><div class="proto-progress-top"><span>${isDream?'✨':'🛡️'} ${esc(goal.name)}</span><strong>${pct}%</strong></div><div class="bar"><div style="width:${pct}%;background:${isDream?'var(--purple)':'var(--blue)'}"></div></div><small>${money(goal.saved)} de ${money(goal.target)}</small></div>`;
+    return `<div class="proto-progress ${isDream?'dream':'goal'}"><div class="proto-progress-top"><span>${icon(isDream?'sparkles':'target')} ${esc(goal.name)}</span><strong>${pct}%</strong></div><div class="bar progress-bar" role="progressbar" aria-label="Progresso de ${esc(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="progress-bar-fill" style="width:${pct}%"></div></div><small>${money(goal.saved)} de ${money(goal.target)}</small></div>`;
   }
   function renderGoals(kind) {
     const data = getData();
@@ -18,8 +18,8 @@ export function criarModuloObjetivos(ctx) {
     const looseAllocations=(data.allocations||[]).filter(a=>!(data.goals||[]).some(g=>g.id===a.goalId)&&(isDream?a.kind==='dream':['reserve','goal'].includes(a.kind)));
     const sumSaved=Math.max(0,n2(goals.reduce((s,g)=>s+g.saved,0)+looseAllocations.reduce((s,a)=>s+a.amount,0)));
     const sumTarget=n2(goals.reduce((s,g)=>s+g.target,0));
-    return `${header(isDream?'Sonho':'Metas','',null)}
-      <section class="card proto-total-card"><h3>${isDream?'✨ Seu sonho':'🎯 Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
+    return `${header('')}
+      <section class="card proto-total-card"><h3>${icon(isDream?'sparkles':'target')} ${isDream?'Seu sonho':'Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
       ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:
       `<div class="card proto-empty-card">${empty(isDream?'Qual sonho você quer realizar? Toque em + para criar.':'Crie sua reserva ou uma meta de economia pelo botão +.',isDream?'sparkles':'target')}</div>`}
@@ -28,7 +28,7 @@ export function criarModuloObjetivos(ctx) {
   }
   function renderMonthlyReserve() {
     const plan=savingPlan(currentMonth);
-    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>🛡️ Aporte planejado · ${plan.percentual}%</h3><small>${esc(monthLabel(currentMonth))}</small></div>
+    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>${icon('target')} Aporte planejado · ${plan.percentual}%</h3><small>${esc(monthLabel(currentMonth))}</small></div>
       ${plan.grupos.length?plan.grupos.map(g=>`<div class="proto-saving-row"><span>${esc(g.categoria)} <small>(${plan.percentual}% de ${money(g.base)})</small></span><strong>${money(g.aporte)}</strong></div>`).join(''):'<p class="proto-note">Escolha categorias de renda em Ajustes para calcular um aporte.</p>'}
       <div class="proto-saving-total"><span>Total a separar</span><strong>${money(plan.total)}</strong></div>
       <p class="proto-note">Planejamento, não transferência automática. Categorias e percentual podem ser alterados em Ajustes.</p>
@@ -56,9 +56,9 @@ export function criarModuloObjetivos(ctx) {
     const deadline=g.deadline?fmtDate.format(parseDate(g.deadline)):'Sem prazo definido';
     const isDream=g.kind==='dream';
     return `<article class="card proto-goal-card ${isDream?'dream':''}">
-      <div class="proto-goal-header"><span class="proto-goal-icon" aria-hidden="true">${isDream?'✨':'🎯'}</span><div class="proto-goal-heading"><span class="proto-goal-type">${isDream?'SONHO':'META / RESERVA'}</span><h2>${esc(g.name)}</h2></div></div>
+      <div class="proto-goal-header"><span class="proto-goal-icon" aria-hidden="true">${icon(isDream?'sparkles':'target')}</span><div class="proto-goal-heading"><span class="proto-goal-type">${isDream?'SONHO':'META / RESERVA'}</span><h2>${esc(g.name)}</h2></div></div>
       <div class="proto-goal-progress"><div class="proto-goal-progress-label"><span>Progresso</span><strong>${pct}%</strong></div>
-        <div class="proto-goal-track" role="progressbar" aria-label="Progresso de ${esc(g.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span class="proto-goal-fill" style="width:${pct}%"></span></div>
+        <div class="proto-goal-track progress-bar progress-bar-large" role="progressbar" aria-label="Progresso de ${esc(g.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span class="proto-goal-fill progress-bar-fill" style="width:${pct}%"></span></div>
         <div class="proto-goal-info"><strong>${money(g.saved)}</strong><span>de ${money(g.target)}</span></div>
       </div>
       <div class="proto-goal-foot"><span>${left===0?'Objetivo alcançado!':`Faltam ${money(left)}`}</span><span>${esc(deadline)}</span></div>

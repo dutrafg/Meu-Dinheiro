@@ -41,7 +41,28 @@ export function normalizarDadosLocais(saved) {
         typeof a.goalId !== 'string') throw new Error('Aplicação local inválida.');
   }
   if (completedAportes.some(v => !texto(v, 200))) throw new Error('Lembrete local inválido.');
+  validarIntegridadeDados({transactions, goals, allocations});
   return {...saved, transactions, goals, allocations, completedAportes};
+}
+
+function validarIntegridadeDados({transactions,goals,allocations}) {
+  const transactionIds=new Set(),goalIds=new Set();
+  for(const t of transactions){if(transactionIds.has(t.id))throw Error('Lançamentos duplicados.');transactionIds.add(t.id);}
+  for(const g of goals){if(goalIds.has(g.id))throw Error('Objetivos duplicados.');goalIds.add(g.id);}
+  const allocationIds=new Set();
+  for(const a of allocations){
+    if(allocationIds.has(a.id)||transactionIds.has(a.id))throw Error('Aplicações duplicadas.');
+    allocationIds.add(a.id);
+    // Um objetivo removido pode deixar uma aplicação antiga sem vínculo.
+    // Um ID existente, porém, deve sempre apontar para o tipo correto.
+    const goal=goals.find(g=>g.id===a.goalId);
+    if(goal && (a.kind==='dream'?goal.kind!=='dream':goal.kind!=='goal'))throw Error('Vínculo incompatível.');
+  }
+}
+
+export function podeAplicarNoObjetivo(valorGuardado,variacao){
+  return Number.isFinite(valorGuardado)&&Number.isFinite(variacao)&&
+    Math.round((valorGuardado+variacao+Number.EPSILON)*100)/100>=0;
 }
 
 export function validarBackup(arquivo, categorias) {
@@ -85,5 +106,6 @@ export function validarBackup(arquivo, categorias) {
     goalIds.add(g.id);
   }
   if (completedAportes.some(v => !texto(v, 200))) throw new Error('Há lembretes inválidos no backup.');
+  validarIntegridadeDados({transactions,goals,allocations});
   return {transactions, goals, allocations, completedAportes};
 }

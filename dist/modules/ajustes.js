@@ -12,8 +12,8 @@ export function aplicarAparencia(preferencias) {
   return esquema;
 }
 
-export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,hideBackupMenu}) {
-  const dialogo=document.getElementById('settings-dialog');
+export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,onCancel,hideBackupMenu}) {
+  const pagina=document.getElementById('settings-page');
   const form=document.getElementById('settings-form');
   const categorias=document.getElementById('settings-categories');
   const cores=document.getElementById('settings-colors');
@@ -47,14 +47,12 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
     }
     reserva.value=prefs.reservaGoalId;
     if(reserva.selectedIndex<0)reserva.value='';
-    dialogo.showModal();
   }
-  document.getElementById('open-settings').addEventListener('click',abrir);
-  // A seleção é uma prévia: fechar sem salvar sempre restaura a preferência persistida.
+  // A seleção é uma prévia: trocar de aba sem salvar restaura a preferência persistida.
   form.addEventListener('change',event=>{
     if(['tema','cor'].includes(event.target?.name))previsualizar();
   });
-  dialogo.addEventListener('close',()=>aplicarAparencia(atual()));
+  function descartar(){aplicarAparencia(atual());}
   form.addEventListener('submit',event=>{
     event.preventDefault();
     const percentual=Number(form.elements.namedItem('percentual').value);
@@ -64,21 +62,15 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
       percentual,categoriasAporte:[...form.querySelectorAll('input[name="categoriaAporte"]:checked')].map(el=>el.value),
       reservaGoalId:reserva.value},CATEGORIES.income);
     if(!gestor.salvar(prefs)){notify('Não foi possível salvar as preferências neste dispositivo.');return;}
-    aplicarAparencia(prefs);dialogo.close();render();onSave?.();notify('Ajustes salvos neste dispositivo.');
+    aplicarAparencia(prefs);render();onSave?.();notify('Ajustes salvos neste dispositivo.');
   });
-  document.getElementById('settings-cancel').addEventListener('click',()=>dialogo.close());
-  document.getElementById('settings-form-cancel').addEventListener('click',()=>dialogo.close());
-  dialogo.addEventListener('click',event=>{if(event.target===dialogo)dialogo.close();});
-  // Não empilhar diagnósticos sobre o diálogo de ajustes.
-  document.getElementById('open-diagnostics').addEventListener('click',()=>dialogo.close());
-  for(const id of ['export-csv','import-csv','export-data','import-data','folder-backup-connect','folder-backup-reconnect','check-update','install-update']){
-    document.getElementById(id).addEventListener('click',()=>dialogo.close());
-  }
+  for(const id of ['settings-cancel','settings-form-cancel'])
+    document.getElementById(id).addEventListener('click',()=>{descartar();onCancel?.();});
   const scheme=window.matchMedia?.('(prefers-color-scheme: dark)');
   scheme?.addEventListener?.('change',()=>{
-    if(dialogo.open){if(form.elements.namedItem('tema').value==='auto')previsualizar();}
+    if(!pagina.classList.contains('hidden')){if(form.elements.namedItem('tema').value==='auto')previsualizar();}
     else if(atual().tema==='auto')aplicarAparencia(atual());
   });
   aplicarAparencia(atual());
-  return {abrir,aplicar:()=>aplicarAparencia(atual())};
+  return {abrir,descartar,aplicar:()=>aplicarAparencia(atual())};
 }

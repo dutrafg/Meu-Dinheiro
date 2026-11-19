@@ -53,8 +53,20 @@
 .diagnostics-dialog{width:min(94vw,600px);max-height:85dvh;overflow-y:auto}
 .diagnostics-privacy{padding:12px;border-radius:11px;background:var(--green-bg);font-size:.81rem;line-height:1.55;margin:8px 0 14px}
 .diagnostics-dialog #diagnostics-summary{font-weight:740;font-size:.9rem;margin:8px 0 13px}
-.diagnostics-checks{border:1px solid var(--border);border-radius:11px;padding:5px 13px;max-height:250px;overflow-y:auto}
-.diagnostics-check{margin:10px 0;font-size:.84rem;line-height:1.45}
+.diagnostics-checks{border:1px solid var(--border);border-radius:11px;padding:10px;max-height:46dvh;overflow-y:auto}
+.diagnostics-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:9px;align-items:start}
+.diagnostics-group{border:1px solid var(--border);border-radius:11px;padding:10px;background:var(--card);min-width:0}
+.diagnostics-group[data-state="ok"]{border-left:3px solid var(--green)}
+.diagnostics-group[data-state="pendente"]{border-left:3px solid var(--blue)}
+.diagnostics-group[data-state="aviso"]{border-left:3px solid var(--amber)}
+.diagnostics-group[data-state="erro"]{border-left:3px solid var(--red)}
+.diagnostics-group-heading{font-size:.8rem;line-height:1.4;font-weight:750;cursor:pointer;overflow-wrap:anywhere}
+.diagnostics-group-items{margin-top:9px;padding-top:5px;border-top:1px solid var(--border)}
+.diagnostics-check{margin:9px 0;font-size:.78rem;line-height:1.45;overflow-wrap:anywhere}
+.diagnostics-pendente{color:var(--blue)}
+.diagnostics-erro{color:var(--red)}
+.diagnostics-aviso{color:var(--sub)}
+.diagnostics-nao_avaliado{color:var(--sub)}
 .diagnostics-ok{color:var(--green)}
 .diagnostics-aviso{color:var(--amber)}
 .diagnostics-erro{color:var(--red)}

@@ -5,6 +5,8 @@ export function iniciarAtualizador() {
   const verificar=document.getElementById('check-update');
   const instalar=document.getElementById('install-update');
   const aviso=document.getElementById('app-update-alert');
+  const versao=document.getElementById('app-running-version');
+  if(versao)versao.textContent='Windows 0.3.0 · base v24';
   status.textContent='Windows: novas versões são instaladas com o arquivo .exe disponibilizado no GitHub.';
   status.dataset.state='idle';
   verificar.disabled=true;
@@ -12,6 +14,6 @@ export function iniciarAtualizador() {
   instalar.classList.add('hidden');
   aviso.classList.add('hidden');
   return {
-    getStatus:()=>({ultimaVerificacao:0,atualizacaoPendente:false,metodo:'instalador-windows'})
+    getStatus:()=>({ultimaVerificacao:0,atualizacaoPendente:false,metodo:'instalador-windows',versaoEmExecucao:'v24'})
   };
 }

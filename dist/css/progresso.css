@@ -1,0 +1,10 @@
+/* Componente único: 10px para listas e 12px para destaques e diagnóstico. */
+.progress-bar{height:10px;border-radius:99px;overflow:hidden;background:var(--border);position:relative;min-width:0}
+.progress-bar-large{height:12px}
+.progress-bar-fill{display:block;height:100%;border-radius:inherit;transform-origin:left center;transition:width .25s ease;
+  animation:progress-reveal .5s ease-out both}
+@keyframes progress-reveal{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.progress-bar-fill{animation:none}}
+.diagnostics-progress::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(90deg,transparent 24.7%,#ffffff91 24.7%,#ffffff91 25%,transparent 25%,
+    transparent 49.7%,#ffffff91 49.7%,#ffffff91 50%,transparent 50%,transparent 74.7%,#ffffff91 74.7%,#ffffff91 75%,transparent 75%)}

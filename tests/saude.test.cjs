@@ -67,6 +67,17 @@ test('Meses futuros não recebem indicador fictício de saúde',async()=>{
   assert.match(modulo.renderSaude(),/Sem dados/);
 });
 
+test('Quando não existe média de gastos, o texto esclarece fôlego desconhecido',async()=>{
+  const {criarModuloSaude}=await carregar();
+  const modulo=criarModuloSaude({getMonth:()=> '2026-11',currentMonth:'2026-11',
+    shiftMonth:()=> '2026-09',sums:()=>({income:2000,expense:0,balance:2000}),
+    transactionsInMonth:()=>[],reservePrincipal:()=>20000});
+  const html=modulo.renderSaude();
+  assert.match(html,/Crescendo/);
+  assert.match(html,/Sem despesas no período para estimar a cobertura da reserva/);
+  assert.match(html,/Fôlego da reserva<\/span><strong>—<\/strong>/);
+});
+
 test('Cinco mil cenários de renda, gasto e reserva respeitam limites e tendências',async()=>{
   const {calcularSaudeFinanceira:f}=await carregar();
   let seed=20261119;

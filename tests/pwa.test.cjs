@@ -45,9 +45,9 @@ test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
   const app=read('dist/app.js');
-  const moduleImports=app+'\n'+read('dist/modules/diagnostico.js');
+  const moduleImports=app+'\n'+read('dist/modules/diagnostico.js')+'\n'+read('dist/modules/relatorio-pdf.js');
   for(const dependency of ['csv.js','analytics.js','folder-backup.js',
-    'modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf.js','modules/lancamentos.js','modules/objetivos.js','modules/backup.js','modules/csv-interface.js','modules/validacao.js','modules/atualizador.js','modules/dialogos.js','modules/diagnostico.js','modules/integridade.js','modules/log.js','modules/preferencias.js','modules/regras-financeiras.js','modules/ajustes.js','modules/catalogo-diagnostico.js','modules/registro-modulos.js']) {
+    'modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf-conteudo.js','modules/relatorio-pdf.js','modules/lancamentos.js','modules/objetivos.js','modules/backup.js','modules/csv-interface.js','modules/validacao.js','modules/atualizador.js','modules/dialogos.js','modules/diagnostico.js','modules/diagnostico-proposta.js','modules/integridade.js','modules/log.js','modules/preferencias.js','modules/regras-financeiras.js','modules/ajustes.js','modules/catalogo-diagnostico.js','modules/registro-modulos.js']) {
     assert.ok(moduleImports.includes(`from './${dependency}'`)||moduleImports.includes(`import './${dependency}'`)||
       moduleImports.includes(`from './${dependency.replace('modules/','')}'`),`Import ausente: ${dependency}`);
   }
@@ -59,7 +59,7 @@ test('Manifesto PWA, ícones reais e scripts essenciais', () => {
   assert.match(html, /id="diagnostics-dialog"/);
   assert.match(html, /id="confirmation-dialog"/);
   assert.match(html, /id="transaction-recurring-warning"/);
-  assert.match(html, /id="settings-dialog"/);
+  assert.match(html, /id="settings-page"/);
   assert.match(html, /id="diagnostics-progress"/);
   assert.match(html, /rel="apple-touch-icon"/);
   assert.match(html, /name="viewport"/);
@@ -94,7 +94,7 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
     for(const [saved,expected] of [[0,0],[25,25],[100,100],[150,100]]){
       const html=sandbox.renderGoal(makeGoal(kind,saved));
       assert.match(html,new RegExp(`role="progressbar"[^>]*aria-valuenow="${expected}"`));
-      assert.match(html,new RegExp(`class="proto-goal-fill" style="width:${expected}%"`));
+      assert.match(html,new RegExp(`class="proto-goal-fill progress-bar-fill" style="width:${expected}%"`));
       assert.match(html,new RegExp(`>${expected}%</strong>`));
       assert.match(html,/data-action="edit-goal"/);
       assert.match(html,/data-action="delete-goal"/);
@@ -120,12 +120,14 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v17/);
+  assert.match(source, /meu-dinheiro-essencial-v24/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));
   for (const name of ['log','integridade','diagnostico','dialogos']) assert.ok(assets.includes(`./modules/${name}.js`));
   assert.ok(assets.includes('./css/responsivo.css'));
+  assert.ok(assets.includes('./css/progresso.css'));
+  assert.ok(assets.includes('./modules/diagnostico-proposta.js'));
 });
 
 test('Offline: navegação recupera a página; arquivo inexistente nunca vira HTML', async () => {

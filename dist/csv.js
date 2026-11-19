@@ -87,7 +87,13 @@
     else if(/aluguel|condominio|imobiliaria/.test(x))name='Moradia';
     else if(/energia|saneamento|telefone|internet|assinatura|netflix|fatura|conta/.test(x))name='Contas';
     else if(/cinema|show|lazer|parque/.test(x))name='Lazer';
-    return available.includes(name)?name:(available.includes('Outros')?'Outros':available[0]);
+    // Extratos com listas antigas podem não ter as categorias específicas.
+    // Nesses casos, preservamos a categoria geral mais próxima antes de "Outros".
+    const gerais={'Internet':'Contas','Telefone':'Contas','Cartão de crédito':'Contas',
+      'Faculdade':'Educação','Farmácia':'Saúde','Cursos':'Educação'};
+    if(available.includes(name))return name;
+    if(gerais[name]&&available.includes(gerais[name]))return gerais[name];
+    return available.includes('Outros')?'Outros':available[0];
   }
   function fingerprint(parts) {
     const str=parts.map(v=>String(v||'').trim().toLowerCase()).join('|');

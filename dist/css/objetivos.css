@@ -12,8 +12,7 @@
 .fab:active{transform:scale(.96)}
 .button-primary,.btn-primary{background:var(--green);color:#fff;box-shadow:none}
 .button-primary:hover{background:#159c6b}
-.button-secondary,.btn-secondary{background:var(--border);color:var(--text)}
-.btn-danger{background:var(--red-bg);color:var(--red)}
+.button-secondary{background:var(--border);color:var(--text)}
 .form-dialog{background:var(--card);color:var(--text);box-shadow:0 22px 70px #12121238;border-color:var(--border)}
 .form-dialog{overflow-y:auto}
 .form-dialog input,.form-dialog select{background:var(--bg);border-color:var(--border);color:var(--text);font-size:1rem}

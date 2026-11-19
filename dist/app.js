@@ -1,4 +1,3 @@
-// Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 import './csv.js';
 import './analytics.js';
 import './folder-backup.js';
@@ -7,7 +6,7 @@ import { criarModuloLancamentos } from './modules/lancamentos.js';
 import { criarModuloObjetivos } from './modules/objetivos.js';
 import { iniciarModuloBackup } from './modules/backup.js';
 import { iniciarModuloCsv } from './modules/csv-interface.js';
-import { validarDataISO, validarBackup, normalizarDadosLocais } from './modules/validacao.js';
+import { validarDataISO, validarBackup, normalizarDadosLocais, podeAplicarNoObjetivo } from './modules/validacao.js';
 import { iniciarAtualizador } from './modules/atualizador.js';
 import { iniciarDialogos } from './modules/dialogos.js';
 import { iniciarDiagnostico } from './modules/diagnostico.js';
@@ -19,6 +18,7 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
 import { criarModuloSaude } from './modules/saude.js';
 import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
+// Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
   'use strict';
@@ -33,7 +33,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   aplicarAparencia(preferencias.obter());
   const NAV = [
     ['resumo', 'Resumo', 'chart-pie'], ['renda', 'Renda', 'wallet'], ['despesas', 'Despesas', 'receipt'],
-    ['metas', 'Metas', 'target'], ['sonho', 'Sonho', 'sparkles']
+    ['metas', 'Metas', 'target'], ['sonho', 'Sonho', 'sparkles'], ['ajustes', 'Ajustes', 'settings']
   ];
   // Ícones e categorias adaptados do protótipo Finanças-2.html.
   const CATEGORY_ICONS = {
@@ -58,13 +58,15 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   let storageLocked = false;
   let data = readData();
   let view = 'resumo';
+  let ultimaVisaoFinanceira = 'resumo';
   let month = currentMonth;
   let search = '';
   let filterCategory = '';
   let toastTimer;
   let folderBackup = null;
   let cdiQuote = readCdiCache();
-  const main = document.getElementById('main-content');
+  const viewContent = document.getElementById('view-content');
+  const settingsPage = document.getElementById('settings-page');
   const transactionDialog = document.getElementById('transaction-dialog');
   const transactionForm = document.getElementById('transaction-form');
   const goalDialog = document.getElementById('goal-dialog');
@@ -210,32 +212,43 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     notificacoes.renderDialog();
   }
   function changeView(next) {
+    if(!NAV.some(item=>item[0]===next))return;
+    if(view==='ajustes'&&next!=='ajustes')ajustes.descartar();
+    if(next!=='ajustes')ultimaVisaoFinanceira=next;
     view = next; search=''; filterCategory='';
     document.querySelectorAll('.nav-button').forEach(el => { const active = el.dataset.view === view; el.classList.toggle('active',active); el.setAttribute('aria-current',active?'page':'false'); });
+    if(view==='ajustes')ajustes.abrir();
     render(); window.scrollTo({top:0,behavior:'instant'});
+  }
+  function sincronizarAlertasNav(){
+    const alerta=!document.getElementById('folder-backup-alert').classList.contains('hidden')||
+      !document.getElementById('app-update-alert').classList.contains('hidden');
+    document.querySelectorAll('.nav-status-dot').forEach(dot=>dot.classList.toggle('hidden',!alerta));
   }
   function renderNav() {
     for (const id of ['desktop-nav','mobile-nav']) {
-      document.getElementById(id).innerHTML = NAV.map(([key,title,symbol]) => `<button class="nav-button ${key===view?'active':''}" type="button" data-view="${key}" aria-current="${key===view?'page':'false'}">${icon(symbol)}<span>${title}</span></button>`).join('');
+      document.getElementById(id).innerHTML = NAV.map(([key,title,symbol]) => `<button class="nav-button ${key===view?'active':''}" type="button" data-view="${key}" aria-current="${key===view?'page':'false'}">${icon(symbol)}<span>${title}</span>${key==='ajustes'?'<span class="nav-status-dot hidden" aria-label="Há atualizações ou avisos de backup"></span>':''}</button>`).join('');
     }
+    sincronizarAlertasNav();
   }
-  function header(title, subtitle, button, monthPicker=false) {
+  function header(subtitle='',monthPicker=false) {
     return `<div class="proto-page-meta">${monthPicker?monthControl():`<p>${esc(subtitle)}</p>`}</div>`;
   }
   function monthControl() { return `<div class="month-control" aria-label="Mês selecionado"><button type="button" data-month="-1" aria-label="Mês anterior">${icon('chevron-left')}</button><span style="text-transform:none">${esc(monthLabel(month))}</span><button type="button" data-month="1" aria-label="Próximo mês">${icon('chevron-right')}</button></div>`; }
-  function actionButton(title, action, type) { return `<button type="button" class="button button-primary" data-action="${action}"${type?` data-type="${type}"`:''}>${icon('plus')}${title}</button>`; }
   function empty(text, symbol='wallet') { return `<div class="empty-state">${icon(symbol)}<p>${esc(text)}</p></div>`; }
-  function stat(title, val, symbol, extra, color='') { return `<div class="stat-card"><div class="stat-top"><span class="stat-icon ${color}">${icon(symbol)}</span>${title}</div><div class="stat-value">${money(val)}</div><div class="stat-sub">${extra}</div></div>`; }
   function render() {
     renderReminderCount();
-    const tituloImpressao=document.getElementById('print-report-title');
-    tituloImpressao.textContent=`${NAV.find(v=>v[0]===view)?.[1]||'Resumo'} · ${monthLabel(month)}`;
     document.getElementById('header-label').textContent=NAV.find(v=>v[0]===view)?.[1]||'Resumo';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
-    document.getElementById('quick-add').setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':'Adicionar lançamento');
-    if (view === 'resumo') main.innerHTML = renderSummary();
-    else if (view === 'renda' || view === 'despesas') main.innerHTML = renderTransactions(view==='renda'?'income':'expense');
-    else main.innerHTML = renderGoals(view==='metas'?'goal':'dream');
+    const fab=document.getElementById('quick-add');
+    fab.classList.toggle('hidden',view==='ajustes');
+    fab.setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':view==='resumo'?'Adicionar renda ou despesa':'Adicionar lançamento');
+    settingsPage.classList.toggle('hidden',view!=='ajustes');
+    viewContent.classList.toggle('hidden',view==='ajustes');
+    if(view==='ajustes')return;
+    if (view === 'resumo') viewContent.innerHTML = renderSummary();
+    else if (view === 'renda' || view === 'despesas') viewContent.innerHTML = renderTransactions(view==='renda'?'income':'expense');
+    else viewContent.innerHTML = renderGoals(view==='metas'?'goal':'dream');
   }
   // Os módulos recebem apenas dependências explícitas e o estado atual por getters.
   // Nenhum arquivo de tela lê ou sobrescreve diretamente os dados persistidos.
@@ -246,7 +259,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     aplicarPreferencias:()=>aplicarAparencia(preferencias.obter()),
     getFilterCategory: () => filterCategory,
     setMonth: next => { month = next; },
-    resetToSummary: () => { view = 'resumo'; month = currentMonth; renderNav(); render(); },
+    resetToSummary: () => { view = 'resumo'; ultimaVisaoFinanceira='resumo'; month = currentMonth; renderNav(); render(); },
     categorySet, esc, icon, money, n2, fmtDate, parseDate, isoDate, validarBackup,
     shiftMonth, monthLabel, shortMonth, header, empty,
     sums, savingPlan, transactionsInMonth, reserveYieldEstimate,
@@ -288,7 +301,8 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
       const goalId=document.querySelector(`[data-allocation-goal="${CSS.escape(id)}"]`)?.value;
       const goal=data.goals.find(g=>g.id===goalId);
       if(!allocation||allocation.goalId||!goal||!goalCandidates(allocation.kind).some(g=>g.id===goalId)){notify('Selecione um objetivo compatível.');return;}
-      const goals=data.goals.map(g=>g.id===goalId?{...g,saved:Math.max(0,n2(g.saved+allocation.amount))}:g);
+      if(!podeAplicarNoObjetivo(goal.saved,allocation.amount)){notify('O resgate excede o valor guardado nesse objetivo.');return;}
+      const goals=data.goals.map(g=>g.id===goalId?{...g,saved:n2(g.saved+allocation.amount)}:g);
       const allocations=data.allocations.map(a=>a.id===id?{...a,goalId}:a);
       if(persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
     }
@@ -308,6 +322,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   document.getElementById('quick-add').addEventListener('click',()=>{
     if(view==='metas')openGoal('goal');
     else if(view==='sonho')openGoal('dream');
+    else if(view==='resumo')openTransaction('income');
     else openTransaction(view==='despesas'?'expense':'income');
   });
   document.getElementById('reminder-button').addEventListener('click',()=>{
@@ -317,7 +332,8 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     if(event.target.id==='transaction-search'){
       search=event.target.value;
       const selection=event.target.selectionStart;
-      render();const input=document.getElementById('transaction-search');if(input){input.focus();input.setSelectionRange(selection,selection);}
+      const position=window.scrollY;
+      render();const input=document.getElementById('transaction-search');if(input){input.focus({preventScroll:true});input.setSelectionRange(selection,selection);window.scrollTo(0,position);}
     }
   });
   document.addEventListener('change',event=>{
@@ -359,8 +375,8 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
-    onSave:()=>folderBackup?.schedule()});
-  const relatorioPdf=iniciarRelatorioPdf({hideBackupMenu:backup.hideBackupMenu,registrar});
+    onSave:()=>folderBackup?.schedule(),onCancel:()=>changeView('resumo')});
+  const relatorioPdf=iniciarRelatorioPdf({...common,getView:()=>ultimaVisaoFinanceira,hideBackupMenu:backup.hideBackupMenu,registrar});
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
@@ -369,5 +385,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     moduloCsv:iniciarModuloCsv,atualizador,ajustes,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
+  if(typeof MutationObserver==='function')
+    new MutationObserver(sincronizarAlertasNav).observe(document.querySelector('.nav-alert-sources'),{attributes:true,attributeFilter:['class'],subtree:true});
   refreshCdiSilently();
 })();

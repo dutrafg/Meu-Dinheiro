@@ -1,3 +1,25 @@
+// Saldo estimado de todo o histórico até hoje. Recorrências são contadas somente
+// quando a respectiva ocorrência mensal já venceu; não altera nenhum registro.
+export function calcularSaldoDisponivelHoje(transacoes,hojeISO){
+  if(!Array.isArray(transacoes)||!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO))return null;
+  const [anoAtual,mesAtual]=hojeISO.split('-').map(Number);
+  let total=0;
+  for(const item of transacoes){
+    if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||item.date>hojeISO||
+      !['income','expense'].includes(item.type)||!Number.isFinite(item.amount))continue;
+    let quantidade=1;
+    if(item.recurring){
+      const [anoInicio,mesInicio,dia]=item.date.split('-').map(Number);
+      const meses=(anoAtual-anoInicio)*12+mesAtual-mesInicio;
+      const ultimoDia=new Date(Date.UTC(anoAtual,mesAtual,0)).getUTCDate();
+      const ocorrenciaAtual=`${hojeISO.slice(0,7)}-${String(Math.min(dia,ultimoDia)).padStart(2,'0')}`;
+      quantidade=meses+(ocorrenciaAtual<=hojeISO?1:0);
+    }
+    total+=(item.type==='income'?1:-1)*item.amount*quantidade;
+  }
+  return Number.isFinite(total)?Math.round(total*100)/100:null;
+}
+
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
     shortMonth, currentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
@@ -47,7 +69,7 @@ export function criarModuloResumo(ctx) {
       <div class="proto-expense-divider" aria-hidden="true"></div>
       <section class="proto-expense-chart-panel" aria-label="Gráfico de média por categoria nos últimos sete meses">
         <h3>Média por categoria</h3><p class="proto-chart-subtitle">Mês atual (parcial) e até 6 anteriores. Média apenas dos meses com gastos.</p>
-        ${stats.averages.length?`<div class="proto-average-list">${stats.averages.map(item=>`<div class="proto-average-item"><div class="proto-average-top"><span><i class="proto-category-color" style="background:${color(item.category)}"></i>${esc(item.category)}</span><strong>${money(item.average)}</strong></div><div class="proto-average-track" role="img" aria-label="Média de ${esc(item.category)}: ${money(item.average)} em ${item.recordedMonths} ${item.recordedMonths===1?'mês':'meses'} com registro"><div style="width:${Math.max(2,(item.average/maxAverage)*100)}%;background:${color(item.category)}"></div></div><small>${item.recordedMonths} ${item.recordedMonths===1?'mês com registro':'meses com registros'}</small></div>`).join('')}</div>`:
+        ${stats.averages.length?`<div class="proto-average-list">${stats.averages.map(item=>`<div class="proto-average-item"><div class="proto-average-top"><span><i class="proto-category-color" style="background:${color(item.category)}"></i>${esc(item.category)}</span><strong>${money(item.average)}</strong></div><div class="proto-average-track progress-bar" role="img" aria-label="Média de ${esc(item.category)}: ${money(item.average)} em ${item.recordedMonths} ${item.recordedMonths===1?'mês':'meses'} com registro"><div class="progress-bar-fill" style="width:${Math.max(2,(item.average/maxAverage)*100)}%;background:${color(item.category)}"></div></div><small>${item.recordedMonths} ${item.recordedMonths===1?'mês com registro':'meses com registros'}</small></div>`).join('')}</div>`:
         `<div class="proto-empty">Ainda não há despesas nesse período para calcular as médias.</div>`}
       </section>
     </div>`;
@@ -70,15 +92,22 @@ export function criarModuloResumo(ctx) {
     const month = getMonth();
     const data = getData();
     const s=sums(month);
+    const hojeISO=isoDate(new Date());
+    const saldoDisponivel=calcularSaldoDisponivelHoje(data.transactions,hojeISO);
     const selected=getPreferences().reservaGoalId;
     const goals=[data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name))),data.goals.find(g=>g.kind==='dream')].filter(Boolean);
     if(!goals.some(g=>g.kind==='goal')) {const another=data.goals.find(g=>g.kind==='goal');if(another)goals.unshift(another);}
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);
-    return `${header('Resumo','Seu dinheiro em um só lugar.','',true)}
+    return `${header('',true)}
       <div class="proto-overview">
         <section class="card proto-donut-card"><h3>Visão financeira</h3>${donut(s.income,s.expense)}<div class="proto-donut-legend"><span><i style="background:var(--green)"></i>Renda</span><span><i style="background:var(--red)"></i>Despesas</span></div></section>
         <div class="proto-overview-secondary">
+          <section class="card proto-today-balance ${saldoDisponivel!==null&&saldoDisponivel<0?'is-negative':''}" aria-label="Saldo disponível hoje, estimado pelos lançamentos">
+            <div class="proto-today-balance-heading"><h3>Saldo acumulado até hoje</h3><span>${esc(hojeISO.split('-').reverse().join('/'))}</span></div>
+            <strong class="proto-today-balance-value">${saldoDisponivel===null?'—':money(saldoDisponivel)}</strong>
+            <p>Acumulado das receitas menos despesas registradas até hoje, incluindo recorrências vencidas. Não é o saldo bancário.</p>
+          </section>
           <div class="grid2"><div class="minicard bg-green"><div class="lbl">Renda</div><div class="val">${money(s.income)}</div></div><div class="minicard bg-red"><div class="lbl">Despesas</div><div class="val">${money(s.expense)}</div></div></div>
           <section class="card proto-progress-card"><h3>Reserva e sonho</h3>${goals.length?goals.map(progressLine).join(''):`<div class="proto-empty">Suas metas e sonhos aparecerão aqui.</div>`}</section>
         </div>

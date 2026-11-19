@@ -1,47 +1,82 @@
 /* Tema selecionável + cor de destaque, sem alterar cores semânticas de receita/despesa. */
-:root{color-scheme:light;--accent:#16875c;--accent-hover:#106947;--accent-soft:#e6f4ed}
+:root{color-scheme:light;--accent:#2563eb;--accent-hover:#1d4ed8;--accent-soft:#e8efff;--accent-text:var(--accent)}
+:root[data-accent="verde"]{--accent:#16875c;--accent-hover:#106947;--accent-soft:#e6f4ed}
 :root[data-accent="azul"]{--accent:#2563eb;--accent-hover:#1d4ed8;--accent-soft:#e8efff}
 :root[data-accent="roxo"]{--accent:#7c3aed;--accent-hover:#6d28d9;--accent-soft:#f1e9ff}
 :root[data-accent="laranja"]{--accent:#c05616;--accent-hover:#9a3412;--accent-soft:#fff1e6}
 :root[data-accent="rosa"]{--accent:#be185d;--accent-hover:#9d174d;--accent-soft:#fce7f3}
 :root[data-accent="turquesa"]{--accent:#087e8b;--accent-hover:#0e6470;--accent-soft:#e2f5f6}
 :root[data-theme="escuro"]{color-scheme:dark;--bg:#131417;--card:#1d1e23;--text:#f0f1f3;--sub:#aeb2bc;--green-bg:#0f3328;--red-bg:#3a1c19;--blue-bg:#122340;--purple-bg:#28183b;--amber-bg:#3a2c0f;--border:#363840}
+:root[data-theme="escuro"]{--accent-text:#8fb7ff}
+:root[data-theme="escuro"][data-accent="verde"]{--accent-text:#6be0ae}
+:root[data-theme="escuro"][data-accent="roxo"]{--accent-text:#c4a2ff}
+:root[data-theme="escuro"][data-accent="laranja"]{--accent-text:#ffb476}
+:root[data-theme="escuro"][data-accent="rosa"]{--accent-text:#ff8eb4}
+:root[data-theme="escuro"][data-accent="turquesa"]{--accent-text:#69dce5}
+@media(prefers-color-scheme:dark){
+  :root[data-theme="auto"]{--accent-text:#8fb7ff}
+  :root[data-theme="auto"][data-accent="verde"]{--accent-text:#6be0ae}
+  :root[data-theme="auto"][data-accent="roxo"]{--accent-text:#c4a2ff}
+  :root[data-theme="auto"][data-accent="laranja"]{--accent-text:#ffb476}
+  :root[data-theme="auto"][data-accent="rosa"]{--accent-text:#ff8eb4}
+  :root[data-theme="auto"][data-accent="turquesa"]{--accent-text:#69dce5}
+}
 :root[data-theme="escuro"] .desktop-nav{background:#27292f}
 :root[data-theme="escuro"] .mobile-nav{box-shadow:0 -4px 20px #00000038}
 :root[data-theme="claro"]{color-scheme:light;--bg:#f5f6f8;--card:#fff;--text:#17181c;--sub:#737983;--green-bg:#e3f7ee;--red-bg:#fce8e6;--blue-bg:#e7f0fe;--purple-bg:#f3e8fd;--amber-bg:#fdf1dc;--border:#e8e9ed}
 :root[data-theme="claro"] .desktop-nav{background:#ededf0}
-.desktop-nav .nav-button.active,.desktop-nav .nav-button:hover,.mobile-nav .nav-button.active{color:var(--accent)}
+.desktop-nav .nav-button.active,.desktop-nav .nav-button:hover,.mobile-nav .nav-button.active{color:var(--accent-text)}
 .fab,.button-primary,.btn-primary{background:var(--accent);color:#fff}
 .fab:hover,.button-primary:hover,.btn-primary:hover{background:var(--accent-hover)}
 .tipo-toggle button.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-.settings-dialog{width:min(94vw,620px);max-height:90dvh;overflow-y:auto}
-.settings-dialog #settings-form{display:block}
-.settings-dialog>.settings-heading{position:sticky;top:0;z-index:5;background:var(--card);padding:9px 4px 12px;border-bottom:1px solid var(--border)}
+.nav-alert-sources{display:none!important}
+.nav-button[data-view="ajustes"]{position:relative}
+.nav-status-dot{position:absolute;right:16px;top:8px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--card)}
+.nav-status-dot.hidden{display:none}
+.settings-page{max-width:960px;margin:auto}
+.settings-page.hidden{display:none}
+.settings-page #settings-form{display:block}
+.settings-page>.settings-heading{position:sticky;top:110px;z-index:7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;background:var(--bg);padding:13px 0 12px;border-bottom:1px solid var(--border)}
+.settings-heading h2{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:1.35rem}
+.settings-title-icon{width:23px;height:23px;color:var(--accent-text)}
+.settings-section-icon{width:20px;height:20px;vertical-align:middle;margin-right:7px;color:var(--accent-text)}
 .settings-heading-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .settings-heading-actions .button{min-height:40px;padding:9px 15px}
+.settings-save-actions{display:flex;justify-content:flex-end;gap:10px;padding:5px 0 12px}
 .settings-preview-hint{font-size:.8rem;line-height:1.5;color:var(--sub);margin:13px 0 0}
 .settings-section{border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;background:var(--card)}
 .settings-section h3{font-size:.95rem;margin:0 0 13px}
-.settings-section label{margin:9px 0;font-size:.89rem}
+.settings-section label{font-size:.89rem}
+.settings-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 3px;border-bottom:1px solid var(--border)}
+.settings-row:last-of-type{border-bottom:0}
+.settings-row>label{flex:1;font-weight:650;margin:0}
+.settings-row>select,.settings-row>input{max-width:55%;min-width:110px;margin:0;height:44px;border:1px solid var(--border);border-radius:11px;padding:8px 12px;background:var(--bg);color:var(--text)}
 .settings-section fieldset{border:0;margin:12px 0;padding:0}
 .settings-section legend{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:10px}
 .settings-colors,.settings-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.settings-section label.settings-color-option,.settings-section label.settings-check-option{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:10px 8px;border:1px solid var(--border);border-radius:10px;font-weight:600;font-size:.79rem;cursor:pointer}
+.settings-section label.settings-color-option{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;position:relative;margin:0;padding:13px 6px;border:1px solid var(--border);border-radius:12px;font-weight:700;font-size:.79rem;cursor:pointer}
+.settings-section label.settings-check-option{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:10px 8px;border:1px solid var(--border);border-radius:10px;font-weight:600;font-size:.79rem;cursor:pointer}
 .settings-section label.settings-color-option:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+:root .settings-section label.settings-color-option:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 :root[data-theme="escuro"] .settings-section label.settings-color-option:has(input:checked){background:color-mix(in srgb,var(--accent) 18%,var(--card))}
-.settings-section .settings-color-option input,.settings-section .settings-check-option input{flex:none;width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent)}
-.settings-color-dot{width:17px;height:17px;flex:none;border-radius:50%;border:1px solid #0002}
+.settings-section .settings-color-option input{position:absolute;width:1px;height:1px;opacity:0}
+.settings-section .settings-check-option input{flex:none;width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent)}
+.settings-color-dot{width:30px;height:30px;flex:none;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border)}
 .settings-tools summary{font-size:.94rem;font-weight:750;cursor:pointer}
 .settings-tool-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
 .settings-tool-buttons button{min-height:42px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:10px 12px;font-size:.85rem;font-weight:650}
-.settings-tool-buttons button:hover{border-color:var(--accent);color:var(--accent)}
-.settings-dialog .folder-backup-status,.settings-dialog .app-update-status{font-size:.85rem;line-height:1.5;color:var(--sub);overflow-wrap:anywhere}
-.settings-dialog .folder-backup-warning{font-size:.79rem;color:var(--sub)}
-.settings-dialog #install-update{background:var(--blue-bg);color:var(--blue);font-weight:750}
-.settings-dialog .folder-backup-status[data-state="error"],.settings-dialog .folder-backup-status[data-state="conflict"],.settings-dialog .folder-backup-status[data-state="permission"]{color:var(--red)}
-.settings-dialog .app-update-status[data-state="ready"]{color:var(--blue);font-weight:750}
+.settings-tool-buttons button svg{width:18px;height:18px;vertical-align:middle;margin-right:6px}
+.settings-tool-buttons button:hover{border-color:var(--accent);color:var(--accent-text)}
+.settings-page .folder-backup-status,.settings-page .app-update-status{font-size:.85rem;line-height:1.5;color:var(--sub);overflow-wrap:anywhere}
+.settings-page .folder-backup-warning{font-size:.79rem;color:var(--sub)}
+.settings-page #install-update{background:var(--blue-bg);color:var(--blue);font-weight:750}
+.settings-page .folder-backup-status[data-state="error"],.settings-page .folder-backup-status[data-state="conflict"],.settings-page .folder-backup-status[data-state="permission"]{color:var(--red)}
+.settings-page .app-update-status[data-state="ready"]{color:var(--blue);font-weight:750}
+.app-current-version{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin:12px 0;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--sub);font-size:.88rem}
+.app-current-version strong{color:var(--text);font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums}
 .diagnostics-progress-area{margin:0 0 12px}
-.diagnostics-progress{height:13px;width:100%;background:var(--border);border-radius:99px;overflow:hidden}
-.diagnostics-progress span{height:100%;width:0%;display:block;border-radius:99px;background:var(--accent);transition:width .2s linear}
+.diagnostics-progress{width:100%}
+.diagnostics-progress span{width:0%;background:var(--accent);transition:width .2s linear}
 .diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
-@media(max-width:540px){.settings-colors,.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-dialog{max-height:91dvh}.settings-section{padding:13px}.settings-heading-actions .button{padding:9px 12px}}
+@media(max-width:879px){.settings-page>.settings-heading{top:92px}}
+@media(max-width:540px){.settings-colors{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-section{padding:13px}.settings-heading-actions .button{padding:9px 10px}.settings-heading h2{font-size:1.15rem}.settings-row{align-items:flex-start;flex-direction:column;gap:7px}.settings-row>select,.settings-row>input{max-width:100%;width:100%}.settings-page>.settings-heading{top:92px}.settings-heading-actions{width:100%;justify-content:flex-end}}

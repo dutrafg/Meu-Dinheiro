@@ -27,7 +27,7 @@ test('Frontend Windows é gerado sem modificar o PWA online', () => {
   assert.match(html,/<script type="module" src="\.\/app\.js"><\/script>/);
   assert.doesNotMatch(html,/rel="manifest"/);
   assert.ok(fs.existsSync(path.join(built,'icon-512.png')));
-  for(const name of ['diagnostico','ajustes','notificacoes','registro-modulos','atualizador']){
+  for(const name of ['diagnostico','ajustes','notificacoes','registro-modulos','atualizador','diagnostico-proposta','auditoria-codigo','relatorio-pdf-conteudo']){
     assert.ok(fs.existsSync(path.join(built,`modules/${name}.js`)),`Módulo ausente: ${name}`);
   }
   for(const name of ['native-updater.js','native-style.css','css/ajustes.css','css/responsivo.css']){
@@ -165,9 +165,13 @@ test('Relatório Windows inspeciona SQLite e dispensa testes exclusivos de Servi
   const empty={transactions:[],goals:[],allocations:[],completedAportes:[]};
   const context={Date,Intl,Blob,navigator:{userAgent:'Windows test'},
     window:{MeuDinheiroNativeBridge:{diagnosticar:async()=>({ponteOk:true,sqliteOk:true,pendente:false})}},
-    verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),localStorage:{getItem:()=>null}};
+    verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),localStorage:{getItem:()=>null},
+    preferenciasPadrao:()=>({tema:'auto',cor:'azul'}),
+    verificarPropostaInterface:()=>null,
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Diagnóstico sem navegador'})};
+  const dependencias=['resumo.js','validacao.js'].map(file=>fs.readFileSync(path.join(repo,'dist/modules',file),'utf8').replace(/^export /gm,'')).join('\n');
   const source=fs.readFileSync(path.join(repo,'dist/modules/diagnostico.js'),'utf8').replace(/^import .*$/gm,'').replace(/^export /gm,'');
-  vm.runInNewContext(`${source}\nthis.gerar=criarRelatorioDiagnostico`,context);
+  vm.runInNewContext(`${dependencias}\n${source}\nthis.gerar=criarRelatorioDiagnostico`,context);
   const report=await context.gerar({getData:()=>empty,CATEGORIES:{income:[],expense:[]}});
   assert.equal(report.ambiente.plataforma,'windows-nativo');
   assert.equal(report.atualizador.metodo,'instalador-windows');
@@ -177,12 +181,14 @@ test('Relatório Windows inspeciona SQLite e dispensa testes exclusivos de Servi
 
 test('Atualizador Windows informa uso do instalador sem ativar Service Worker',()=>{
   const elements=new Map();
-  for(const id of ['app-update-status','check-update','install-update','app-update-alert'])
+  for(const id of ['app-update-status','check-update','install-update','app-update-alert','app-running-version'])
     elements.set(id,{textContent:'',dataset:{},disabled:false,title:'',classList:{add:()=>{}}});
   const context={document:{getElementById:id=>elements.get(id)}};
   vm.runInNewContext(fs.readFileSync(path.join(repo,'desktop/native-updater.js'),'utf8').replace(/^export /gm,'')+'\nthis.iniciar=iniciarAtualizador;',context);
   const updater=context.iniciar();
   assert.equal(updater.getStatus().metodo,'instalador-windows');
+  assert.equal(updater.getStatus().versaoEmExecucao,'v24');
+  assert.match(elements.get('app-running-version').textContent,/Windows 0\.3\.0/);
   assert.equal(elements.get('check-update').disabled,true);
   assert.match(elements.get('app-update-status').textContent,/instaladas com o arquivo \.exe/);
 });
@@ -195,6 +201,6 @@ test('Configuração Windows gera instalador x64 com ícone e janela ajustável'
   assert.ok(config.app.windows[0].minWidth<=390);
   assert.ok(fs.existsSync(path.join(repo,'dist/icon-512.png')));
   assert.match(JSON.parse(fs.readFileSync(path.join(repo,'desktop/package.json'),'utf8')).scripts.icons,/tauri icon/);
-  assert.equal(config.version,'0.2.0');
-  assert.match(fs.readFileSync(path.join(repo,'desktop/src-tauri/Cargo.toml'),'utf8'),/^version = "0\.2\.0"/m);
+  assert.equal(config.version,'0.3.0');
+  assert.match(fs.readFileSync(path.join(repo,'desktop/src-tauri/Cargo.toml'),'utf8'),/^version = "0\.3\.0"/m);
 });

@@ -13,27 +13,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .prototype-heading{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .prototype-heading span{text-transform:uppercase;letter-spacing:.065em;font-size:.87rem;font-weight:700;color:var(--sub)}
 .prototype-heading strong{font-size:2rem;line-height:1.15;font-weight:760;letter-spacing:-.04em;color:var(--text)}
+.prototype-heading strong{font-variant-numeric:tabular-nums}
 .header .icon-button{color:var(--sub);background:transparent}
 .header .icon-button:hover{background:var(--border)}
 .proto-header-actions{display:flex;align-items:center;gap:3px}
 .proto-reminder-button{position:relative}
 .proto-reminder-count{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 3px;border-radius:99px;background:var(--red);color:#fff;font-size:.63rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
 .proto-reminder-count.hidden{display:none}
-.backup-menu{top:80px;background:var(--card);border-color:var(--border)}
-.backup-menu button{color:var(--text)}
-.backup-menu button:hover{background:var(--green-bg)}
-.backup-menu-divider{height:1px;background:var(--border);margin:5px 9px}
 .header .icon-button{position:relative}
 .folder-backup-alert{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:1px solid var(--bg)}
 .app-update-alert{position:absolute;top:5px;left:5px;width:9px;height:9px;border-radius:50%;background:#2477f3;border:1px solid var(--bg)}
-.backup-menu #install-update{background:#e6f1ff;color:#155bb4;font-weight:750}
-.backup-menu #install-update:hover{background:#d8e9ff}
-.backup-menu .app-update-status{font-size:.78rem;color:var(--sub);line-height:1.5;margin:5px 10px 9px;overflow-wrap:anywhere}
-.backup-menu .app-update-status[data-state="ready"]{color:#155bb4;font-weight:700}
-.backup-menu .folder-backup-status{font-size:.79rem;color:var(--sub);line-height:1.5;margin:7px 10px 5px;overflow-wrap:anywhere}
-.backup-menu .folder-backup-status[data-state="saved"]{color:var(--green)}
-.backup-menu .folder-backup-status[data-state="error"],.backup-menu .folder-backup-status[data-state="conflict"],.backup-menu .folder-backup-status[data-state="permission"]{color:var(--red)}
-.backup-menu .folder-backup-warning{font-size:.72rem;color:var(--sub);line-height:1.45;margin:5px 10px 9px}
 .desktop-nav{display:flex;justify-content:center;gap:4px;border-radius:23px;background:#ededf0;margin:0 auto 27px;padding:8px;max-width:100%;width:max-content}
 .desktop-nav .nav-button{min-width:132px;padding:12px 17px;color:#585b61;display:flex;flex-direction:column;gap:7px;font-weight:650;font-size:.95rem;border-radius:16px}
 .desktop-nav .nav-button svg{width:29px;height:29px;stroke-width:1.9}
