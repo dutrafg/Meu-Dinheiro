@@ -106,9 +106,9 @@ test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis'
   const prefs={tema:'escuro',cor:'roxo',percentual:10,categoriasAporte:['Salário'],reservaGoalId:''};
   const root={dataset:{theme:'escuro',accent:'roxo'}};
   const body={};
-  const botao={};
-  const estado={fundo:'#131417',cor:'#7c3aed',corFundo:'rgb(19, 20, 23)',corBotao:'rgb(124, 58, 237)',esquema:'dark'};
-  const style=(el)=>el===root?{getPropertyValue:n=>n==='--bg'?estado.fundo:estado.cor,colorScheme:estado.esquema}
+  const estado={fundo:'#131417',cor:'#7c3aed',corHover:'#6d28d9',corFundo:'rgb(19, 20, 23)',corBotao:'rgb(124, 58, 237)',esquema:'dark',hover:false};
+  const botao={matches:selector=>selector===':hover, :active'&&estado.hover};
+  const style=(el)=>el===root?{getPropertyValue:n=>n==='--bg'?estado.fundo:n==='--accent-hover'?estado.corHover:estado.cor,colorScheme:estado.esquema}
     :el===body?{backgroundColor:estado.corFundo}:{backgroundColor:estado.corBotao};
   const context={Date,Intl,Blob,CORES:{verde:'#16875c',roxo:'#7c3aed'},TEMAS:['auto','claro','escuro'],
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
@@ -122,6 +122,12 @@ test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis'
   const aparencia=bom.integridade.itens.filter(v=>v.codigo.startsWith('APARENCIA_'));
   assert.equal(aparencia.length,7);
   assert.ok(aparencia.every(v=>v.estado==='ok'));
+  estado.hover=true;estado.corBotao='rgb(109, 40, 217)';
+  const hover=await verificar();
+  assert.equal(hover.integridade.itens.find(v=>v.codigo==='APARENCIA_BOTAO').estado,'ok','Hover em tela de toque usa --accent-hover');
+  estado.hover=false;
+  const hoverInvalido=await verificar();
+  assert.equal(hoverInvalido.integridade.itens.find(v=>v.codigo==='APARENCIA_BOTAO').estado,'erro','Cor de hover fora de interação não deve ocultar defeitos');
   root.dataset.theme='claro';root.dataset.accent='verde';estado.fundo='#f5f6f8';estado.cor='#16875c';
   estado.corFundo='rgb(245, 246, 248)';estado.corBotao='rgb(22, 135, 92)';estado.esquema='light';
   const ruim=await verificar();

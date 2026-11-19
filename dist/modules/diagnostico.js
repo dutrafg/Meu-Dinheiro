@@ -119,8 +119,15 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       conferir('APARENCIA_ESQUEMA',String(estilo.colorScheme||'').split(' ').includes(escuro?'dark':'light'),
         'Esquema claro/escuro corresponde à seleção','Esquema de cores nativo não corresponde ao tema','ajustes');
       const botao=document.querySelector('.fab, .button-primary, .btn-primary');
-      if(botao)conferir('APARENCIA_BOTAO',normalizarCor(window.getComputedStyle(botao).backgroundColor)===normalizarCor(rgb(corEsperada)),
-        'Cor de destaque aparece nos botões','Botões não receberam a cor de destaque','ajustes');
+      if(botao){
+        const fundoBotao=normalizarCor(window.getComputedStyle(botao).backgroundColor);
+        const corNormal=normalizarCor(rgb(corEsperada));
+        const corHover=normalizarCor(rgb(estilo.getPropertyValue('--accent-hover').trim()));
+        // Em telas de toque, :hover pode continuar ativo após o toque.
+        const interagindo=Boolean(botao.matches?.(':hover, :active'));
+        conferir('APARENCIA_BOTAO',fundoBotao===corNormal||(interagindo&&fundoBotao===corHover),
+          'Cor de destaque aparece nos botões','Botões não receberam a cor de destaque','ajustes');
+      }
     }catch{adicionar('APARENCIA_INSPECAO','aviso','O navegador não permitiu verificar os estilos aplicados','ajustes');}
   }
   if(typeof document!=='undefined'){
