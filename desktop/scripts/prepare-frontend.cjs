@@ -20,8 +20,8 @@ function prepare() {
   fs.cpSync(source, output, {recursive: true});
 
   let html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
-  html = replaceOnce(html, '<script src="./app.js" defer></script>',
-    '<script src="./native-bridge.js" defer></script>\n  <script src="./app.js" defer></script>', 'index.html');
+  html = replaceOnce(html, '<script type="module" src="./app.js"></script>',
+    '<script src="./native-bridge.js"></script>\n  <script type="module" src="./app.js"></script>', 'index.html');
   html = replaceOnce(html, '<link rel="manifest" href="./manifest.webmanifest" />',
     '<link rel="stylesheet" href="./native-style.css" />', 'index.html');
   fs.writeFileSync(path.join(output, 'index.html'), html);
@@ -39,15 +39,17 @@ function prepare() {
   app = replaceOnce(app, '      localStorage.setItem(KEY, JSON.stringify(next));',
     '      window.MeuDinheiroNativeBridge.stage(next);\n      localStorage.setItem(KEY, JSON.stringify(next));', 'app.js');
   app = replaceOnce(app, '      folderBackup?.schedule();',
-    '      window.MeuDinheiroNativeBridge.persist(next);\n      folderBackup?.schedule();', 'app.js');
-  app = replaceOnce(app, '  folderBackup=window.MeuDinheiroFolderBackup.createBrowserManager({',
-    '  folderBackup=window.MeuDinheiroNativeBridge.createFolderManager({', 'app.js');
-  app = replaceOnce(app,
-    "  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));",
-    '  // O instalador Windows recebe novas versões; não registrar service worker.', 'app.js');
+    '      void window.MeuDinheiroNativeBridge.persist(next);\n      folderBackup?.schedule();', 'app.js');
+  app = replaceOnce(app, "import { iniciarAtualizador } from './modules/atualizador.js';",
+    "import { iniciarAtualizador } from './native-updater.js';", 'app.js');
   fs.writeFileSync(path.join(output, 'app.js'), app);
+  const backupFile=path.join(output, 'modules', 'backup.js');
+  const backup=fs.readFileSync(backupFile,'utf8');
+  fs.writeFileSync(backupFile,replaceOnce(backup,'window.MeuDinheiroFolderBackup.createBrowserManager(',
+    'window.MeuDinheiroNativeBridge.createFolderManager(', 'modules/backup.js'));
   fs.copyFileSync(path.join(root, 'desktop/native-bridge.js'), path.join(output, 'native-bridge.js'));
   fs.copyFileSync(path.join(root, 'desktop/native-style.css'), path.join(output, 'native-style.css'));
+  fs.copyFileSync(path.join(root, 'desktop/native-updater.js'), path.join(output, 'native-updater.js'));
   return output;
 }
 

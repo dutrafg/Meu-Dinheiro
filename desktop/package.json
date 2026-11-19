@@ -1,7 +1,7 @@
 {
   "name": "meu-dinheiro-windows",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Aplicativo Windows x64 Meu Dinheiro",
   "scripts": {
     "prepare": "node scripts/prepare-frontend.cjs",

@@ -81,6 +81,23 @@
     return queue;
   }
 
+  async function diagnosticar() {
+    const ponteOk=Boolean(root.__TAURI__?.core?.invoke);
+    let sqliteOk=false;
+    try {
+      const raw=await invoke('load_data');
+      if(raw===null)sqliteOk=true;
+      else {
+        const snapshot=JSON.parse(raw);
+        sqliteOk=Boolean(snapshot&&['transactions','goals','allocations','completedAportes']
+          .every(field=>Array.isArray(snapshot[field])));
+      }
+    } catch { /* O diagnóstico não exporta dados nem mensagens nativas. */ }
+    let pendente=true;
+    try {pendente=Boolean(localStorage.getItem(PENDING));}catch{/* Armazenamento inacessível. */}
+    return {ponteOk,sqliteOk,pendente};
+  }
+
   function createFolderManager({confirmReplace, onStatus}) {
     let state = {code:'off',folder:'',message:'Escolha uma pasta para ativar o backup automático.'};
     onBackupStatus = update;
@@ -102,7 +119,7 @@
       try {
         const selection = await invoke('select_backup_folder');
         if (!selection) return false;
-        const allowReplace = !!selection.conflict && !!confirmReplace('A pasta já contém dados diferentes. Guardar uma cópia do arquivo anterior e substituí-lo?');
+        const allowReplace = !!selection.conflict && !!(await confirmReplace('A pasta já contém dados diferentes. Guardar uma cópia do arquivo anterior e substituí-lo?'));
         if (selection.conflict && !allowReplace) return false;
         return action('activate_backup_folder', {allowReplace});
       } catch (error) {
@@ -118,7 +135,7 @@
           return result.code === 'saved';
         }
         update(result);
-        if (!confirmReplace('O arquivo na pasta foi alterado. Fazer uma cópia do arquivo anterior e substituir pelo banco atual?')) return false;
+        if (!await confirmReplace('O arquivo na pasta foi alterado. Fazer uma cópia do arquivo anterior e substituir pelo banco atual?')) return false;
         return action('resolve_backup_conflict');
       } catch (error) {
         update({code:'error',folder:state.folder,message:String(error)});
@@ -133,6 +150,6 @@
       getState: () => ({state:state.code,folder:state.folder})
     };
   }
-  root.MeuDinheiroNativeBridge = {boot, stage, persist, createFolderManager};
+  root.MeuDinheiroNativeBridge = {boot, stage, persist, createFolderManager, diagnosticar};
   if (typeof module !== 'undefined' && module.exports) module.exports = root.MeuDinheiroNativeBridge;
 })(typeof window === 'object' ? window : globalThis);

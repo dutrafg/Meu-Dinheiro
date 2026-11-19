@@ -1,0 +1,47 @@
+/* Tema selecionável + cor de destaque, sem alterar cores semânticas de receita/despesa. */
+:root{color-scheme:light;--accent:#16875c;--accent-hover:#106947;--accent-soft:#e6f4ed}
+:root[data-accent="azul"]{--accent:#2563eb;--accent-hover:#1d4ed8;--accent-soft:#e8efff}
+:root[data-accent="roxo"]{--accent:#7c3aed;--accent-hover:#6d28d9;--accent-soft:#f1e9ff}
+:root[data-accent="laranja"]{--accent:#c05616;--accent-hover:#9a3412;--accent-soft:#fff1e6}
+:root[data-accent="rosa"]{--accent:#be185d;--accent-hover:#9d174d;--accent-soft:#fce7f3}
+:root[data-accent="turquesa"]{--accent:#087e8b;--accent-hover:#0e6470;--accent-soft:#e2f5f6}
+:root[data-theme="escuro"]{color-scheme:dark;--bg:#131417;--card:#1d1e23;--text:#f0f1f3;--sub:#aeb2bc;--green-bg:#0f3328;--red-bg:#3a1c19;--blue-bg:#122340;--purple-bg:#28183b;--amber-bg:#3a2c0f;--border:#363840}
+:root[data-theme="escuro"] .desktop-nav{background:#27292f}
+:root[data-theme="escuro"] .mobile-nav{box-shadow:0 -4px 20px #00000038}
+:root[data-theme="claro"]{color-scheme:light;--bg:#f5f6f8;--card:#fff;--text:#17181c;--sub:#737983;--green-bg:#e3f7ee;--red-bg:#fce8e6;--blue-bg:#e7f0fe;--purple-bg:#f3e8fd;--amber-bg:#fdf1dc;--border:#e8e9ed}
+:root[data-theme="claro"] .desktop-nav{background:#ededf0}
+.desktop-nav .nav-button.active,.desktop-nav .nav-button:hover,.mobile-nav .nav-button.active{color:var(--accent)}
+.fab,.button-primary,.btn-primary{background:var(--accent);color:#fff}
+.fab:hover,.button-primary:hover,.btn-primary:hover{background:var(--accent-hover)}
+.tipo-toggle button.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.settings-dialog{width:min(94vw,620px);max-height:90dvh;overflow-y:auto}
+.settings-dialog #settings-form{display:block}
+.settings-dialog>.settings-heading{position:sticky;top:0;z-index:5;background:var(--card);padding:9px 4px 12px;border-bottom:1px solid var(--border)}
+.settings-heading-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.settings-heading-actions .button{min-height:40px;padding:9px 15px}
+.settings-preview-hint{font-size:.8rem;line-height:1.5;color:var(--sub);margin:13px 0 0}
+.settings-section{border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;background:var(--card)}
+.settings-section h3{font-size:.95rem;margin:0 0 13px}
+.settings-section label{margin:9px 0;font-size:.89rem}
+.settings-section fieldset{border:0;margin:12px 0;padding:0}
+.settings-section legend{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.settings-colors,.settings-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.settings-section label.settings-color-option,.settings-section label.settings-check-option{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:10px 8px;border:1px solid var(--border);border-radius:10px;font-weight:600;font-size:.79rem;cursor:pointer}
+.settings-section label.settings-color-option:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+:root[data-theme="escuro"] .settings-section label.settings-color-option:has(input:checked){background:color-mix(in srgb,var(--accent) 18%,var(--card))}
+.settings-section .settings-color-option input,.settings-section .settings-check-option input{flex:none;width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent)}
+.settings-color-dot{width:17px;height:17px;flex:none;border-radius:50%;border:1px solid #0002}
+.settings-tools summary{font-size:.94rem;font-weight:750;cursor:pointer}
+.settings-tool-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.settings-tool-buttons button{min-height:42px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:10px 12px;font-size:.85rem;font-weight:650}
+.settings-tool-buttons button:hover{border-color:var(--accent);color:var(--accent)}
+.settings-dialog .folder-backup-status,.settings-dialog .app-update-status{font-size:.85rem;line-height:1.5;color:var(--sub);overflow-wrap:anywhere}
+.settings-dialog .folder-backup-warning{font-size:.79rem;color:var(--sub)}
+.settings-dialog #install-update{background:var(--blue-bg);color:var(--blue);font-weight:750}
+.settings-dialog .folder-backup-status[data-state="error"],.settings-dialog .folder-backup-status[data-state="conflict"],.settings-dialog .folder-backup-status[data-state="permission"]{color:var(--red)}
+.settings-dialog .app-update-status[data-state="ready"]{color:var(--blue);font-weight:750}
+.diagnostics-progress-area{margin:0 0 12px}
+.diagnostics-progress{height:13px;width:100%;background:var(--border);border-radius:99px;overflow:hidden}
+.diagnostics-progress span{height:100%;width:0%;display:block;border-radius:99px;background:var(--accent);transition:width .2s linear}
+.diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
+@media(max-width:540px){.settings-colors,.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-dialog{max-height:91dvh}.settings-section{padding:13px}.settings-heading-actions .button{padding:9px 12px}}

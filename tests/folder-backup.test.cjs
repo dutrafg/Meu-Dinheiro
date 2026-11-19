@@ -61,6 +61,22 @@ test('Primeira autorização grava dados completos e cópia diária', async () =
   assert.equal(f.manager.getState().state,'saved');
 });
 
+test('Backup compara preferências sem invalidar arquivos legados sem preferências',()=>{
+  const p={tema:'auto',cor:'verde',percentual:10,categoriasAporte:['Salário base','Salário','Personal'],reservaGoalId:''};
+  assert.equal(backup.sameData(base(),{...base(),preferences:p}),true);
+  assert.equal(backup.sameData(base(),{...base(),preferences:{...p,percentual:15}}),false);
+  assert.equal(backup.sameData({...base(),preferences:p},{...base(),preferences:{...p,categoriasAporte:['Personal','Salário base','Salário']}}),true);
+});
+
+test('Preferências personalizadas são preservadas no arquivo de pasta',async()=>{
+  const f=fixture();
+  f.setData({...base(),preferences:{tema:'escuro',cor:'roxo',percentual:15,categoriasAporte:['Personal'],reservaGoalId:''}});
+  await f.manager.connect();
+  const backupGravado=JSON.parse(f.directory.files.get(FILE));
+  assert.equal(backupGravado.preferences.percentual,15);
+  assert.equal(backupGravado.preferences.cor,'roxo');
+});
+
 test('Cada alteração grava os dados mais recentes, preservando backup restaurável', async () => {
   const f=fixture();
   await f.manager.connect();
@@ -81,6 +97,16 @@ test('Não sobrescreve backup diferente quando o usuário cancela', async () => 
   dir.files.set(FILE,JSON.stringify({...base(),transactions:[{id:'antigo'}]}));
   const f=fixture(dir,()=>false);
   const previous=dir.files.get(FILE);
+  assert.equal(await f.manager.connect(),false);
+  assert.equal(dir.files.get(FILE),previous);
+  assert.equal(dir.history.size,0);
+});
+
+test('Confirmação assíncrona pode cancelar sem tocar no backup existente', async () => {
+  const dir=fakeDirectory();
+  const previous=JSON.stringify({...base(),transactions:[{id:'importante'}]});
+  dir.files.set(FILE,previous);
+  const f=fixture(dir,async()=>false);
   assert.equal(await f.manager.connect(),false);
   assert.equal(dir.files.get(FILE),previous);
   assert.equal(dir.history.size,0);

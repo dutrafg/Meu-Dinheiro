@@ -1,6 +1,6 @@
 [package]
 name = "meu-dinheiro-windows"
-version = "0.1.0"
+version = "0.2.0"
 description = "Meu Dinheiro para Windows"
 authors = ["dutrafg"]
 edition = "2021"

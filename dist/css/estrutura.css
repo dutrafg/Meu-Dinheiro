@@ -1,0 +1,52 @@
+/* Adaptação responsiva do visual e componentes do Finanças-2.html do usuário. */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#17181c;--sub:#737983;
+  --green:#19a974;--green-bg:#e3f7ee;--red:#e6493b;--red-bg:#fce8e6;
+  --blue:#2f7cf6;--blue-bg:#e7f0fe;--purple:#9b4df0;--purple-bg:#f3e8fd;
+  --amber:#f2a318;--amber-bg:#fdf1dc;--border:#e8e9ed;
+  --ink:var(--text);--muted:var(--sub);--white:var(--card);--pale:var(--green-bg);
+  --positive:var(--green);--negative:var(--red);--shadow:none;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Inter,"Segoe UI",Roboto,Arial,sans-serif}
+.app-shell{max-width:1080px;margin:0 auto;padding:0 26px}
+.header{height:110px;position:sticky;top:0;z-index:8;background:var(--bg);justify-content:space-between;padding:14px 0 8px}
+.prototype-heading{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.prototype-heading span{text-transform:uppercase;letter-spacing:.065em;font-size:.87rem;font-weight:700;color:var(--sub)}
+.prototype-heading strong{font-size:2rem;line-height:1.15;font-weight:760;letter-spacing:-.04em;color:var(--text)}
+.header .icon-button{color:var(--sub);background:transparent}
+.header .icon-button:hover{background:var(--border)}
+.proto-header-actions{display:flex;align-items:center;gap:3px}
+.proto-reminder-button{position:relative}
+.proto-reminder-count{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 3px;border-radius:99px;background:var(--red);color:#fff;font-size:.63rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+.proto-reminder-count.hidden{display:none}
+.backup-menu{top:80px;background:var(--card);border-color:var(--border)}
+.backup-menu button{color:var(--text)}
+.backup-menu button:hover{background:var(--green-bg)}
+.backup-menu-divider{height:1px;background:var(--border);margin:5px 9px}
+.header .icon-button{position:relative}
+.folder-backup-alert{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:1px solid var(--bg)}
+.app-update-alert{position:absolute;top:5px;left:5px;width:9px;height:9px;border-radius:50%;background:#2477f3;border:1px solid var(--bg)}
+.backup-menu #install-update{background:#e6f1ff;color:#155bb4;font-weight:750}
+.backup-menu #install-update:hover{background:#d8e9ff}
+.backup-menu .app-update-status{font-size:.78rem;color:var(--sub);line-height:1.5;margin:5px 10px 9px;overflow-wrap:anywhere}
+.backup-menu .app-update-status[data-state="ready"]{color:#155bb4;font-weight:700}
+.backup-menu .folder-backup-status{font-size:.79rem;color:var(--sub);line-height:1.5;margin:7px 10px 5px;overflow-wrap:anywhere}
+.backup-menu .folder-backup-status[data-state="saved"]{color:var(--green)}
+.backup-menu .folder-backup-status[data-state="error"],.backup-menu .folder-backup-status[data-state="conflict"],.backup-menu .folder-backup-status[data-state="permission"]{color:var(--red)}
+.backup-menu .folder-backup-warning{font-size:.72rem;color:var(--sub);line-height:1.45;margin:5px 10px 9px}
+.desktop-nav{display:flex;justify-content:center;gap:4px;border-radius:23px;background:#ededf0;margin:0 auto 27px;padding:8px;max-width:100%;width:max-content}
+.desktop-nav .nav-button{min-width:132px;padding:12px 17px;color:#585b61;display:flex;flex-direction:column;gap:7px;font-weight:650;font-size:.95rem;border-radius:16px}
+.desktop-nav .nav-button svg{width:29px;height:29px;stroke-width:1.9}
+.desktop-nav .nav-button.active{background:var(--card);color:var(--green);box-shadow:0 3px 10px #1212120c}
+.desktop-nav .nav-button:hover{color:var(--green)}
+.mobile-nav{display:none}
+main{max-width:960px;margin:0 auto;padding-bottom:125px}
+.proto-page-meta{display:flex;justify-content:flex-end;align-items:center;min-height:39px;margin:0 0 16px;color:var(--sub);font-size:.88rem}
+.proto-page-meta p{margin:0;width:100%;font-size:.88rem;color:var(--sub)}
+.month-control{padding:2px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:none;gap:2px}
+.month-control button{height:32px;width:32px;color:var(--sub)}
+.month-control button:hover{background:var(--green-bg);color:var(--green)}
+.month-control span{min-width:127px;color:var(--text);font-size:.85rem;font-weight:700;text-transform:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:17px;padding:20px;margin:0 0 15px;box-shadow:none}
+.card h3{font-size:.83rem;font-weight:780;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);margin:0 0 18px}
+.proto-overview{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.35fr);gap:16px;align-items:stretch}

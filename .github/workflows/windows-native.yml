@@ -27,7 +27,7 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
       - name: Testes JavaScript
-        run: node --test tests/analytics.test.cjs tests/csv.test.cjs tests/folder-backup.test.cjs tests/pwa.test.cjs tests/windows.test.cjs
+        run: node --test tests/*.test.cjs
       - name: Instalar CLI Tauri
         working-directory: desktop
         run: npm install --no-audit --no-fund
