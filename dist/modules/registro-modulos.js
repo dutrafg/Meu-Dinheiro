@@ -6,11 +6,12 @@ import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.
 import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 import {calcularSaldoDisponivelHoje} from './resumo.js';
+import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
+    atualizador,ajustes,limpeza,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
@@ -22,6 +23,9 @@ export function registrarModulosDoApp(api) {
   registrar('csv-interface',()=>typeof moduloCsv==='function');
   registrar('atualizador',()=>typeof atualizador.getStatus==='function'&&/^v\d+$/.test(atualizador.getStatus().versaoEmExecucao));
   registrar('ajustes',()=>typeof ajustes.abrir==='function'&&typeof ajustes.aplicar==='function');
+  registrar('limpeza-dados',()=>typeof limpeza.abrir==='function'&&typeof apagarDadosLocais==='function'&&
+    validarFraseLimpeza('APAGAR')&&!validarFraseLimpeza('apagar')&&!validarFraseLimpeza('APAGAR ')&&
+    typeof moduloBackup.folderBackup?.pause==='function');
   registrar('notificacoes',()=>typeof notificacoes.pendentes==='function'&&Array.isArray(notificacoes.pendentes())&&
     Number.isSafeInteger(notificacoes.getStatus().ocultas));
   registrar('saude',()=>typeof moduloSaude.renderSaude==='function'&&typeof moduloSaude.calcular==='function'&&

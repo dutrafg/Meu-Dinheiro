@@ -5,6 +5,7 @@ import { auditarCodigoPublicado } from './auditoria-codigo.js';
 import { verificarPropostaInterface } from './diagnostico-proposta.js';
 import { calcularSaldoDisponivelHoje } from './resumo.js';
 import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
+import { apagarDadosLocais, validarFraseLimpeza } from './limpeza-dados.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -78,6 +79,25 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('SALDO_DISPONIVEL_HOJE',saldoExemplo===150,
     'Saldo disponível calculado corretamente com recorrências e lançamentos futuros',
     'Cálculo do saldo disponível não corresponde ao cenário de referência','resumo');
+  // Testes em armazenamento fictício: nunca removem registros do usuário.
+  const armazenamentoTeste=new Map([['dados','financeiros'],['preferencias','escuro']]);
+  const ordemLimpeza=[];
+  const apagouTeste=await apagarDadosLocais({storage:{removeItem:chave=>{
+    ordemLimpeza.push('remover');armazenamentoTeste.delete(chave);
+  }},chave:'dados',pausarBackup:async()=>ordemLimpeza.push('pausar')});
+  conferir('LIMPEZA_CHAVE_EXCLUSIVA',apagouTeste&&!armazenamentoTeste.has('dados')&&armazenamentoTeste.get('preferencias')==='escuro',
+    'Limpeza remove somente a chave financeira no cenário de teste',
+    'Limpeza não preservou outras configurações no cenário de teste','limpeza-dados');
+  conferir('LIMPEZA_ORDEM_BACKUP',ordemLimpeza.join(',')==='pausar,remover',
+    'Backup pausado antes da remoção local no cenário de teste',
+    'Proteção do backup não precede a remoção local','limpeza-dados');
+  const erroLimpeza=await apagarDadosLocais({storage:{removeItem:()=>{throw Error('simulação');}},chave:'dados'});
+  conferir('LIMPEZA_FALHA_SEGURA',erroLimpeza===false,
+    'Falha simulada de armazenamento não informa sucesso',
+    'Limpeza informa sucesso após falha no armazenamento','limpeza-dados');
+  conferir('LIMPEZA_FRASE_EXATA',validarFraseLimpeza('APAGAR')&&!validarFraseLimpeza('apagar')&&!validarFraseLimpeza('APAGAR '),
+    'Segunda confirmação exige a frase exata',
+    'Segunda confirmação aceita frase incompleta ou alterada','limpeza-dados');
   // Cenários artificiais: nenhuma alteração no armazenamento ou nos dados do usuário.
   const amostra={transactions:[{id:'diag-t',description:'Exemplo',type:'income',amount:10,date:'2026-11-19',category:'Salário'}],
     goals:[{id:'diag-g',name:'Reserva',kind:'goal',target:100,saved:10,deadline:''}],allocations:[],completedAportes:[]};
@@ -111,10 +131,11 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('CACHE_VERSAO',cacheInstalado.length<=1||swEmEspera,
     swEmEspera&&cacheInstalado.length>1?'Caches em transição: atualização aguarda sua autorização':'Versões de cache consistentes',
     'Mais de uma versão de cache sem atualização pendente','pwa','aviso');
-  if(['conflict','permission','error'].includes(pasta.state))adicionar('BACKUP_PASTA','aviso','Backup em pasta requer atenção e não está sincronizado');
+  if(pasta.state==='paused')adicionar('BACKUP_PASTA','aviso','Backup automático pausado após exclusão local; arquivo externo preservado');
+  else if(['conflict','permission','error'].includes(pasta.state))adicionar('BACKUP_PASTA','aviso','Backup em pasta requer atenção e não está sincronizado');
   else adicionar('BACKUP_PASTA','ok',['saved','ready','saving'].includes(pasta.state)?'Backup em pasta conectado':'Backup em pasta opcional, sem falha ativa');
   adicionar('ATUALIZADOR','ok',swEmEspera?'Nova versão disponível para instalar':'Estado da atualização consultado');
-  conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
+  conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','paused','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
   if(update.versaoEmExecucao!==undefined){
     conferir('ATUALIZADOR_VERSAO',/^v\d+$/.test(update.versaoEmExecucao),
@@ -191,9 +212,16 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
       PDF:['export-pdf','print-report'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
-      CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel']})) {
+      CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel'],
+      LIMPEZA_DADOS:['delete-all-data','delete-data-dialog','delete-data-form','delete-data-phrase','delete-data-confirm','delete-data-cancel']})) {
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');
     }
+    const entrada=document.getElementById('delete-data-phrase');
+    const botao=document.getElementById('delete-data-confirm');
+    if(entrada&&botao)conferir('LIMPEZA_CONFIRMACAO_FINAL',entrada.required&&botao.type==='submit'&&
+      botao.closest?.('form')?.id==='delete-data-form'&&Boolean(document.getElementById('delete-data-dialog')?.getAttribute('aria-labelledby')),
+      'Confirmação final exige campo obrigatório em diálogo identificado',
+      'Confirmação final da limpeza está incompleta','limpeza-dados');
   }
   // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.
   // Os achados são sugestões, sem remoção automática ou leitura dos dados pessoais.

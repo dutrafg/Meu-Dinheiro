@@ -18,6 +18,7 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
 import { criarModuloSaude } from './modules/saude.js';
 import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
+import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -376,13 +377,28 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
     onSave:()=>folderBackup?.schedule(),onCancel:()=>changeView('resumo')});
+  const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
+    apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
+      pausarBackup:()=>folderBackup?.pause(),
+      aposLimpeza:()=>{
+        data={transactions:[],goals:[],allocations:[],completedAportes:[]};
+        storageLocked=false;
+        search='';filterCategory='';
+        // A referência à meta excluída não deve ficar órfã nas preferências.
+        const prefs=preferencias.obter();
+        if(prefs.reservaGoalId)preferencias.salvar({...prefs,reservaGoalId:''});
+        for(const modal of [transactionDialog,goalDialog,reminderDialog])if(modal?.open)modal.close();
+        view='resumo';ultimaVisaoFinanceira='resumo';month=currentMonth;
+        registrar('info','DADOS_APAGADOS','dados');
+        renderNav();render();
+      }})});
   const relatorioPdf=iniciarRelatorioPdf({...common,getView:()=>ultimaVisaoFinanceira,hideBackupMenu:backup.hideBackupMenu,registrar});
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,preferencias,notificacoes,relatorioPdf,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
   if(typeof MutationObserver==='function')

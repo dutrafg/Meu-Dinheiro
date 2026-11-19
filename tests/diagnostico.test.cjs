@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const semImports = file=>(file==='dist/modules/diagnostico.js'?
-  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n`:'')+
+  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^export /gm,'')}\n`:'')+
   read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({
   transactions:[{id:'id-1',description:'Despesa CPF 123.456.789-00',type:'expense',amount:741.59,date:'2026-11-05',category:'Alimentação',recurring:false,createdAt:'2026-11-05T12:00:00.000Z'}],
@@ -84,6 +84,8 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
   const report=await context.criar({getData:dados,CATEGORIES,getFolderState:()=>({state:'saved',folder:'/Usuários/Ana/Finanças',lastSavedAt:new Date('2026-11-18T16:00:00Z')}),
     getUpdateStatus:()=>({ultimaVerificacao:1763510400000}),obterLogs:()=>[{t:'2026-11-18T00:00:00.000Z',nivel:'erro',codigo:'PWA_VERIFICACAO_FALHOU',modulo:'pwa'}]});
   assert.equal(report.integridade.erros,0);
+  for(const codigo of ['LIMPEZA_CHAVE_EXCLUSIVA','LIMPEZA_ORDEM_BACKUP','LIMPEZA_FALHA_SEGURA','LIMPEZA_FRASE_EXATA'])
+    assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
   assert.equal(report.dados.lancamentos,1);
   assert.equal(report.dados.metas,1);
   assert.equal(report.backup.pastaConectada,true);

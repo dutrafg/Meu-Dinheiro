@@ -83,6 +83,11 @@
           <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
           <div class="settings-tool-buttons"><button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button></div>
         </section>
+        <section class="settings-section settings-danger-zone" aria-labelledby="settings-danger-title">
+          <h3 id="settings-danger-title">Apagar dados financeiros</h3>
+          <p>Remove deste navegador lançamentos, metas, sonhos, aplicações e lembretes. Preferências e arquivos de backup serão preservados. O backup automático na pasta será pausado.</p>
+          <button type="button" id="delete-all-data" class="button button-danger">Apagar dados deste dispositivo</button>
+        </section>
       </section>
     </main>
     <section id="print-report" class="print-report" aria-hidden="true"></section>
@@ -137,6 +142,15 @@
     <div class="dialog-heading"><div><span class="eyebrow">CONFIRMAÇÃO</span><h2 id="confirmation-title">Confirmar ação</h2></div></div>
     <p id="confirmation-message" class="confirmation-message"></p>
     <div class="dialog-actions"><button id="confirmation-cancel" type="button" class="button button-secondary">Cancelar</button><button id="confirmation-accept" type="button" class="button button-primary">Confirmar</button></div>
+  </dialog>
+  <dialog id="delete-data-dialog" class="form-dialog confirmation-dialog delete-data-dialog" aria-labelledby="delete-data-title" aria-describedby="delete-data-description">
+    <form id="delete-data-form" autocomplete="off">
+      <div class="dialog-heading"><div><span class="eyebrow">CONFIRMAÇÃO FINAL · 2 DE 2</span><h2 id="delete-data-title">Apagar definitivamente os dados locais</h2></div></div>
+      <p id="delete-data-description">Esta ação não pode ser desfeita dentro do aplicativo. Os backups externos permanecem intactos. Para confirmar, digite <strong>APAGAR</strong> exatamente como aparece.</p>
+      <label for="delete-data-phrase">Frase de confirmação</label>
+      <input id="delete-data-phrase" name="frase" type="text" autocapitalize="characters" spellcheck="false" autocomplete="off" required aria-describedby="delete-data-description" />
+      <div class="dialog-actions"><button id="delete-data-cancel" type="button" class="button button-secondary">Cancelar</button><button id="delete-data-confirm" type="submit" class="button button-danger" disabled>Apagar meus dados</button></div>
+    </form>
   </dialog>
   <dialog id="diagnostics-dialog" class="form-dialog diagnostics-dialog" aria-labelledby="diagnostics-title">
     <div class="dialog-heading"><div><span class="eyebrow">INTEGRIDADE LOCAL</span><h2 id="diagnostics-title">Diagnóstico do aplicativo</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>

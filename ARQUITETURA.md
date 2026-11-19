@@ -76,6 +76,7 @@ dist/
 - Para modificar somente a interface, altere o arquivo da área em `dist/modules/` e/ou `dist/css/` correspondente.
 - Ao criar, renomear ou remover qualquer script/CSS/ícone, atualize `ASSETS` em `dist/sw.js` e incremente a versão de `CACHE`.
 - **Versão visível e sincronizada:** `VERSAO_EM_EXECUCAO` em `dist/modules/atualizador.js` representa o código atualmente aberto e deve ser atualizado junto com `CACHE` em `dist/sw.js` a cada publicação. O teste `tests/atualizador.test.cjs` impede a publicação caso os números não coincidam. O Diagnóstico confere se a versão aparece corretamente em Ajustes.
+- **Exclusão local protegida:** `modules/limpeza-dados.js` orquestra confirmação visual, frase `APAGAR` e exclusão somente da chave financeira; `folder-backup.js` pausa antes de apagar, aguarda gravações ativas e protege backups externos. `tests/limpeza-dados.test.cjs` e `tests/folder-backup.test.cjs` cobrem cancelamento, erros e recuperação.
 - A cada publicação que modificar o app, altere o identificador `CACHE` no Service Worker para que uma nova versão seja detectada. O SW instala em espera; apenas o clique em **Atualizar agora** envia `SKIP_WAITING`, que aciona `controllerchange` e recarrega a página. Não force a atualização durante a edição de dados.
 - Não carregue módulos por URLs absolutas: os caminhos relativos funcionam tanto na raiz da Vercel quanto na raiz publicada no GitHub Pages.
 - Não invoque `localStorage.clear()` ou apague registros como parte de atualização, teste ou recuperação.

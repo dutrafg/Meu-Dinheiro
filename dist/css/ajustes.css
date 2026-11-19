@@ -46,6 +46,10 @@
 .settings-preview-hint{font-size:.8rem;line-height:1.5;color:var(--sub);margin:13px 0 0}
 .settings-section{border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;background:var(--card)}
 .settings-section h3{font-size:.95rem;margin:0 0 13px}
+.settings-danger-zone{border-color:color-mix(in srgb,#b91c1c 40%,var(--border))}
+.settings-danger-zone h3{color:var(--text)}
+.settings-danger-zone p{color:var(--sub);font-size:.86rem;line-height:1.6;margin:0 0 14px}
+.settings-danger-zone .button-danger{min-height:44px;max-width:100%;white-space:normal;text-align:center}
 .settings-section label{font-size:.89rem}
 .settings-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 3px;border-bottom:1px solid var(--border)}
 .settings-row:last-of-type{border-bottom:0}

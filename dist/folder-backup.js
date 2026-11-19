@@ -80,6 +80,7 @@
     let completed = 0;
     let writing = null;
     let lastSavedAt = null;
+    let suspended = false;
     const status = (code, message) => { state = code; onStatus?.({code, message, folder: directory?.name || '', lastSavedAt}); };
     const snapshot = () => JSON.stringify({...getSnapshot(), exportedAt:now().toISOString()}, null, 2);
 
@@ -97,17 +98,22 @@
       return {allowed:true, text};
     }
     async function initialize() {
+      if (suspended) return;
       if (!store || !chooseDirectory) { status('unsupported', 'Este navegador não permite salvar diretamente em pastas. Use o backup JSON.'); return; }
       try {
         const saved = await store.load();
+        if (suspended) return;
         if (!saved) { status('off', 'Escolha uma pasta para ativar o backup automático.'); return; }
         directory = saved;
-        if (!await permission(directory)) { status('permission', 'Autorize novamente o acesso para continuar salvando.'); return; }
+        const permitted = await permission(saved);
+        if (suspended) return;
+        if (!permitted) { status('permission', 'Autorize novamente o acesso para continuar salvando.'); return; }
         const checked = await protectExisting(directory, false);
+        if (suspended) return;
         if (!checked.allowed) { status('conflict', 'A pasta contém dados diferentes. Restaure o JSON ou selecione a pasta novamente para escolher o que manter.'); return; }
         lastWritten = checked.text;
         status('ready', 'Pasta conectada. As próximas alterações serão salvas automaticamente.');
-      } catch (error) { status('error', error.message || 'Não foi possível verificar a pasta.'); }
+      } catch (error) { if (!suspended) status('error', error.message || 'Não foi possível verificar a pasta.'); }
     }
     async function connect() {
       if (!chooseDirectory || !store) { status('unsupported', 'Seleção de pasta indisponível neste navegador.'); return false; }
@@ -122,6 +128,7 @@
         const checked = await protectExisting(selected, true);
         if (!checked.allowed) return false;
         await store.save(selected);
+        suspended = false;
         directory = selected;
         lastWritten = checked.text;
         state = 'ready';
@@ -142,6 +149,7 @@
         }
         const checked = await protectExisting(directory, true);
         if (!checked.allowed) return false;
+        suspended = false;
         lastWritten = checked.text;
         state = 'ready';
         pending++;
@@ -168,10 +176,11 @@
     }
     async function flush() {
       if (writing) { await writing; if (pending <= completed) return true; }
+      if (suspended) return false;
       if (!directory || !['ready','saved','saving'].includes(state)) return false;
       const work = (async () => {
         try {
-          while (completed < pending) {
+          while (!suspended && completed < pending) {
             const version = pending;
             if (!await writeSnapshot()) return false;
             completed = version;
@@ -187,17 +196,29 @@
       finally { if (writing === work) writing = null; }
     }
     function schedule() {
+      if (suspended) return;
       if (!directory || !['ready','saved','saving'].includes(state)) return;
       pending++;
       if (timer !== null) cancelDefer(timer);
       timer = defer(() => { timer = null; void flush(); }, 350);
     }
     async function saveNow() {
+      if (suspended) return false;
       if (timer !== null) { cancelDefer(timer); timer = null; }
       pending++;
       return flush();
     }
-    return {initialize, connect, reauthorize, schedule, saveNow, getState:()=>({state,folder:directory?.name||'',lastSavedAt})};
+    async function pause() {
+      // Espera escritas em andamento antes de autorizar a exclusão dos dados locais.
+      suspended = true;
+      if (timer !== null) { cancelDefer(timer); timer = null; }
+      if (writing) await writing;
+      directory = null;
+      pending = completed;
+      lastWritten = null;
+      status('paused', 'Backup em pasta pausado após apagar dados. O arquivo existente foi preservado. Reconecte manualmente para reativar.');
+    }
+    return {initialize, connect, reauthorize, schedule, saveNow, pause, getState:()=>({state,folder:directory?.name||'',lastSavedAt})};
   }
 
   function createBrowserManager({getSnapshot,confirmReplace,onStatus}) {

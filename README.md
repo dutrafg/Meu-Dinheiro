@@ -88,9 +88,16 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Auditoria de CSS e funções possivelmente sem uso | `dist/modules/auditoria-codigo.js` |
 | Diálogos de confirmação e avisos | `dist/modules/dialogos.js` |
 | Aparência e painel de Ajustes | `dist/modules/ajustes.js` + `dist/css/ajustes.css` |
+| Exclusão de dados financeiros com dupla confirmação | `dist/modules/limpeza-dados.js` + `dist/css/dialogos.css` |
 | Preferências persistidas e validadas | `dist/modules/preferencias.js` |
 | Regras puras de aporte | `dist/modules/regras-financeiras.js` |
 | Inventário e testes obrigatórios por módulo | `dist/modules/catalogo-diagnostico.js` + `dist/modules/registro-modulos.js` |
+
+### Apagar dados em Ajustes
+
+Em **Ajustes → Apagar dados financeiros**, a exclusão local exige **duas confirmações**: aceitar o aviso e digitar exatamente `APAGAR` no diálogo final. A função remove somente o armazenamento de lançamentos, metas, sonhos, aplicações e lembretes concluídos deste navegador. Mantém tema, cores e demais preferências (exceto o vínculo com a reserva removida), avisos dispensados e arquivos de backup exportados.
+
+O backup automático em pasta é pausado **antes** de remover os registros, aguarda gravações pendentes e não substitui silenciosamente o arquivo externo por um backup vazio. A reconexão é manual; se houver diferenças, exige confirmação e preserva uma cópia histórica antes de substituir. Não é possível desfazer a exclusão sem restaurar um backup existente. O Diagnóstico inclui o módulo, a interface e o estado de backup pausado; testes Node cobrem cancelamento, frase, falhas de armazenamento e preservação dos backups.
 | Barras de progresso reutilizáveis | `dist/css/progresso.css` |
 | Aparência, layout e responsividade | `dist/css/` (carregado por `dist/prototype.css`) |
 | Estado, persistência e navegação | `dist/app.js` |

@@ -49,6 +49,83 @@ function fixture(directory=fakeDirectory(),confirmReplace=()=>true) {
   return {directory,manager,statuses,setData:next=>{data=next;},store};
 }
 
+test('Apagar dados pausa backup agendado e não altera arquivo nem histórico externo',async()=>{
+  const dir=fakeDirectory();
+  const callbacks=new Map();
+  let seq=0;
+  let data={...base(),transactions:[{id:'renda',amount:1000}]};
+  const manager=backup.createManager({chooseDirectory:async()=>dir,
+    store:{load:async()=>null,save:async()=>{}},getSnapshot:()=>data,confirmReplace:async()=>true,
+    defer:fn=>{const id=++seq;callbacks.set(id,fn);return id;},cancelDefer:id=>callbacks.delete(id)});
+  await manager.connect();
+  const anterior=dir.files.get(FILE);
+  const historicoAnterior=dir.history.get([...dir.history.keys()][0]);
+  data={...base(),transactions:[{id:'renda',amount:500}]};
+  manager.schedule();
+  assert.equal(callbacks.size,1);
+  await manager.pause();
+  assert.equal(callbacks.size,0);
+  assert.equal(manager.getState().state,'paused');
+  data=base();
+  manager.schedule();
+  assert.equal(await manager.saveNow(),false);
+  assert.equal(dir.files.get(FILE),anterior);
+  assert.equal(dir.history.get([...dir.history.keys()][0]),historicoAnterior);
+});
+
+test('Reconectar após exclusão exige confirmação para substituir backup existente e guarda histórico',async()=>{
+  const dir=fakeDirectory();
+  let permite=false;
+  let data={...base(),transactions:[{id:'renda',amount:1000}]};
+  const manager=backup.createManager({chooseDirectory:async()=>dir,
+    store:{load:async()=>null,save:async()=>{}},getSnapshot:()=>data,confirmReplace:async()=>permite});
+  await manager.connect();
+  const anterior=dir.files.get(FILE);
+  await manager.pause();
+  data=base();
+  assert.equal(await manager.connect(),false);
+  assert.equal(dir.files.get(FILE),anterior);
+  permite=true;
+  assert.equal(await manager.connect(),true);
+  assert.equal(JSON.parse(dir.files.get(FILE)).transactions.length,0);
+  assert.ok([...dir.history.values()].includes(anterior),'Backup anterior preservado em histórico');
+});
+
+test('Pausa aguarda uma escrita em andamento antes de liberar a exclusão local',async()=>{
+  const dir=fakeDirectory();
+  const f=fixture(dir);
+  await f.manager.connect();
+  let liberarEscrita;
+  let comecouEscrita;
+  const esperouInicio=new Promise(resolve=>{comecouEscrita=resolve;});
+  const esperaDisco=new Promise(resolve=>{liberarEscrita=resolve;});
+  const abrirArquivo=dir.getFileHandle.bind(dir);
+  dir.getFileHandle=async(name,options)=>{
+    const arquivo=await abrirArquivo(name,options);
+    if(name!==FILE)return arquivo;
+    return {...arquivo,createWritable:async()=>{
+      const gravador=await arquivo.createWritable();
+      return {...gravador,close:async()=>{
+        comecouEscrita();
+        await esperaDisco;
+        await gravador.close();
+      }};
+    }};
+  };
+  f.setData({...base(),transactions:[{id:'salario',amount:250}]});
+  const gravacao=f.manager.saveNow();
+  await esperouInicio;
+  let pausaFinalizada=false;
+  const pausa=f.manager.pause().then(()=>{pausaFinalizada=true;});
+  await Promise.resolve();
+  assert.equal(pausaFinalizada,false,'A exclusão deve aguardar o término da gravação');
+  liberarEscrita();
+  await Promise.all([gravacao,pausa]);
+  assert.equal(pausaFinalizada,true);
+  assert.equal(f.manager.getState().state,'paused');
+  assert.equal(JSON.parse(dir.files.get(FILE)).transactions[0].amount,250);
+});
+
 test('Primeira autorização grava dados completos e cópia diária', async () => {
   const f=fixture();
   await f.manager.initialize();

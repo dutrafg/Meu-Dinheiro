@@ -50,6 +50,16 @@
 .confirmation-dialog{width:min(94vw,430px)}
 .confirmation-message{font-size:.92rem;line-height:1.6;color:var(--text);margin:15px 0 23px;overflow-wrap:anywhere}
 .confirmation-dialog .button-danger{background:var(--red);color:#fff}
+.confirmation-dialog .button-danger,.settings-danger-zone .button-danger{background:#b91c1c;color:#fff;border:1px solid #b91c1c}
+.confirmation-dialog .button-danger:hover,.settings-danger-zone .button-danger:hover{background:#991b1b;border-color:#991b1b}
+.confirmation-dialog .button-danger:focus-visible,.settings-danger-zone .button-danger:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.confirmation-dialog .button-danger:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.3)}
+.delete-data-dialog p{line-height:1.6;font-size:.89rem;color:var(--text);margin:13px 0}
+.delete-data-dialog form>label{display:block;font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.delete-data-dialog input{display:block;width:100%;min-height:44px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:10px;padding:10px 12px;letter-spacing:.05em}
+.delete-data-dialog input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.delete-data-dialog .dialog-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.delete-data-dialog .dialog-actions .button{flex:1 1 145px;min-height:44px}
 .diagnostics-dialog{width:min(94vw,600px);max-height:85dvh;overflow-y:auto}
 .diagnostics-privacy{padding:12px;border-radius:11px;background:var(--green-bg);font-size:.81rem;line-height:1.55;margin:8px 0 14px}
 .diagnostics-dialog #diagnostics-summary{font-weight:740;font-size:.9rem;margin:8px 0 13px}
