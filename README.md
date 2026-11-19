@@ -4,7 +4,7 @@ Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progre
 
 ## Áreas do aplicativo
 
-- **Resumo:** visão financeira, últimas transações e dois gráficos de gastos por categoria em um único card.
+- **Resumo:** visão financeira, últimas transações, dois gráficos de gastos por categoria e o painel de Saúde Financeira.
 - **Renda:** salário base, Personal e demais entradas; lembretes de aporte configuráveis (padrão de 10% sobre Salário, Salário base e Personal).
 - **Despesas:** lançamentos e categorias de gastos.
 - **Metas:** reserva, objetivos de economia e estimativa ilustrativa de CDB a 100% do CDI a partir de dados do Banco Central.
@@ -16,13 +16,31 @@ O aplicativo também oferece importação e exportação CSV, backup/restauraç�
 
 Nos três pontos (`⋯`) do cabeçalho, selecione **Abrir Ajustes e diagnósticos**. Escolha tema **claro, escuro ou automático**, seis cores de destaque, percentual de aporte (0%–100%), categorias de renda consideradas e qual meta é a reserva principal. A cor de destaque não altera as cores financeiras de entradas ou saídas.
 
+Tema e cor mudam **assim que você seleciona**. Use **Salvar** no cabeçalho dos Ajustes para manter a aparência. Fechar ou Cancelar antes de salvar restaura a escolha anterior. O Diagnóstico agora compara a configuração salva com o fundo, os botões e as cores realmente aplicados pela folha CSS.
+
 As preferências ficam em uma chave própria do navegador, sem regravar lançamentos. O planejamento em **Metas** e o sino usam as regras selecionadas; nenhum aporte é transferido automaticamente. Backups JSON e em pasta incluem preferências e são compatíveis com os arquivos antigos.
 
 CSV, backups, atualização e diagnóstico ficam centralizados em seções expansíveis de Ajustes. Também há metadados para adicionar à tela inicial no iOS.
 
+## Saúde Financeira (Etapa 3)
+
+O painel **Saúde financeira** do Resumo apresenta três indicadores informativos:
+
+- **Taxa de poupança:** saldo do mês dividido pela renda do mês (em percentual). Sem renda, exibe `—`.
+- **Fôlego da reserva:** reserva principal dividida pela média diária das despesas dos últimos três meses até a data atual. Sem despesas, exibe `—`, evitando uma falsa cobertura infinita.
+- **Situação:** 🌱 Crescendo (poupança ≥ 15%), 😌 Estável (saldo não negativo), ⚠️ Apertado (déficit com cobertura ≥ 30 dias) ou 🔥 Atenção (déficit com cobertura menor). Sem movimentações, informa que faltam dados.
+
+São estimativas baseadas no que foi registrado no aparelho. Não movimentam dinheiro nem prometem rendimento futuro.
+
+## Notificações e relatório PDF (Etapa 4)
+
+Toque no **sino** e em **Limpar notificações** para dispensar os lembretes pendentes. Uma confirmação evita limpezas acidentais. Isso **não marca aportes como realizados e não exclui lançamentos**. O botão **Restaurar avisos ocultos** permite recuperar a lista; novas rendas continuam produzindo lembretes. As dispensas são salvas em uma chave separada dos dados financeiros.
+
+Em **Ajustes → Arquivos, importação e backup → Imprimir / salvar PDF da tela**, o navegador abre a impressão da área financeira atual, sem botões nem menus. Selecione **Salvar como PDF** no diálogo nativo. Não há envio de dados para servidores do aplicativo.
+
 ## Diagnóstico e integridade (Etapas 1–2)
 
-Em **Ajustes → Atualizações e integridade → Executar diagnóstico completo**, o aplicativo verifica, sem modificar registros, dezenas de itens independentes: datas, valores, IDs, categorias, vínculos, lembretes, limites de backup, bibliotecas, interface, cada módulo, preferências, armazenamento, cache PWA, atualização e pasta de backup.
+Em **Ajustes → Atualizações e integridade → Executar diagnóstico completo**, o aplicativo verifica, sem modificar registros, dezenas de itens independentes: datas, valores, IDs, categorias, vínculos, lembretes, notificações dispensadas, estilo efetivo do tema e das cores, Saúde Financeira, PDF, limites de backup, bibliotecas, interface, cada módulo, preferências, armazenamento, cache PWA, atualização e pasta de backup.
 
 Cada módulo em `dist/modules/` deve constar no catálogo com uma autoverificação funcional. Testes de arquitetura impedem que arquivos novos fiquem sem registro. Não há limite fixo para a quantidade de verificações. A **animação** da barra segue 5 segundos iniciais e mais 0,5 segundo por verificação acima das 9 primeiras, limitada a **25 segundos**. O relógio não interrompe testes: todos são executados, mesmo quando a análise demorar mais do que a animação. O relatório JSON só é liberado após concluir.
 
@@ -43,6 +61,9 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Área | Arquivo principal |
 | --- | --- |
 | Resumo e gráficos | `dist/modules/resumo.js` |
+| Saúde Financeira | `dist/modules/saude.js` + `dist/css/saude.css` |
+| Limpeza e restauração de notificações | `dist/modules/notificacoes.js` |
+| Impressão e PDF | `dist/modules/relatorio-pdf.js` + `dist/css/impressao.css` |
 | Renda e Despesas | `dist/modules/lancamentos.js` |
 | Metas, Reserva e Sonho | `dist/modules/objetivos.js` |
 | Backup JSON e pasta do PC | `dist/modules/backup.js` |
@@ -58,7 +79,7 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Regras puras de aporte | `dist/modules/regras-financeiras.js` |
 | Inventário e testes obrigatórios por módulo | `dist/modules/catalogo-diagnostico.js` + `dist/modules/registro-modulos.js` |
 | Aparência, layout e responsividade | `dist/css/` (carregado por `dist/prototype.css`) |
-| Estado, persistência, navegação e lembretes | `dist/app.js` |
+| Estado, persistência e navegação | `dist/app.js` |
 
 Consulte [ARQUITETURA.md](ARQUITETURA.md) antes de alterar um módulo. Mantenha o formato de dados e o fluxo de gravação sem mudanças silenciosas: usuários existentes precisam continuar acessando seus lançamentos e seus arquivos de backup.
 

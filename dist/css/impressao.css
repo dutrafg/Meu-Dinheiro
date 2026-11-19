@@ -1,0 +1,17 @@
+/* Ficha de impressão da área em exibição; o navegador oferece Salvar como PDF. */
+.print-report-heading{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  :root[data-theme]{color-scheme:light;--bg:#fff;--card:#fff;--text:#17181c;--sub:#555;--border:#ddd}
+  html,body{background:#fff!important;color:#17181c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .header,.desktop-nav,.mobile-nav,.fab,#toast,.toast,.app-update-alert,dialog,.month-control button,.entry-actions,.quick-section,.page-header .button-primary,.proto-history summary{display:none!important}
+  .app-shell{width:100%;max-width:none;padding:0;margin:0}
+  .print-report-heading{display:block;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid #17181c}
+  .print-report-heading strong{display:block;font-size:17pt}
+  .print-report-heading span{display:block;margin-top:3px;font-size:10pt;color:#555}
+  #main-content{width:100%;max-width:none;display:block}
+  .card,.saude-card,.proto-overview,.proto-expense-chart-panel,.stat-card,.minicard{break-inside:avoid;page-break-inside:avoid;box-shadow:none}
+  .card{background:#fff!important;border:1px solid #ddd}
+  .proto-history:not([open]){display:none!important}
+  a{color:inherit;text-decoration:none}
+}

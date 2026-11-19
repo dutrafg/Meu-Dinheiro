@@ -16,6 +16,10 @@
 .tipo-toggle button.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .settings-dialog{width:min(94vw,620px);max-height:90dvh;overflow-y:auto}
 .settings-dialog #settings-form{display:block}
+.settings-dialog>.settings-heading{position:sticky;top:0;z-index:5;background:var(--card);padding:9px 4px 12px;border-bottom:1px solid var(--border)}
+.settings-heading-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.settings-heading-actions .button{min-height:40px;padding:9px 15px}
+.settings-preview-hint{font-size:.8rem;line-height:1.5;color:var(--sub);margin:13px 0 0}
 .settings-section{border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;background:var(--card)}
 .settings-section h3{font-size:.95rem;margin:0 0 13px}
 .settings-section label{margin:9px 0;font-size:.89rem}
@@ -23,6 +27,8 @@
 .settings-section legend{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:10px}
 .settings-colors,.settings-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .settings-section label.settings-color-option,.settings-section label.settings-check-option{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:10px 8px;border:1px solid var(--border);border-radius:10px;font-weight:600;font-size:.79rem;cursor:pointer}
+.settings-section label.settings-color-option:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+:root[data-theme="escuro"] .settings-section label.settings-color-option:has(input:checked){background:color-mix(in srgb,var(--accent) 18%,var(--card))}
 .settings-section .settings-color-option input,.settings-section .settings-check-option input{flex:none;width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent)}
 .settings-color-dot{width:17px;height:17px;flex:none;border-radius:50%;border:1px solid #0002}
 .settings-tools summary{font-size:.94rem;font-weight:750;cursor:pointer}
@@ -38,4 +44,4 @@
 .diagnostics-progress{height:13px;width:100%;background:var(--border);border-radius:99px;overflow:hidden}
 .diagnostics-progress span{height:100%;width:0%;display:block;border-radius:99px;background:var(--accent);transition:width .2s linear}
 .diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
-@media(max-width:540px){.settings-colors,.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-dialog{max-height:91dvh}.settings-section{padding:13px}}
+@media(max-width:540px){.settings-colors,.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-dialog{max-height:91dvh}.settings-section{padding:13px}.settings-heading-actions .button{padding:9px 12px}}

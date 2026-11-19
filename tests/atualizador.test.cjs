@@ -138,3 +138,20 @@ test('Service Worker espera confirmação antes de skipWaiting', async () => {
   events.message({data:{type:'SKIP_WAITING'}});
   assert.equal(skips,1);
 });
+
+test('Registro do Service Worker falho diferencia segurança e rede sem expor dados do erro',async()=>{
+  for(const nome of ['SecurityError','TypeError']){
+    const events={};const logs=[];
+    const button=fakeElement(),state=fakeElement();
+    const context={document:{readyState:'complete',getElementById:id=>id==='check-update'?button:id==='app-update-status'?state:fakeElement(),addEventListener:()=>{}},
+      window:{addEventListener:()=>{},setInterval:()=>0},navigator:{onLine:true,serviceWorker:{addEventListener:()=>{},register:async()=>{const error=new Error('URL privada, não registrar');error.name=nome;throw error;}}},
+      location:{protocol:'https:'}};
+    vm.runInNewContext(`${read('dist/modules/atualizador.js').replace(/^export /gm,'')}\nthis.iniciar=iniciarAtualizador;`,context);
+    context.iniciar({notify:()=>{},registrar:(...val)=>logs.push(val)});
+    await flush();
+    assert.ok(logs.some(v=>v[1]==='PWA_REGISTRO_FALHOU'));
+    assert.ok(logs.some(v=>v[1]=== (nome==='SecurityError'?'PWA_REGISTRO_SEGURANCA':'PWA_REGISTRO_REDE_ARQUIVO')));
+    assert.doesNotMatch(JSON.stringify(logs),/URL privada/);
+    assert.equal(state.dataset.state,'error');
+  }
+});

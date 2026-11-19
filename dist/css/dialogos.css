@@ -38,6 +38,8 @@
 .proto-cdi-estimate strong{color:var(--green)}
 .proto-cdi-estimate small{display:block;color:var(--sub);margin-top:5px}
 .proto-reminder-list{max-height:50dvh;overflow-y:auto}
+.reminder-actions{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0}
+.reminder-actions .button{min-height:40px;font-size:.82rem;flex:1 1 150px}
 .proto-reminder-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding:14px 0}
 .proto-reminder-item strong{display:block;font-size:.92rem;overflow-wrap:anywhere}
 .proto-reminder-item small{display:block;margin:5px 0;color:var(--sub);font-size:.77rem}

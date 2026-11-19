@@ -57,6 +57,7 @@
       <input type="file" id="csv-import-file" accept="text/csv,.csv,text/plain" hidden />
     </header>
     <nav class="desktop-nav" aria-label="Áreas do aplicativo" id="desktop-nav"></nav>
+    <div class="print-report-heading" aria-hidden="true"><strong>Meu Dinheiro</strong><span id="print-report-title"></span></div>
     <main id="main-content" tabindex="-1" aria-live="polite"></main>
     <button type="button" id="quick-add" class="fab" aria-label="Adicionar lançamento">+</button>
     <nav class="mobile-nav" aria-label="Áreas do aplicativo" id="mobile-nav"></nav>
@@ -101,6 +102,7 @@
   <dialog id="reminder-dialog" class="form-dialog reminder-dialog">
     <div class="dialog-heading"><div><span class="eyebrow">LEMBRETES</span><h2>🔔 Hora de guardar</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
     <p class="field-hint">Ao receber uma renda, lembre-se de fazer o aporte. Marcar como feito só confirma o lembrete; não movimenta dinheiro.</p>
+    <div class="reminder-actions"><button type="button" id="notifications-clear" class="button button-secondary">Limpar notificações</button><button type="button" id="notifications-restore" class="button button-secondary hidden">Restaurar avisos ocultos</button></div>
     <div id="reminder-list" class="proto-reminder-list"></div>
     <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Fechar</button></div>
   </dialog>
@@ -110,11 +112,12 @@
     <div class="dialog-actions"><button id="confirmation-cancel" type="button" class="button button-secondary">Cancelar</button><button id="confirmation-accept" type="button" class="button button-primary">Confirmar</button></div>
   </dialog>
   <dialog id="settings-dialog" class="form-dialog settings-dialog" aria-labelledby="settings-title">
-    <div class="dialog-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title">⚙️ Ajustes</h2></div><button type="button" id="settings-cancel" class="icon-button" aria-label="Fechar ajustes"><svg><use href="#i-close"/></svg></button></div>
+    <div class="dialog-heading settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title">⚙️ Ajustes</h2></div><div class="settings-heading-actions"><button type="submit" form="settings-form" class="button button-primary" id="settings-save-top">Salvar</button><button type="button" id="settings-cancel" class="icon-button" aria-label="Fechar ajustes"><svg><use href="#i-close"/></svg></button></div></div>
     <form id="settings-form">
       <section class="settings-section"><h3>Aparência</h3>
         <label>Tema <select name="tema"><option value="auto">Automático (sistema)</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></label>
-        <fieldset><legend>Cor de destaque</legend><div id="settings-colors" class="settings-colors"></div></fieldset>
+        <fieldset><legend>Cor de destaque (botões e navegação)</legend><div id="settings-colors" class="settings-colors"></div></fieldset>
+        <p class="settings-preview-hint">A aparência muda na hora para você testar. Toque em <strong>Salvar</strong> para manter ou em <strong>Cancelar</strong> para desfazer.</p>
       </section>
       <section class="settings-section"><h3>Planejamento do aporte</h3>
         <label>Percentual por renda selecionada <input name="percentual" type="number" min="0" max="100" step="0.01" required /></label>
@@ -125,7 +128,7 @@
       <div class="dialog-actions"><button class="button button-secondary" id="settings-form-cancel" type="button">Cancelar</button><button class="button button-primary" type="submit">Salvar ajustes</button></div>
     </form>
     <details class="settings-section settings-tools"><summary>Arquivos, importação e backup</summary>
-      <div class="settings-tool-buttons"><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
+      <div class="settings-tool-buttons"><button type="button" id="export-pdf">Imprimir / salvar PDF da tela</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
       <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
       <p class="folder-backup-warning">Backup JSON sem criptografia: proteja a pasta.</p>
     </details>

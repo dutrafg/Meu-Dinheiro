@@ -83,9 +83,13 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
       observarInstalacao(registration.installing);
       if (!mostrarAtualizacao()) mostrarEstado('Atualizações automáticas ativadas.');
       await verificarAtualizacoes();
-    } catch {
+    } catch (error) {
       registrar('erro','PWA_REGISTRO_FALHOU','pwa');
-      mostrarEstado('Não foi possível ativar as atualizações. Tente verificar novamente.', 'error');
+      // Apenas o nome padronizado do erro: nunca registrar URL, caminho ou mensagem bruta.
+      if(error?.name==='SecurityError')registrar('aviso','PWA_REGISTRO_SEGURANCA','pwa');
+      else if(error?.name==='TypeError')registrar('aviso','PWA_REGISTRO_REDE_ARQUIVO','pwa');
+      mostrarEstado(navigator.onLine===false?'Sem conexão para ativar atualizações. Tente novamente quando estiver online.':
+        'Não foi possível ativar as atualizações. Confira o HTTPS, a conexão e tente novamente.', 'error');
     }
   }
 

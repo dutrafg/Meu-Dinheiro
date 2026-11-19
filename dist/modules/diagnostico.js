@@ -10,7 +10,7 @@ export function calcularDuracaoDiagnostico(totalVerificacoes) {
 
 // Nenhum lançamento, nome, descrição, valor, caminho de pasta ou objeto de erro sai no JSON.
 export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderState=()=>null,getUpdateStatus=()=>null,
-  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,obterLogs=()=>[]}) {
+  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,obterLogs=()=>[]}) {
   const dados = getData();
   const integridade = verificarIntegridade(dados,CATEGORIES);
   const transactions = Array.isArray(dados?.transactions) ? dados.transactions : [];
@@ -85,6 +85,11 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
+  const notificacoes=getNotificationStatus();
+  if(notificacoes){
+    conferir('NOTIFICACOES_PERSISTENCIA',notificacoes.armazenamentoOk,'Avisos podem ser dispensados e restaurados','Não foi possível gravar ou ler os avisos dispensados','notificacoes','aviso');
+    conferir('NOTIFICACOES_OCULTAS',Number.isSafeInteger(notificacoes.ocultas)&&notificacoes.ocultas>=0,'Contagem de avisos ocultos válida','Contagem de avisos ocultos inválida','notificacoes');
+  }
   const prefs=getPreferences();
   if(prefs){
     conferir('PREF_TEMA',TEMAS.includes(prefs.tema),'Tema configurado válido','Tema desconhecido','preferencias');
@@ -94,12 +99,37 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     conferir('PREF_RESERVA',!prefs.reservaGoalId||dados.goals?.some(g=>g.id===prefs.reservaGoalId&&g.kind==='goal'),'Meta principal de reserva localizada','Meta principal da reserva foi removida','objetivos','aviso');
     conferir('PREF_CATEGORIAS_VAZIAS',prefs.categoriasAporte.length>0,'Há categorias consideradas no aporte','Nenhuma categoria selecionada para aporte','regras-financeiras','aviso');
   }
+  // As preferências podem estar corretas no armazenamento e não ter efeito visual.
+  // Conferir os estilos calculados detecta CSS ausente, tema ignorado e cor não aplicada.
+  if(prefs&&typeof document!=='undefined'&&document.documentElement&&document.body&&typeof window.getComputedStyle==='function'){
+    try {
+      const root=document.documentElement;
+      const estilo=window.getComputedStyle(root);
+      const corEsperada=CORES[prefs.cor];
+      const escuro=prefs.tema==='escuro'||(prefs.tema==='auto'&&Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches));
+      const fundoEsperado=escuro?'#131417':'#f5f6f8';
+      const rgb=hex=>`rgb(${[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(', ')})`;
+      const normalizarCor=valor=>String(valor||'').toLowerCase().replace(/\s+/g,'');
+      conferir('APARENCIA_TEMA_ATIVO',root.dataset.theme===prefs.tema,'Tema selecionado está ativo','Tema salvo não foi aplicado à página','ajustes');
+      conferir('APARENCIA_COR_ATIVA',root.dataset.accent===prefs.cor,'Cor selecionada está ativa','Cor salva não foi aplicada à página','ajustes');
+      conferir('APARENCIA_TEMA_CSS',normalizarCor(estilo.getPropertyValue('--bg'))===fundoEsperado,'Variáveis do tema carregadas','Variáveis CSS do tema não correspondem à seleção','ajustes');
+      conferir('APARENCIA_COR_CSS',normalizarCor(estilo.getPropertyValue('--accent'))===corEsperada,'Variável CSS da cor de destaque carregada','Variável CSS da cor de destaque não corresponde à seleção','ajustes');
+      conferir('APARENCIA_FUNDO',normalizarCor(window.getComputedStyle(document.body).backgroundColor)===normalizarCor(rgb(fundoEsperado)),
+        'Fundo da tela corresponde ao tema','Fundo visível não corresponde ao tema configurado','ajustes');
+      conferir('APARENCIA_ESQUEMA',String(estilo.colorScheme||'').split(' ').includes(escuro?'dark':'light'),
+        'Esquema claro/escuro corresponde à seleção','Esquema de cores nativo não corresponde ao tema','ajustes');
+      const botao=document.querySelector('.fab, .button-primary, .btn-primary');
+      if(botao)conferir('APARENCIA_BOTAO',normalizarCor(window.getComputedStyle(botao).backgroundColor)===normalizarCor(rgb(corEsperada)),
+        'Cor de destaque aparece nos botões','Botões não receberam a cor de destaque','ajustes');
+    }catch{adicionar('APARENCIA_INSPECAO','aviso','O navegador não permitiu verificar os estilos aplicados','ajustes');}
+  }
   if(typeof document!=='undefined'){
     for(const [codigo,ids] of Object.entries({
       NAVEGACAO:['desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
-      OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],
+      OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-dialog','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
+      PDF:['export-pdf','print-report-title'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
       CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel']})) {
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');
@@ -144,6 +174,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
+    notificacoes:notificacoes?{ocultas:notificacoes.ocultas,armazenamentoOk:Boolean(notificacoes.armazenamentoOk)}:null,
     integridade,bibliotecas,logs:obterLogs()
   };
 }

@@ -14,13 +14,18 @@ dist/
   css/
     estrutura.css           # Cores, cabeçalho, navegação e layout geral
     resumo.css             # Painéis, gráficos e cartões
+    saude.css              # Indicadores de saúde financeira, desktop e celular
     objetivos.css          # Metas, sonho e componentes de progresso
     dialogos.css           # Formulários, CSV, reserva e lembretes
     responsivo.css         # Smartphone, tablet e tema do sistema
     ajustes.css            # Tema, cores e janela de Ajustes
+    impressao.css          # Saída A4 sem controles, incluindo tema claro
   app.js                   # Orquestração, persistência e eventos legados
   modules/
     resumo.js              # Tela Resumo e gráficos por categoria
+    saude.js               # Poupança, fôlego e temperatura: regras puras e card
+    notificacoes.js        # Dispensar/restaurar lembretes sem concluir aportes
+    relatorio-pdf.js       # Imprimir tela atual e salvar PDF via navegador
     lancamentos.js         # Renda/Despesas, linhas e formulário
     objetivos.js           # Metas/Sonho, progresso, reserva e formulário
     backup.js              # Backup completo JSON e cópias na pasta
@@ -50,6 +55,7 @@ dist/
 4. Os controladores alteram os registros por `persist(next)`, que atualiza `localStorage` e agenda o backup automático em pasta, quando habilitado.
 5. `render()` atualiza a tela corrente. Os módulos recebem o estado atualizado via `getData()` e `getMonth()`, evitando referências obsoletas após restauração.
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
+7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
 
 ## Regras de manutenção
 
@@ -57,6 +63,7 @@ dist/
 - **Regra permanente:** cada funcionalidade, verificador, serviço e controle de interface deve ocupar seu próprio módulo em `dist/modules/`, com dependências explícitas e testes próprios. `app.js` permanece como orquestrador, sem concentrar lógica nova.
 - Logs aceitam apenas códigos técnicos predefinidos e indicação de módulo. Nunca registre valores, nomes, descrições, objetos completos de erro, stacks, conteúdo CSV/JSON ou caminhos de pasta.
 - Diagnósticos são operações somente leitura sobre os dados financeiros. O log usa somente a sessão, limitado a 50 códigos técnicos. Preferências são armazenadas separadamente dos registros financeiros.
+- A prévia de tema/cor nunca grava dados antes de Salvar e deve ser revertida em qualquer fechamento do diálogo. O Diagnóstico valida atributos e estilos CSS calculados, não apenas preferências JSON.
 - **Registro obrigatório do Diagnóstico:** ao criar/renomear módulo em `dist/modules/`, adicione seu nome em `MODULOS_OBRIGATORIOS` (`catalogo-diagnostico.js`) e uma autoverificação executável em `registro-modulos.js`. Inclua verificações específicas do comportamento e possíveis falhas. `tests/arquitetura.test.cjs` falha quando falta registro.
 - A barra do Diagnóstico segue **5 s para até 9 verificações +0,5 s por verificação adicional, com teto de 25 s somente para a animação**. O catálogo não tem limite de verificações e a execução real nunca é interrompida pelo relógio visual. Todos os resultados são coletados antes da animação; se os testes demorarem mais, a interface continua aguardando. O JSON só fica disponível ao final.
 - Mantenha `completedAportes`, `allocations`, `transactions` e `goals` ao importar/exportar.
@@ -79,3 +86,4 @@ Abrir `http://localhost:4173` em um navegador moderno. Testar as cinco áreas, f
 O teste `tests/modulos.test.cjs` exercita os renderizadores separadamente e verifica os arquivos CSS; `tests/pwa.test.cjs` garante que todos os módulos estejam no cache offline.
 O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão, instalação inicial e a exigência de confirmação antes do recarregamento. `tests/validacao.test.cjs` cobre dados antigos, backups e recuperação de falhas. `tests/standalone.test.cjs` verifica a prévia HTML independente.
 `tests/diagnostico.test.cjs` valida integridade, privacidade e duração; `tests/registro-diagnostico.test.cjs` exige autoverificações; `tests/preferencias.test.cjs` cobre validação e isolamento; `tests/dialogos.test.cjs` comprova cancelamento seguro; `tests/recorrencia-formulario.test.cjs` verifica aviso sobre séries mensais. Toda mudança de interface deve ser conferida também em desktop e smartphone antes da publicação.
+`tests/saude.test.cjs` verifica limites, ausência de dados e datas futuras; `tests/notificacoes.test.cjs` cobre limpar, cancelar, restaurar, dados adulterados e falhas de armazenamento; `tests/relatorio-pdf.test.cjs` garante impressão local. `tests/ajustes.test.cjs` simula prévia, cancelamento e gravação.

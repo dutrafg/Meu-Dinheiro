@@ -1,7 +1,7 @@
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
     shortMonth, currentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
-    renderEntry, progressLine, header} = ctx;
+    renderEntry, progressLine, header, renderSaude=()=>''} = ctx;
 
   function renderChart() {
     const month = getMonth();
@@ -37,7 +37,7 @@ export function criarModuloResumo(ctx) {
     return `<div class="card proto-expense-charts" role="group" aria-label="Análise de despesas por categoria">
       <section class="proto-expense-chart-panel" aria-label="Gráfico de gastos do mês por categoria">
         <h3>Gastos por categoria</h3><p class="proto-chart-subtitle">${esc(monthLabel(currentMonth))} · mês em andamento</p>
-        ${stats.current.length?`<svg class="proto-expense-donut" viewBox="0 0 120 120" role="img" aria-label="Total ${money(stats.currentTotal)}. ${stats.current.map(t=>`${t.category}: ${money(t.amount)}`).join('; ')}">
+        ${stats.current.length?`<svg class="proto-expense-donut" viewBox="0 0 120 120" role="img" aria-label="Total ${money(stats.currentTotal)}. ${esc(stats.current.map(t=>`${t.category}: ${money(t.amount)}`).join('; '))}">
           <circle cx="60" cy="60" r="42" fill="none" stroke="var(--border)" stroke-width="15"/>${slices}
           <text x="60" y="54" text-anchor="middle" font-size="8.1" fill="var(--sub)">Total de gastos</text>
           <text x="60" y="68" text-anchor="middle" font-size="${money(stats.currentTotal).length>15?7:money(stats.currentTotal).length>12?8.4:10}" font-weight="760" fill="var(--text)">${money(stats.currentTotal)}</text>
@@ -83,6 +83,7 @@ export function criarModuloResumo(ctx) {
           <section class="card proto-progress-card"><h3>Reserva e sonho</h3>${goals.length?goals.map(progressLine).join(''):`<div class="proto-empty">Suas metas e sonhos aparecerão aqui.</div>`}</section>
         </div>
       </div>
+      ${renderSaude()}
       <section class="card proto-list-card"><h3>Últimas transações</h3>${entryList(recent,'Nenhuma transação neste mês.')}</section>
       ${renderExpenseCharts()}
       ${hasHistory?`<details class="card proto-history"><summary>Comparar os últimos 6 meses</summary>${renderChart()}</details>`:''}

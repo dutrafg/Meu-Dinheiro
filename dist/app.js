@@ -16,6 +16,9 @@ import { criarGestorPreferencias } from './modules/preferencias.js';
 import { calcularAporte, calcularPlanoAporte } from './modules/regras-financeiras.js';
 import { iniciarAjustes, aplicarAparencia } from './modules/ajustes.js';
 import { registrarModulosDoApp } from './modules/registro-modulos.js';
+import { criarModuloSaude } from './modules/saude.js';
+import { criarModuloNotificacoes } from './modules/notificacoes.js';
+import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 
 (() => {
   'use strict';
@@ -198,18 +201,13 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
         items.push({key,date,description:t.description,category:t.category,tenPercent});
       }
     }
-    return items.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,100);
+    return items.sort((a,b)=>b.date.localeCompare(a.date));
   }
   function renderReminderCount() {
-    const count=dueAportes().length;
-    const badge=document.getElementById('reminder-count');
-    badge.classList.toggle('hidden',count===0);
-    badge.textContent=count>99?'99+':String(count);
-    document.getElementById('reminder-button').setAttribute('aria-label',count?`${count} ${count===1?'lembrete de aporte pendente':'lembretes de aporte pendentes'}`:'Lembretes de aporte, nenhum pendente');
+    notificacoes.renderBadge();
   }
   function renderReminderDialog() {
-    const reminders=dueAportes();
-    document.getElementById('reminder-list').innerHTML=reminders.length?reminders.map(a=>`<div class="proto-reminder-item"><div><strong>${esc(a.description)}</strong><small>${esc(a.category)} · ${fmtDate.format(parseDate(a.date))}</small><p>${a.tenPercent===null?'Lembre-se de verificar se fará um aporte com esta entrada.':`Separe <b>${money(a.tenPercent)}</b> (${preferencias.obter().percentual}% desta renda) para sua reserva.`}</p></div><button type="button" class="button button-secondary" data-action="mark-aporte" data-id="${esc(a.key)}">Já fiz</button></div>`).join(''):`<div class="proto-empty">Tudo em dia! Seus novos recebimentos aparecerão aqui. ✓</div>`;
+    notificacoes.renderDialog();
   }
   function changeView(next) {
     view = next; search=''; filterCategory='';
@@ -230,6 +228,8 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
   function stat(title, val, symbol, extra, color='') { return `<div class="stat-card"><div class="stat-top"><span class="stat-icon ${color}">${icon(symbol)}</span>${title}</div><div class="stat-value">${money(val)}</div><div class="stat-sub">${extra}</div></div>`; }
   function render() {
     renderReminderCount();
+    const tituloImpressao=document.getElementById('print-report-title');
+    tituloImpressao.textContent=`${NAV.find(v=>v[0]===view)?.[1]||'Resumo'} · ${monthLabel(month)}`;
     document.getElementById('header-label').textContent=NAV.find(v=>v[0]===view)?.[1]||'Resumo';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
     document.getElementById('quick-add').setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':'Adicionar lançamento');
@@ -258,7 +258,10 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
   const {renderTransactions, renderEntry, openTransaction, setTransactionType} = moduloLancamentos;
   const moduloObjetivos=criarModuloObjetivos(common);
   const {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates} = moduloObjetivos;
-  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine});
+  const moduloSaude=criarModuloSaude({...common,reservePrincipal});
+  const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
+    fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
+  const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
@@ -276,7 +279,7 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
     else if(button.dataset.action==='add-goal')openGoal(button.dataset.type);
     else if(button.dataset.action==='edit-goal')openGoal(null,id);
     else if(button.dataset.action==='mark-aporte'){
-      if(!dueAportes().some(a=>a.key===id))return;
+      if(!notificacoes.pendentes().some(a=>a.key===id))return;
       const completedAportes=[...(data.completedAportes||[]),id];
       if(persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
     }
@@ -357,12 +360,13 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
     onSave:()=>folderBackup?.schedule()});
+  const relatorioPdf=iniciarRelatorioPdf({hideBackupMenu:backup.hideBackupMenu,registrar});
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
-    obterLogs,configurarDetalhado,modoDetalhado});
-  registrarModulosDoApp({dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,preferencias,
+    getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
+  registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
   refreshCdiSilently();

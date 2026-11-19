@@ -19,6 +19,10 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
   const cores=document.getElementById('settings-colors');
   const reserva=document.getElementById('settings-reserve');
   const atual=()=>gestor.obter();
+  function previsualizar() {
+    aplicarAparencia({...atual(),tema:form.elements.namedItem('tema').value,
+      cor:form.querySelector('input[name="cor"]:checked')?.value||atual().cor});
+  }
   function abrir() {
     hideBackupMenu();
     const prefs=atual();
@@ -46,6 +50,11 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
     dialogo.showModal();
   }
   document.getElementById('open-settings').addEventListener('click',abrir);
+  // A seleção é uma prévia: fechar sem salvar sempre restaura a preferência persistida.
+  form.addEventListener('change',event=>{
+    if(['tema','cor'].includes(event.target?.name))previsualizar();
+  });
+  dialogo.addEventListener('close',()=>aplicarAparencia(atual()));
   form.addEventListener('submit',event=>{
     event.preventDefault();
     const percentual=Number(form.elements.namedItem('percentual').value);
@@ -66,7 +75,10 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
     document.getElementById(id).addEventListener('click',()=>dialogo.close());
   }
   const scheme=window.matchMedia?.('(prefers-color-scheme: dark)');
-  scheme?.addEventListener?.('change',()=>{if(atual().tema==='auto')aplicarAparencia(atual());});
+  scheme?.addEventListener?.('change',()=>{
+    if(dialogo.open){if(form.elements.namedItem('tema').value==='auto')previsualizar();}
+    else if(atual().tema==='auto')aplicarAparencia(atual());
+  });
   aplicarAparencia(atual());
   return {abrir,aplicar:()=>aplicarAparencia(atual())};
 }
