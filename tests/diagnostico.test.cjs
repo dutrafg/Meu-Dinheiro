@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const semImports = file=>(file==='dist/modules/diagnostico.js'?
-  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n`:'')+
+  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n`:'')+
   read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({
   transactions:[{id:'id-1',description:'Despesa CPF 123.456.789-00',type:'expense',amount:741.59,date:'2026-11-05',category:'Alimentação',recurring:false,createdAt:'2026-11-05T12:00:00.000Z'}],
@@ -33,7 +33,7 @@ test('Integridade verifica estrutura, IDs e vínculos sem modificar os dados', a
   valor.allocations.push({id:'aplicacao',description:'Aplicação',amount:50,date:'2026-11-05',kind:'goal',goalId:'inexistente'});
   valor.transactions[0].category='Não mapeada';
   const alterado=verificar(valor,CATEGORIES);
-  assert.equal(alterado.erros,1);
+  assert.equal(alterado.erros,2);
   assert.equal(alterado.avisos,2);
   assert.equal(alterado.itens.find(item=>item.codigo==='IDENTIFICADORES').estado,'erro');
 });

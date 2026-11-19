@@ -1,3 +1,4 @@
+import { podeAplicarNoObjetivo } from './validacao.js';
 export function iniciarModuloCsv(ctx) {
   const {getData, setMonth, goalCandidates, hideBackupMenu, isoDate, notify,
     esc, fmtDate, parseDate, money, CATEGORIES, uniqueId, n2, persist, render, registrar=()=>{}, registrarEvento=()=>{}} = ctx;
@@ -68,7 +69,8 @@ export function iniciarModuloCsv(ctx) {
     const goals=data.goals.map(g=>({...g}));
     for(const allocation of addedAllocations){
       const goal=goals.find(g=>g.id===allocation.goalId);
-      if(goal)goal.saved=Math.max(0,n2(goal.saved+allocation.amount));
+      if(goal && !podeAplicarNoObjetivo(goal.saved,allocation.amount)){notify('O resgate excede o valor guardado no objetivo. Ajuste o vínculo antes de importar.');return;}
+      if(goal)goal.saved=n2(goal.saved+allocation.amount);
     }
     const next={...data,goals,transactions:[...data.transactions,...added],allocations:[...(data.allocations||[]),...addedAllocations]};
     if(persist(next)){

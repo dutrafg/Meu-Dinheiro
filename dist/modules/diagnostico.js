@@ -4,6 +4,7 @@ import { CORES,TEMAS,preferenciasPadrao } from './preferencias.js';
 import { auditarCodigoPublicado } from './auditoria-codigo.js';
 import { verificarPropostaInterface } from './diagnostico-proposta.js';
 import { calcularSaldoDisponivelHoje } from './resumo.js';
+import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -77,6 +78,25 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('SALDO_DISPONIVEL_HOJE',saldoExemplo===150,
     'Saldo disponível calculado corretamente com recorrências e lançamentos futuros',
     'Cálculo do saldo disponível não corresponde ao cenário de referência','resumo');
+  // Cenários artificiais: nenhuma alteração no armazenamento ou nos dados do usuário.
+  const amostra={transactions:[{id:'diag-t',description:'Exemplo',type:'income',amount:10,date:'2026-11-19',category:'Salário'}],
+    goals:[{id:'diag-g',name:'Reserva',kind:'goal',target:100,saved:10,deadline:''}],allocations:[],completedAportes:[]};
+  const rejeita=entrada=>{try{normalizarDadosLocais(entrada);return false;}catch{return true;}};
+  conferir('VALIDACAO_DADOS_VALIDOS',!rejeita(amostra),'Estrutura válida aceita na leitura local','Estrutura válida rejeitada na leitura local','validacao');
+  conferir('VALIDACAO_ID_DUPLICADO',rejeita({...amostra,transactions:[...amostra.transactions,{...amostra.transactions[0]}]}),
+    'IDs duplicados rejeitados na leitura local','Leitura local aceitou IDs de lançamentos duplicados','validacao');
+  conferir('VALIDACAO_ID_ENTRE_LISTAS',rejeita({...amostra,allocations:[{id:'diag-t',description:'Aporte',kind:'reserve',amount:1,date:'2026-11-19',goalId:''}]}),
+    'ID repetido entre lançamento e aplicação rejeitado','Leitura local aceitou ID repetido entre listas','validacao');
+  conferir('VALIDACAO_VINCULO_TIPO',rejeita({...amostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
+    'Vínculo com tipo incompatível rejeitado','Leitura local aceitou vínculo de tipo incompatível','validacao');
+  conferir('VALIDACAO_SEM_VINCULO',!rejeita({...amostra,allocations:[{id:'diag-a',description:'Aporte',kind:'reserve',amount:1,date:'2026-11-19',goalId:''}]}),
+    'Aplicação sem vínculo preservada','Aplicação legítima sem vínculo foi rejeitada','validacao');
+  const backupAmostra={app:'meu-dinheiro-essencial',version:1,transactions:amostra.transactions.map(t=>({...t,recurring:false,createdAt:'2026-11-19T12:00:00.000Z'})),goals:amostra.goals};
+  const rejeitaBackup=entrada=>{try{validarBackup(entrada,CATEGORIES);return false;}catch{return true;}};
+  conferir('BACKUP_VINCULO_TIPO',rejeitaBackup({...backupAmostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
+    'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
+  conferir('RESGATE_LIMITE',podeAplicarNoObjetivo(10,-5)&&podeAplicarNoObjetivo(10,-10)&&!podeAplicarNoObjetivo(10,-20),
+    'Limite de resgate de objetivo calculável','Limite de resgate de objetivo inconsistente','objetivos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');
@@ -151,6 +171,19 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     }catch{adicionar('APARENCIA_INSPECAO','aviso','O navegador não permitiu verificar os estilos aplicados','ajustes');}
   }
   if(typeof document!=='undefined'){
+    const quickAdd=document.getElementById('quick-add');
+    if(document.getElementById('header-label')?.textContent==='Resumo')
+      conferir('UI_ADICIONAR_RESUMO',Boolean(quickAdd?.getAttribute('aria-label')?.includes('renda ou despesa')),
+        'Ação rápida do resumo identifica renda e despesa','Ação rápida do resumo não identifica as duas opções','interface','aviso');
+    const saldoTitulo=document.querySelector?.('.proto-today-balance h3');
+    if(saldoTitulo)conferir('UI_SALDO_PERIODO',String(saldoTitulo.textContent||'').includes('acumulado'),
+      'Período acumulado do saldo indicado','Período do saldo de hoje não está claro','interface','aviso');
+    const editar=document.querySelector?.('.proto-edit');
+    if(editar&&typeof editar.getBoundingClientRect==='function'){
+      const tamanho=editar.getBoundingClientRect();
+      conferir('UI_TOQUE_EDICAO',tamanho.width>=40&&tamanho.height>=44,
+        'Área de toque para editar lançamento adequada','Área de toque para editar lançamento pequena','interface','aviso');
+    }
     for(const [codigo,ids] of Object.entries({
       NAVEGACAO:['desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
       OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],

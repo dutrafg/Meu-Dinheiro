@@ -104,7 +104,7 @@ export function criarModuloResumo(ctx) {
         <section class="card proto-donut-card"><h3>Visão financeira</h3>${donut(s.income,s.expense)}<div class="proto-donut-legend"><span><i style="background:var(--green)"></i>Renda</span><span><i style="background:var(--red)"></i>Despesas</span></div></section>
         <div class="proto-overview-secondary">
           <section class="card proto-today-balance ${saldoDisponivel!==null&&saldoDisponivel<0?'is-negative':''}" aria-label="Saldo disponível hoje, estimado pelos lançamentos">
-            <div class="proto-today-balance-heading"><h3>Saldo disponível hoje</h3><span>${esc(hojeISO.split('-').reverse().join('/'))}</span></div>
+            <div class="proto-today-balance-heading"><h3>Saldo acumulado até hoje</h3><span>${esc(hojeISO.split('-').reverse().join('/'))}</span></div>
             <strong class="proto-today-balance-value">${saldoDisponivel===null?'—':money(saldoDisponivel)}</strong>
             <p>Acumulado das receitas menos despesas registradas até hoje, incluindo recorrências vencidas. Não é o saldo bancário.</p>
           </section>

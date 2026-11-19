@@ -32,12 +32,14 @@
   .minicard .lbl{font-size:.82rem}
   .minicard .val{font-size:1.2rem}
   .proto-page-meta{margin-bottom:12px}
-  .proto-item{gap:8px}
+  .proto-item{gap:5px;flex-wrap:wrap}
+  .proto-item-label{flex-basis:calc(100% - 45px)}
+  .proto-item-value{margin-left:34px;margin-right:auto}
   .proto-item-label strong{font-size:.86rem}
   .proto-item-label small{font-size:.75rem}
   .proto-item-value{font-size:.82rem}
   .proto-category-icon{width:25px;font-size:1.16rem}
-  .proto-edit,.proto-delete{width:27px}
+  .proto-edit,.proto-delete{width:40px;min-height:44px}
   .proto-progress-top{font-size:.86rem}
   .proto-goal-foot{flex-wrap:wrap}
   .csv-investment-fields{grid-template-columns:1fr}

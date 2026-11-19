@@ -42,7 +42,7 @@
 .proto-item-label strong{display:block;font-size:.93rem;font-weight:650;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .proto-item-label small{display:block;font-size:.79rem;color:var(--sub);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .proto-item-value{font-size:.9rem;font-weight:750;white-space:nowrap}
-.proto-edit,.proto-delete{border:0;background:transparent;color:var(--sub);display:grid;place-items:center;flex:none;border-radius:9px;width:30px;height:32px}
+.proto-edit,.proto-delete{border:0;background:transparent;color:var(--sub);display:grid;place-items:center;flex:none;border-radius:9px;width:42px;height:44px}
 .proto-edit:hover{color:var(--blue);background:var(--blue-bg)}
 .proto-delete:hover{color:var(--red);background:var(--red-bg)}
 .proto-edit svg,.proto-delete svg{width:16px;height:16px}

@@ -1,4 +1,3 @@
-// Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 import './csv.js';
 import './analytics.js';
 import './folder-backup.js';
@@ -7,7 +6,7 @@ import { criarModuloLancamentos } from './modules/lancamentos.js';
 import { criarModuloObjetivos } from './modules/objetivos.js';
 import { iniciarModuloBackup } from './modules/backup.js';
 import { iniciarModuloCsv } from './modules/csv-interface.js';
-import { validarDataISO, validarBackup, normalizarDadosLocais } from './modules/validacao.js';
+import { validarDataISO, validarBackup, normalizarDadosLocais, podeAplicarNoObjetivo } from './modules/validacao.js';
 import { iniciarAtualizador } from './modules/atualizador.js';
 import { iniciarDialogos } from './modules/dialogos.js';
 import { iniciarDiagnostico } from './modules/diagnostico.js';
@@ -19,6 +18,7 @@ import { registrarModulosDoApp } from './modules/registro-modulos.js';
 import { criarModuloSaude } from './modules/saude.js';
 import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
+// Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
   'use strict';
@@ -242,7 +242,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
     const fab=document.getElementById('quick-add');
     fab.classList.toggle('hidden',view==='ajustes');
-    fab.setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':'Adicionar lançamento');
+    fab.setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':view==='resumo'?'Adicionar renda ou despesa':'Adicionar lançamento');
     settingsPage.classList.toggle('hidden',view!=='ajustes');
     viewContent.classList.toggle('hidden',view==='ajustes');
     if(view==='ajustes')return;
@@ -301,7 +301,8 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
       const goalId=document.querySelector(`[data-allocation-goal="${CSS.escape(id)}"]`)?.value;
       const goal=data.goals.find(g=>g.id===goalId);
       if(!allocation||allocation.goalId||!goal||!goalCandidates(allocation.kind).some(g=>g.id===goalId)){notify('Selecione um objetivo compatível.');return;}
-      const goals=data.goals.map(g=>g.id===goalId?{...g,saved:Math.max(0,n2(g.saved+allocation.amount))}:g);
+      if(!podeAplicarNoObjetivo(goal.saved,allocation.amount)){notify('O resgate excede o valor guardado nesse objetivo.');return;}
+      const goals=data.goals.map(g=>g.id===goalId?{...g,saved:n2(g.saved+allocation.amount)}:g);
       const allocations=data.allocations.map(a=>a.id===id?{...a,goalId}:a);
       if(persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
     }
@@ -321,6 +322,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   document.getElementById('quick-add').addEventListener('click',()=>{
     if(view==='metas')openGoal('goal');
     else if(view==='sonho')openGoal('dream');
+    else if(view==='resumo')openTransaction('income');
     else openTransaction(view==='despesas'?'expense':'income');
   });
   document.getElementById('reminder-button').addEventListener('click',()=>{
@@ -330,7 +332,8 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
     if(event.target.id==='transaction-search'){
       search=event.target.value;
       const selection=event.target.selectionStart;
-      render();const input=document.getElementById('transaction-search');if(input){input.focus();input.setSelectionRange(selection,selection);}
+      const position=window.scrollY;
+      render();const input=document.getElementById('transaction-search');if(input){input.focus({preventScroll:true});input.setSelectionRange(selection,selection);window.scrollTo(0,position);}
     }
   });
   document.addEventListener('change',event=>{
