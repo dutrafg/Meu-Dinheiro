@@ -1,8 +1,8 @@
 // Inventário obrigatório: toda adição em dist/modules deve entrar aqui com teste real.
 // O teste de arquitetura compara esta lista com o diretório inteiro, sem exceções.
 export const MODULOS_OBRIGATORIOS = Object.freeze([
-  'ajustes','atualizador','auditoria-codigo','backup','catalogo-diagnostico','csv-interface','diagnostico','diagnostico-proposta','dialogos',
-  'integridade','lancamentos','limpeza-dados','log','notificacoes','objetivos','preferencias','registro-modulos','regras-financeiras','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','validacao'
+  'acao-rapida','ajustes','atualizador','auditoria-codigo','backup','catalogo-diagnostico','csv-interface','diagnostico','diagnostico-proposta','dialogos',
+  'integridade','investimentos','lancamentos','limpeza-dados','log','notificacoes','objetivos','preferencias','registro-modulos','regras-financeiras','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','validacao'
 ]);
 
 const registros=new Map();

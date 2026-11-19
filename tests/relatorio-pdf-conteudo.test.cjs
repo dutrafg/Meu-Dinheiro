@@ -85,6 +85,19 @@ test('Resumo completo também inclui aplicações de todos os tipos, sem ocultar
   assert.match(html,/2 registros · todos os períodos/);
 });
 
+test('PDF identifica categoria e origem do investimento sem mostrar texto injetado',async()=>{
+  const {montarRelatorioFinanceiro}=await carregar();
+  const html=montarRelatorioFinanceiro(base({aplicacoesRegistradas:[
+    {id:'novo',kind:'goal',description:'Aporte voluntário',date:'2026-11-19',amount:123,goalId:'g1',category:'<CDB>',origin:'salary',salaryId:'r',salaryDate:'2026-11-05'},
+    {id:'antigo',kind:'dream',description:'Investimento antigo',date:'2026-03-01',amount:50,goalId:'g2',category:'Poupança',origin:'previous'}
+  ]}));
+  assert.match(html,/&lt;CDB&gt;/);
+  assert.match(html,/Do salário/);
+  assert.match(html,/Investimento antigo/);
+  assert.match(html,/Poupança/);
+  assert.doesNotMatch(html,/<CDB>/);
+});
+
 test('Dados financeiros e nomes são escapados antes de inserir no HTML de impressão',async()=>{
   const {montarRelatorioFinanceiro}=await carregar();
   const html=montarRelatorioFinanceiro(base({transacoes:[{...transacoes[1],category:'<script>alert(1)</script>',description:'"Mercado" & <b>teste</b>'}],

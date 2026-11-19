@@ -38,7 +38,9 @@ export function normalizarDadosLocais(saved) {
   for (const a of allocations) {
     if (!a || !texto(a.id, 200) || !texto(a.description, 300) || !['goal','reserve','dream'].includes(a.kind) ||
         !Number.isFinite(a.amount) || Math.abs(a.amount) > 999999999 || !validarDataISO(a.date) ||
-        typeof a.goalId !== 'string') throw new Error('Aplicação local inválida.');
+        typeof a.goalId !== 'string'||(a.category!==undefined&&!texto(a.category,120))||
+        (a.origin!==undefined&&!['salary','previous'].includes(a.origin))||
+        (a.origin==='salary'&&(!texto(a.salaryId,200)||!validarDataISO(a.salaryDate)))) throw new Error('Aplicação local inválida.');
   }
   if (completedAportes.some(v => !texto(v, 200))) throw new Error('Lembrete local inválido.');
   validarIntegridadeDados({transactions, goals, allocations});
@@ -90,7 +92,10 @@ export function validarBackup(arquivo, categorias) {
   for (const a of allocations) {
     if (!a || !texto(a.id, 200) || ids.has(a.id) || !texto(a.description, 300) ||
         !['goal','reserve','dream'].includes(a.kind) || !Number.isFinite(a.amount) ||
-        Math.abs(a.amount) > 999999999 || !validarDataISO(a.date) || typeof a.goalId !== 'string') {
+        Math.abs(a.amount) > 999999999 || !validarDataISO(a.date) || typeof a.goalId !== 'string'||
+        (a.category!==undefined&&!texto(a.category,120))||
+        (a.origin!==undefined&&!['salary','previous'].includes(a.origin))||
+        (a.origin==='salary'&&(!texto(a.salaryId,200)||!validarDataISO(a.salaryDate)))) {
       throw new Error('Há aplicações inválidas ou duplicadas no backup.');
     }
     ids.add(a.id);

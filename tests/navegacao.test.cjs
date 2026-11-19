@@ -16,7 +16,7 @@ function simular(){
   const elementos=new Map([
     ['desktop-nav',criar('desktop-nav')],['mobile-nav',criar('mobile-nav')],
     ['header-label',criar('header-label')],['header-balance',criar('header-balance')],
-    ['quick-add',criar('quick-add')],['settings-page',criar('settings-page',['hidden'])],
+    ['quick-add',criar('quick-add')],['desktop-create-wrap',criar('desktop-create-wrap')],['settings-page',criar('settings-page',['hidden'])],
     ['view-content',criar('view-content')],['folder-backup-alert',criar('folder-backup-alert',['hidden'])],
     ['app-update-alert',criar('app-update-alert',['hidden'])]
   ]);
@@ -29,7 +29,11 @@ function simular(){
     ajustes:{abrir:()=>eventos.push('abrir'),descartar:()=>eventos.push('descartar')},
     renderReminderCount:()=>{},sums:()=>({balance:100}),money:n=>`R$ ${n}`,
     renderSummary:()=>'<div>Resumo</div>',renderTransactions:tipo=>`<div>${tipo}</div>`,renderGoals:kind=>`<div>${kind}</div>`,
-    icon:n=>`<svg>${n}</svg>`};
+    icon:n=>`<svg>${n}</svg>`,
+    acaoRapida:{atualizar:visao=>{
+      elementos.get('quick-add').classList.toggle('hidden',visao==='ajustes');
+      elementos.get('desktop-create-wrap').classList.toggle('hidden',visao==='ajustes');
+    }}};
   const nav=source.slice(source.indexOf('  function changeView(next) {'),source.indexOf('  function header(subtitle'));
   const render=source.slice(source.indexOf('  function render() {'),source.indexOf('  // Os módulos recebem'));
   vm.runInNewContext(`${nav}\n${render}\nthis.acao={changeView,renderNav,render,sincronizarAlertasNav};`,variables);
@@ -49,10 +53,12 @@ test('Abrir Ajustes preserva controles, esconde FAB e descartar restaura o modo 
   assert.equal(settings.classList.contains('hidden'),false);
   assert.equal(t.elementos.get('view-content').classList.contains('hidden'),true);
   assert.equal(t.elementos.get('quick-add').classList.contains('hidden'),true);
+  assert.equal(t.elementos.get('desktop-create-wrap').classList.contains('hidden'),true);
   assert.ok(t.eventos.includes('abrir'));
   t.api.changeView('despesas');
   assert.equal(settings.classList.contains('hidden'),true);
   assert.equal(t.elementos.get('quick-add').classList.contains('hidden'),false);
+  assert.equal(t.elementos.get('desktop-create-wrap').classList.contains('hidden'),false);
   assert.match(t.elementos.get('view-content').innerHTML,/expense/);
   assert.ok(t.eventos.includes('descartar'));
   assert.equal(t.variables.view,'despesas');

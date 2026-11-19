@@ -6,6 +6,7 @@ import { verificarPropostaInterface } from './diagnostico-proposta.js';
 import { calcularSaldoDisponivelHoje } from './resumo.js';
 import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 import { apagarDadosLocais, validarFraseLimpeza } from './limpeza-dados.js';
+import { adicionarInvestimentoVinculado, encontrarSalarioAnterior } from './investimentos.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -117,6 +118,21 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
   conferir('RESGATE_LIMITE',podeAplicarNoObjetivo(10,-5)&&podeAplicarNoObjetivo(10,-10)&&!podeAplicarNoObjetivo(10,-20),
     'Limite de resgate de objetivo calculável','Limite de resgate de objetivo inconsistente','objetivos');
+  const aporte=adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'diag-g',description:'Aporte sintético',amount:12.34,date:'2026-11-19',category:'CDB'});
+  conferir('INVESTIMENTO_SEM_DUPLICACAO',aporte.goals[0].saved===22.34&&aporte.allocations.length===1&&amostra.goals[0].saved===10,
+    'Aporte aumenta objetivo uma vez, preservando dados anteriores','Aporte contabilizado incorretamente','investimentos');
+  conferir('INVESTIMENTO_CATEGORIA',aporte.allocations[0].category==='CDB'&&!rejeita(aporte)&&
+    rejeita({...aporte,allocations:[{...aporte.allocations[0],category:''}]}),
+    'Categoria personalizada é armazenada e validada','Categoria de investimento não foi validada corretamente','investimentos');
+  const salarioAmostra=encontrarSalarioAnterior(amostra.transactions,'2026-11-19');
+  const aporteSalario=adicionarInvestimentoVinculado(amostra,{id:'diag-s',goalId:'diag-g',description:'Do salário',amount:3,date:'2026-11-19',category:'Poupança',origin:'salary'});
+  conferir('INVESTIMENTO_ORIGEM_SALARIO',salarioAmostra?.id==='diag-t'&&aporteSalario.allocations[0].salaryId==='diag-t',
+    'Aporte do salário vinculado ao rendimento com data compatível','Origem do salário não corresponde à data registrada','investimentos');
+  conferir('INVESTIMENTO_SALDO_DISPONIVEL',calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporteSalario.allocations)===7&&
+    calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporte.allocations)===10,
+    'Somente aporte do salário reduz dinheiro disponível','Investimento antigo e salário não foram separados no saldo','resumo');
+  let rejeitouMeta=false;try{adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'inexistente',description:'Aporte',amount:5,date:'2026-11-19',category:'CDB'});}catch{rejeitouMeta=true;}
+  conferir('INVESTIMENTO_META_EXISTENTE',rejeitouMeta,'Aporte exige objetivo existente','Aporte aceito sem objetivo','investimentos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');
@@ -206,8 +222,9 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
         'Área de toque para editar lançamento adequada','Área de toque para editar lançamento pequena','interface','aviso');
     }
     for(const [codigo,ids] of Object.entries({
-      NAVEGACAO:['desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
-      OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
+      NAVEGACAO:['desktop-toolbar','desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
+      ACAO_RAPIDA:['desktop-create-wrap','desktop-create-trigger','desktop-create-menu','quick-add'],
+      OBJETIVOS:['goal-dialog','goal-form'],INVESTIMENTOS:['investment-dialog','investment-form','investment-category-suggestions','investment-origin-note'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
       PDF:['export-pdf','pdf-report-type','print-report'],SAUDE:['main-content'],
@@ -226,6 +243,19 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     if(seletorRelatorio)conferir('PDF_TIPO_SELECIONADO',['resumo','renda','despesas','metas','sonho'].includes(seletorRelatorio.value),
       'Relatório PDF possui seleção explícita e válida',
       'Tipo do relatório PDF ausente ou inválido','relatorio-pdf');
+    const botaoDesktop=document.getElementById('desktop-create-trigger');
+    const menuDesktop=document.getElementById('desktop-create-menu');
+    if(botaoDesktop?.getAttribute&&menuDesktop?.querySelectorAll)conferir('ACAO_RAPIDA_MENU',
+      botaoDesktop.getAttribute('aria-controls')===menuDesktop.id&&menuDesktop.querySelectorAll('[data-create-kind]').length===5,
+      'Menu desktop oferece criação direta de cinco registros, inclusive investimentos',
+      'Ações ou acessibilidade do menu desktop incompletas','acao-rapida');
+    const barraDesktop=document.getElementById('desktop-toolbar');
+    if(barraDesktop&&typeof window!=='undefined'&&window.innerWidth>=880&&typeof window.getComputedStyle==='function'){
+      const estilo=window.getComputedStyle(barraDesktop);
+      conferir('NAVEGACAO_FIXA_DESKTOP',estilo.position==='sticky'&&estilo.top==='0px',
+        'Navegação permanece no topo durante a rolagem no desktop',
+        'Barra de navegação não está fixada no topo do desktop','interface');
+    }
   }
   // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.
   // Os achados são sugestões, sem remoção automática ou leitura dos dados pessoais.

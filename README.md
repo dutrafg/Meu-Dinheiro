@@ -43,6 +43,12 @@ Em **Ajustes → Arquivos, importação e backup → Conteúdo do relatório PDF
 
 No desktop e tablet, o aplicativo ocupa a largura disponível, com margens proporcionais e cartões responsivos. A visualização de smartphones permanece compacta; a impressão A4 conserva formatação independente da largura da tela.
 
+No **desktop**, a navegação fica presa ao topo ao rolar a página; o cabeçalho de saldo sai de cena para liberar espaço e os cartões passam por trás da barra. A criação de registros fica no botão **Novo** à direita da navegação, com ações para **renda, despesa, meta, sonho e investimento**. O menu pode ser fechado com Escape ou clique fora. No tablet e smartphone, a navegação inferior e o botão **+** continuam compactos e adaptados à tela.
+
+O teste de navegador, quando houver Playwright e Chromium no computador, pode ser executado com `node scripts/verificar-interface.cjs`. Ele cria apenas dados fictícios em um servidor local efêmero e verifica navegação, formulários, saldo, metas e layout móvel. Não faz parte da suíte Node padrão porque depende de um navegador instalado e permissões para executá-lo.
+
+Em **Metas** e **Sonhos**, cada objetivo possui o botão **Investir**. Informe a descrição, o valor, a data, a categoria (pode digitar uma nova) e a origem do dinheiro. O aplicativo procura uma renda identificada como salário nos **45 dias anteriores** à data do investimento, inclusive salários recorrentes, e sugere **Do salário registrado**; você pode confirmar essa opção ou marcar **Investimento antigo / já guardado**. A origem salarial exige salário previamente cadastrado, sem adivinhação. Cada aporte aumenta o valor guardado da meta ou sonho exatamente uma vez e entra no histórico e no PDF, sem gerar uma despesa. Somente os aportes confirmados como oriundos do salário reduzem o **saldo disponível hoje**; investimentos antigos não alteram esse saldo. No **Resumo**, Reserva e Sonhos têm cards independentes.
+
 ## Diagnóstico e integridade (Etapas 1–2)
 
 **Atualização v22:** a verificação de cores semânticas reconhece seletores CSS normalizados pelo navegador e valida metas e sonhos. A verificação de acessibilidade renderiza duas metas fictícias em um elemento desconectado, inspecionando rótulos e percentuais mesmo sem objetivos reais cadastrados. Nenhum dado é salvo ou alterado. O saldo disponível também possui teste de lógica com lançamentos de exemplo, inclusive recorrências e datas futuras.
@@ -65,7 +71,7 @@ O aplicativo instalado no navegador verifica automaticamente se há novas versõ
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
-Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v26`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v27`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
 
 ## Estrutura modular do código
 
@@ -76,6 +82,7 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Resumo e gráficos | `dist/modules/resumo.js` |
 | Saúde Financeira | `dist/modules/saude.js` + `dist/css/saude.css` |
 | Limpeza e restauração de notificações | `dist/modules/notificacoes.js` |
+| Ação rápida no desktop e no celular | `dist/modules/acao-rapida.js` + `dist/css/estrutura.css` |
 | Impressão e PDF | `dist/modules/relatorio-pdf.js` (controle) + `dist/modules/relatorio-pdf-conteudo.js` (conteúdo) + `dist/css/impressao.css` (A4) |
 | Renda e Despesas | `dist/modules/lancamentos.js` |
 | Metas, Reserva e Sonho | `dist/modules/objetivos.js` |

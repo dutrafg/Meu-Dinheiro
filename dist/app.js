@@ -19,6 +19,8 @@ import { criarModuloSaude } from './modules/saude.js';
 import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
+import { iniciarAcaoRapida } from './modules/acao-rapida.js';
+import { iniciarInvestimentos } from './modules/investimentos.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -71,6 +73,8 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
   const transactionForm = document.getElementById('transaction-form');
   const goalDialog = document.getElementById('goal-dialog');
   const goalForm = document.getElementById('goal-form');
+  const investmentDialog = document.getElementById('investment-dialog');
+  const investmentForm = document.getElementById('investment-form');
   const reminderDialog = document.getElementById('reminder-dialog');
 
   function readData() {
@@ -239,9 +243,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
     renderReminderCount();
     document.getElementById('header-label').textContent=NAV.find(v=>v[0]===view)?.[1]||'Resumo';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
-    const fab=document.getElementById('quick-add');
-    fab.classList.toggle('hidden',view==='ajustes');
-    fab.setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':view==='resumo'?'Adicionar renda ou despesa':'Adicionar lançamento');
+    acaoRapida.atualizar(view);
     settingsPage.classList.toggle('hidden',view!=='ajustes');
     viewContent.classList.toggle('hidden',view==='ajustes');
     if(view==='ajustes')return;
@@ -270,6 +272,8 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
   const {renderTransactions, renderEntry, openTransaction, setTransactionType} = moduloLancamentos;
   const moduloObjetivos=criarModuloObjetivos(common);
   const {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates} = moduloObjetivos;
+  const investimentos=iniciarInvestimentos({...common,dialog:investmentDialog,form:investmentForm,documento:document});
+  const acaoRapida=iniciarAcaoRapida({getView:()=>view,openTransaction,openGoal,openInvestment:investimentos.abrir});
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
     fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
@@ -290,6 +294,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
     else if(button.dataset.action==='edit')openTransaction(null,id);
     else if(button.dataset.action==='add-goal')openGoal(button.dataset.type);
     else if(button.dataset.action==='edit-goal')openGoal(null,id);
+    else if(button.dataset.action==='add-investment')investimentos.abrir(id);
     else if(button.dataset.action==='mark-aporte'){
       if(!notificacoes.pendentes().some(a=>a.key===id))return;
       const completedAportes=[...(data.completedAportes||[]),id];
@@ -317,12 +322,6 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
         if(persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
       }
     }
-  });
-  document.getElementById('quick-add').addEventListener('click',()=>{
-    if(view==='metas')openGoal('goal');
-    else if(view==='sonho')openGoal('dream');
-    else if(view==='resumo')openTransaction('income');
-    else openTransaction(view==='despesas'?'expense':'income');
   });
   document.getElementById('reminder-button').addEventListener('click',()=>{
     renderReminderDialog();reminderDialog.showModal();
@@ -385,7 +384,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
         if(prefs.reservaGoalId)preferencias.salvar({...prefs,reservaGoalId:''});
-        for(const modal of [transactionDialog,goalDialog,reminderDialog])if(modal?.open)modal.close();
+        for(const modal of [transactionDialog,goalDialog,investmentDialog,reminderDialog])if(modal?.open)modal.close();
         view='resumo';month=currentMonth;
         registrar('info','DADOS_APAGADOS','dados');
         renderNav();render();
@@ -396,7 +395,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,preferencias,notificacoes,relatorioPdf,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
   renderNav();render();
   if(typeof MutationObserver==='function')

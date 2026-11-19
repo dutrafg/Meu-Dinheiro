@@ -71,6 +71,24 @@ test('Desktop e tablet utilizam largura disponível sem restringir o app a uma c
   assert.match(ajustes,/\.settings-page\{width:100%;max-width:none/);
 });
 
+test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os dados',()=>{
+  const css=read('dist/css/estrutura.css');
+  const media=read('dist/css/responsivo.css');
+  const impressao=read('dist/css/impressao.css');
+  const html=read('dist/index.html');
+  assert.match(css,/\.desktop-toolbar\{display:grid/);
+  assert.match(css,/@media\(min-width:880px\)\{[\s\S]*?\.desktop-toolbar\{position:sticky;top:0;z-index:11\}/);
+  assert.match(css,/\.desktop-create-menu\{position:absolute/);
+  assert.match(css,/\.fab\{display:none\}/);
+  assert.match(media,/\.desktop-toolbar\{display:none\}/);
+  assert.match(impressao,/\.desktop-toolbar,\.mobile-nav/);
+  assert.match(html,/id="desktop-create-trigger"[^>]*aria-expanded="false"/);
+  assert.match(html,/id="desktop-create-menu"[^>]*role="group"/);
+  assert.match(html,/data-create-kind="investment"/);
+  assert.match(read('dist/modules/objetivos.js'),/data-action="add-investment"/);
+  assert.match(html,/id="investment-category-suggestions"/);
+});
+
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{
   const resumo=read('dist/modules/resumo.js');
   assert.match(resumo,/aria-label="Total \$\{money\(stats\.currentTotal\)\}\. \$\{esc\(stats\.current\.map/);

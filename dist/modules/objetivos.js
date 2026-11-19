@@ -41,11 +41,11 @@ export function criarModuloObjetivos(ctx) {
     if(!items.length)return '';
     const unlinked=items.filter(a=>!data.goals.some(g=>g.id===a.goalId));
     const label=a=>a.kind==='reserve'?'Reserva':a.kind==='dream'?'Sonho':'Meta';
-    return `<details class="card proto-history" ${unlinked.length?'open':''}><summary>Aplicações importadas (${items.length})${unlinked.length?` · ${unlinked.length} sem vínculo`:''}</summary>
+    return `<details class="card proto-history" ${unlinked.length?'open':''}><summary>Histórico de investimentos (${items.length})${unlinked.length?` · ${unlinked.length} sem vínculo`:''}</summary>
       ${items.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{
         const linked=data.goals.find(g=>g.id===a.goalId);
         const candidates=goalCandidates(a.kind);
-        return `<div class="proto-allocation-row"><div class="proto-allocation-top"><div><strong>${esc(label(a))} · ${esc(a.description)}</strong><small>${fmtDate.format(parseDate(a.date))} · ${linked?`Vinculado a ${esc(linked.name)}`:'Sem objetivo vinculado'}</small></div><b style="color:${a.amount>=0?'var(--green)':'var(--red)'}">${a.amount>=0?'+':'−'}${money(Math.abs(a.amount))}</b></div>
+        return `<div class="proto-allocation-row"><div class="proto-allocation-top"><div><strong>${esc(label(a))} · ${esc(a.description)}</strong><small>${fmtDate.format(parseDate(a.date))} · ${linked?`Vinculado a ${esc(linked.name)}`:'Sem objetivo vinculado'}${a.origin==='salary'?' · Do salário':a.origin==='previous'?' · Investimento antigo':''}${a.category?` <span class="investment-category-label">${esc(a.category)}</span>`:''}</small></div><b style="color:${a.amount>=0?'var(--green)':'var(--red)'}">${a.amount>=0?'+':'−'}${money(Math.abs(a.amount))}</b></div>
           ${!linked?(candidates.length?`<div class="proto-link-box"><select data-allocation-goal="${esc(a.id)}" aria-label="Escolher objetivo para ${esc(a.description)}">${candidates.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select><button type="button" class="button button-secondary" data-action="link-allocation" data-id="${esc(a.id)}">Vincular</button></div>`:`<p class="proto-note">Crie primeiro um objetivo correspondente para vincular este aporte.</p>`):''}
         </div>`;
       }).join('')}</details>`;
@@ -62,7 +62,7 @@ export function criarModuloObjetivos(ctx) {
         <div class="proto-goal-info"><strong>${money(g.saved)}</strong><span>de ${money(g.target)}</span></div>
       </div>
       <div class="proto-goal-foot"><span>${left===0?'Objetivo alcançado!':`Faltam ${money(left)}`}</span><span>${esc(deadline)}</span></div>
-      <div class="proto-goal-actions"><button type="button" class="button button-secondary" data-action="edit-goal" data-id="${esc(g.id)}">Atualizar valor</button><button type="button" class="button button-danger" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir ${esc(g.name)}">${icon('trash')}</button></div>
+      <div class="proto-goal-actions"><button type="button" class="button goal-invest-button" data-action="add-investment" data-id="${esc(g.id)}">${icon('plus')} Investir</button><button type="button" class="button button-secondary" data-action="edit-goal" data-id="${esc(g.id)}">Atualizar valor</button><button type="button" class="button button-danger" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir ${esc(g.name)}">${icon('trash')}</button></div>
     </article>`;
   }
   function openGoal(kind,id='') {

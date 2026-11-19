@@ -28,6 +28,23 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .desktop-nav .nav-button svg{width:29px;height:29px;stroke-width:1.9}
 .desktop-nav .nav-button.active{background:var(--card);color:var(--green);box-shadow:0 3px 10px #1212120c}
 .desktop-nav .nav-button:hover{color:var(--green)}
+.desktop-toolbar{display:grid;grid-template-columns:minmax(130px,1fr) auto minmax(130px,1fr);align-items:center;gap:12px;padding:8px 0 12px;margin-bottom:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.desktop-toolbar .desktop-nav{grid-column:2;margin:0;gap:4px}
+.desktop-toolbar .desktop-nav .nav-button{min-width:clamp(80px,7.6vw,132px);padding:12px clamp(8px,1vw,17px)}
+.desktop-create{position:relative;justify-self:end;grid-column:3}
+.desktop-create-trigger{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:.9rem;font-weight:750;white-space:nowrap;box-shadow:0 5px 13px #00000012}
+.desktop-create-trigger:hover{background:var(--accent-hover)}
+.desktop-create-trigger svg{width:19px;height:19px;flex:none}
+.desktop-create-trigger .desktop-create-chevron{width:16px;height:16px;opacity:.85}
+.desktop-create-menu{position:absolute;top:calc(100% + 10px);right:0;width:225px;padding:7px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 28px #00000020;z-index:12}
+.desktop-create-menu button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:transparent;color:var(--text);border:0;border-radius:9px;padding:12px 11px;min-height:44px;font-size:.9rem;font-weight:650}
+.desktop-create-menu button:hover,.desktop-create-menu button:focus-visible{background:var(--accent-soft);color:var(--accent-text)}
+.desktop-create-menu svg{width:19px;height:19px;color:var(--accent-text);flex:none}
+@media(min-width:880px){
+  .header{position:relative;top:auto;z-index:1}
+  .desktop-toolbar{position:sticky;top:0;z-index:11}
+  .fab{display:none}
+}
 .mobile-nav{display:none}
 main{width:100%;max-width:none;margin:0 auto;padding-bottom:125px}
 .proto-page-meta{display:flex;justify-content:flex-end;align-items:center;min-height:39px;margin:0 0 16px;color:var(--sub);font-size:.88rem}

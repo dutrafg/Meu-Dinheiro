@@ -48,7 +48,7 @@ function aplicacoes(itens,goals,money){
     <table class="pdf-table"><thead><tr><th>Data</th><th>Descrição / vínculo</th><th>Operação</th><th class="pdf-right">Valor</th></tr></thead><tbody>
     ${itens.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(item=>{
       const goal=goals.find(g=>g.id===item.goalId);
-      return `<tr><td class="pdf-nowrap">${dataCurta(item.date)}</td><td>${escapar(item.description||'Aplicação')}<small class="pdf-subline">${goal?`Vinculado a ${escapar(goal.name)}`:'Sem objetivo vinculado'}</small></td><td>${item.amount>=0?'Aplicação':'Resgate'}</td><td class="pdf-right pdf-nowrap pdf-strong">${money(Math.abs(item.amount))}</td></tr>`;
+      return `<tr><td class="pdf-nowrap">${dataCurta(item.date)}</td><td>${escapar(item.description||'Aplicação')}<small class="pdf-subline">${goal?`Vinculado a ${escapar(goal.name)}`:'Sem objetivo vinculado'}${item.category?` · ${escapar(item.category)}`:''}${item.origin==='salary'?' · Do salário':item.origin==='previous'?' · Investimento antigo':''}</small></td><td>${item.amount>=0?'Aplicação':'Resgate'}</td><td class="pdf-right pdf-nowrap pdf-strong">${money(Math.abs(item.amount))}</td></tr>`;
     }).join('')}</tbody></table></section>`;
 }
 

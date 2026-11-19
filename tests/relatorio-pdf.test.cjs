@@ -97,7 +97,7 @@ test('PDF possui identidade própria, paginação A4 e tabelas repetidas entre p
   assert.match(css,/\.pdf-kpis/);
   assert.match(css,/\.pdf-header/);
   assert.match(css,/\.pdf-goal-track/);
-  assert.match(css,/\.desktop-nav,\.mobile-nav/);
+  assert.match(css,/\.desktop-toolbar,\.mobile-nav/);
   assert.match(css,/dialog/);
   assert.match(html,/id="print-report"/);
   assert.match(html,/id="export-pdf"/);

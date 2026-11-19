@@ -42,6 +42,28 @@ test('Saldo permite resultado negativo e não desconta metas nem aplicações',a
   assert.equal(saldo(items,'data inválida'),null);
 });
 
+test('Investimento do salário reduz caixa disponível sem virar despesa, e antigo não reduz',async()=>{
+  const {calcularSaldoDisponivelHoje:saldo}=await carregar();
+  const lancamentos=[{id:'s',type:'income',date:'2026-11-05',amount:2500,category:'Salário base'},
+    {id:'d',type:'expense',date:'2026-11-08',amount:400}];
+  const aportes=[{origin:'salary',salaryId:'s',date:'2026-11-10',amount:500},
+    {origin:'previous',date:'2026-11-01',amount:1000},
+    {origin:'salary',salaryId:'s',date:'2026-11-20',amount:200},
+    {date:'2026-11-04',amount:150}];
+  assert.equal(saldo(lancamentos,'2026-11-09',aportes),2100);
+  assert.equal(saldo(lancamentos,'2026-11-19',aportes),1600);
+  assert.equal(saldo(lancamentos,'2026-11-20',aportes),1400);
+  assert.equal(saldo(lancamentos,'2026-11-20',[{origin:'salary',salaryId:'inexistente',date:'2026-11-10',amount:500}]),2100);
+});
+
+test('Resumo mostra cards independentes de reserva e sonhos com ações em estados vazios',()=>{
+  assert.match(source,/aria-label="Resumo da reserva"/);
+  assert.match(source,/aria-label="Resumo dos sonhos"/);
+  assert.match(source,/data-action="add-goal" data-type="goal"/);
+  assert.match(source,/data-action="add-goal" data-type="dream"/);
+  assert.doesNotMatch(source,/<h3>Reserva e sonho<\/h3>/);
+});
+
 test('Diagnóstico traz verificação própria de saldo e cenário fictício sem dados financeiros reais',()=>{
   const diag=fs.readFileSync(path.join(__dirname,'..','dist/modules/diagnostico.js'),'utf8');
   const registro=fs.readFileSync(path.join(__dirname,'..','dist/modules/registro-modulos.js'),'utf8');

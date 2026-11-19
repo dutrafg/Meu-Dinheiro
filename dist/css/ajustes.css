@@ -36,7 +36,7 @@
 .settings-page{width:100%;max-width:none;margin:auto}
 .settings-page.hidden{display:none}
 .settings-page #settings-form{display:block}
-.settings-page>.settings-heading{position:sticky;top:110px;z-index:7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;background:var(--bg);padding:13px 0 12px;border-bottom:1px solid var(--border)}
+.settings-page>.settings-heading{position:sticky;top:122px;z-index:7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;background:var(--bg);padding:13px 0 12px;border-bottom:1px solid var(--border)}
 .settings-heading h2{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:1.35rem}
 .settings-title-icon{width:23px;height:23px;color:var(--accent-text)}
 .settings-section-icon{width:20px;height:20px;vertical-align:middle;margin-right:7px;color:var(--accent-text)}

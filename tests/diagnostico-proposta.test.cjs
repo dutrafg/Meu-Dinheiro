@@ -147,7 +147,7 @@ test('A nova área permanece no DOM durante a troca de telas e possui controles 
   assert.match(html,/<symbol id="i-settings"/);
   assert.match(app,/\['ajustes', 'Ajustes', 'settings'\]/);
   assert.match(app,/if\(view==='ajustes'\)ajustes\.abrir\(\)/);
-  assert.match(app,/fab\.classList\.toggle\('hidden',view==='ajustes'\)/);
+  assert.match(app,/acaoRapida\.atualizar\(view\)/);
   assert.doesNotMatch(app,/ultimaVisaoFinanceira/);
   assert.match(html,/id="pdf-report-type"/);
   assert.doesNotMatch(html,/id="backup-menu-button"|id="settings-dialog"/);
@@ -196,7 +196,8 @@ test('Diagnóstico trata proposta como categoria separada de erros e avisa sobre
 
 test('Relatório principal incorpora o checklist sem classificar propostas pendentes como falhas',async()=>{
   const {avaliarRequisitosProposta}=await carregar();
-  const codigo=read('dist/modules/diagnostico.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
+  const codigo=read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+    read('dist/modules/diagnostico.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const verificar=()=>({itens:[],erros:0,avisos:0});
   const gerar=async(comProposta)=>{
     const contexto={Date,Intl,Blob,verificarIntegridade:verificar,

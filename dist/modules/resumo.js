@@ -1,6 +1,6 @@
 // Saldo estimado de todo o histórico até hoje. Recorrências são contadas somente
 // quando a respectiva ocorrência mensal já venceu; não altera nenhum registro.
-export function calcularSaldoDisponivelHoje(transacoes,hojeISO){
+export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
   if(!Array.isArray(transacoes)||!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO))return null;
   const [anoAtual,mesAtual]=hojeISO.split('-').map(Number);
   let total=0;
@@ -16,6 +16,12 @@ export function calcularSaldoDisponivelHoje(transacoes,hojeISO){
       quantidade=meses+(ocorrenciaAtual<=hojeISO?1:0);
     }
     total+=(item.type==='income'?1:-1)*item.amount*quantidade;
+  }
+  // Transferência interna comprovada pelo usuário: sai do dinheiro disponível,
+  // mas não vira despesa e não reduz o valor total do patrimônio investido.
+  for(const aporte of Array.isArray(aplicacoes)?aplicacoes:[]){
+    if(aporte?.origin==='salary'&&aporte.date<=hojeISO&&Number.isFinite(aporte.amount)&&
+      transacoes.some(t=>t.id===aporte.salaryId&&t.type==='income'))total-=aporte.amount;
   }
   return Number.isFinite(total)?Math.round(total*100)/100:null;
 }
@@ -93,30 +99,33 @@ export function criarModuloResumo(ctx) {
     const data = getData();
     const s=sums(month);
     const hojeISO=isoDate(new Date());
-    const saldoDisponivel=calcularSaldoDisponivelHoje(data.transactions,hojeISO);
+    const saldoDisponivel=calcularSaldoDisponivelHoje(data.transactions,hojeISO,data.allocations);
     const selected=getPreferences().reservaGoalId;
-    const goals=[data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name))),data.goals.find(g=>g.kind==='dream')].filter(Boolean);
-    if(!goals.some(g=>g.kind==='goal')) {const another=data.goals.find(g=>g.kind==='goal');if(another)goals.unshift(another);}
+    const reserva=data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name)))||data.goals.find(g=>g.kind==='goal');
+    const sonho=data.goals.find(g=>g.kind==='dream');
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);
     return `${header('',true)}
       <div class="proto-overview">
         <section class="card proto-donut-card"><h3>Visão financeira</h3>${donut(s.income,s.expense)}<div class="proto-donut-legend"><span><i style="background:var(--green)"></i>Renda</span><span><i style="background:var(--red)"></i>Despesas</span></div></section>
         <div class="proto-overview-secondary">
-          <section class="card proto-today-balance ${saldoDisponivel!==null&&saldoDisponivel<0?'is-negative':''}" aria-label="Saldo disponível hoje, estimado pelos lançamentos">
+          <section class="card proto-today-balance ${saldoDisponivel!==null&&saldoDisponivel<0?'is-negative':''}" aria-label="Saldo disponível hoje, estimado pelos lançamentos e investimentos feitos com salário">
             <div class="proto-today-balance-heading"><h3>Saldo acumulado até hoje</h3><span>${esc(hojeISO.split('-').reverse().join('/'))}</span></div>
             <strong class="proto-today-balance-value">${saldoDisponivel===null?'—':money(saldoDisponivel)}</strong>
-            <p>Acumulado das receitas menos despesas registradas até hoje, incluindo recorrências vencidas. Não é o saldo bancário.</p>
+            <p>Receitas menos despesas até hoje, incluindo recorrências vencidas e aportes identificados como saídos do salário. Não é o saldo bancário.</p>
           </section>
           <div class="grid2"><div class="minicard bg-green"><div class="lbl">Renda</div><div class="val">${money(s.income)}</div></div><div class="minicard bg-red"><div class="lbl">Despesas</div><div class="val">${money(s.expense)}</div></div></div>
-          <section class="card proto-progress-card"><h3>Reserva e sonho</h3>${goals.length?goals.map(progressLine).join(''):`<div class="proto-empty">Suas metas e sonhos aparecerão aqui.</div>`}</section>
+          <div class="proto-goal-summary-grid">
+            <section class="card proto-progress-card" aria-label="Resumo da reserva"><h3>Reserva</h3>${reserva?progressLine(reserva):'<div class="proto-empty">Nenhuma reserva cadastrada. <button type="button" class="button button-secondary" data-action="add-goal" data-type="goal">Criar meta</button></div>'}</section>
+            <section class="card proto-progress-card" aria-label="Resumo dos sonhos"><h3>Sonhos</h3>${sonho?progressLine(sonho):'<div class="proto-empty">Nenhum sonho cadastrado. <button type="button" class="button button-secondary" data-action="add-goal" data-type="dream">Criar sonho</button></div>'}</section>
+          </div>
         </div>
       </div>
       ${renderSaude()}
       <section class="card proto-list-card"><h3>Últimas transações</h3>${entryList(recent,'Nenhuma transação neste mês.')}</section>
       ${renderExpenseCharts()}
       ${hasHistory?`<details class="card proto-history"><summary>Comparar os últimos 6 meses</summary>${renderChart()}</details>`:''}
-      <p class="proto-note">Valores guardados são acompanhados separadamente e não são descontados novamente do saldo.</p>`;
+      <p class="proto-note">Investimentos antigos não alteram o saldo disponível. Aportes confirmados como feitos com salário são tratados como transferências internas, sem criar novas despesas.</p>`;
   }
   return {renderSummary};
 }
