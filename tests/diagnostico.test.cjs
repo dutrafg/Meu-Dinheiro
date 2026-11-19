@@ -73,6 +73,7 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
   const raw=JSON.stringify(dados());
   const context={
     verificarIntegridade:verificar,Date,Intl,Blob,
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Prévia de teste sem fontes externas'}),
     navigator:{userAgent:'TesteBrowser 1.0',language:'pt-BR',storage:{estimate:async()=>({usage:1234,quota:10000})},serviceWorker:{controller:{},getRegistration:async()=>({active:{},waiting:{}})}},
     window:{innerWidth:390,innerHeight:844,matchMedia:()=>({matches:true}),MeuDinheiroCSV:{importCSV:()=>{}},MeuDinheiroAnalytics:{expenseCategoryStats:()=>{}},MeuDinheiroFolderBackup:{createBrowserManager:()=>{}}},
     localStorage:{getItem:()=>raw},caches:{keys:async()=>['outra-app','meu-dinheiro-essencial-v12']}
@@ -94,6 +95,7 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
 test('Diagnóstico não falha se armazenamento, Cache API e Service Worker não estiverem disponíveis',async()=>{
   const verificar=await integridade();
   const context={verificarIntegridade:verificar,Date,Intl,Blob,
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Prévia de teste sem fontes externas'}),
     navigator:{userAgent:'Teste'},window:{},localStorage:{getItem:()=>{throw Error('bloqueado');}}};
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const result=await context.criar({getData:dados,CATEGORIES});
@@ -111,6 +113,7 @@ test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis'
   const style=(el)=>el===root?{getPropertyValue:n=>n==='--bg'?estado.fundo:n==='--accent-hover'?estado.corHover:estado.cor,colorScheme:estado.esquema}
     :el===body?{backgroundColor:estado.corFundo}:{backgroundColor:estado.corBotao};
   const context={Date,Intl,Blob,CORES:{verde:'#16875c',roxo:'#7c3aed'},TEMAS:['auto','claro','escuro'],
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Prévia de teste sem fontes externas'}),
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     navigator:{userAgent:'Teste',serviceWorker:{}},
     window:{getComputedStyle:style,matchMedia:()=>({matches:false})},
@@ -156,9 +159,31 @@ test('Limite visual de 25 segundos não corta a execução das verificações',(
   assert.match(source,/const tempoRestante=duracao/);
 });
 
+test('Diagnóstico apresenta CSS e funções candidatas como avisos sem apagar código',async()=>{
+  const context={Date,Intl,Blob,
+    verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:true,arquivosInspecionados:33,
+      seletoresVerificados:243,funcoesVerificadas:131,
+      cssNaoUsados:[{arquivo:'css/resumo.css',nome:'inativa'}],
+      funcoesSemUso:[{arquivo:'modules/resumo.js',nome:'semChamada'}]}),
+    navigator:{userAgent:'Teste',serviceWorker:{}},
+    window:{MeuDinheiroCSV:{importCSV:()=>{}},MeuDinheiroAnalytics:{expenseCategoryStats:()=>{}},
+      MeuDinheiroFolderBackup:{createBrowserManager:()=>{}}},localStorage:{getItem:()=>null}
+  };
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const relatorio=await context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
+  assert.equal(relatorio.auditoriaCodigo.candidatosCss,1);
+  assert.equal(relatorio.auditoriaCodigo.candidatosFuncoes,1);
+  assert.equal(relatorio.integridade.erros,0);
+  assert.equal(relatorio.integridade.itens.find(item=>item.codigo==='CSS_POSSIVELMENTE_SEM_USO_1').estado,'aviso');
+  assert.equal(relatorio.integridade.itens.find(item=>item.codigo==='FUNCAO_POSSIVELMENTE_SEM_USO_1').estado,'aviso');
+  assert.ok(relatorio.duracaoPrevistaMs<=25000);
+});
+
 test('PWA instalado verifica o cache de cada módulo separadamente',async()=>{
   const modulos=['resumo','integridade','ajustes'];
   const context={Date,Intl,Blob,
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Prévia de teste sem fontes externas'}),
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     MODULOS_OBRIGATORIOS:modulos,totalRegistros:()=>3,
     executarVerificacoesModulos:()=>modulos.map(nome=>({codigo:`MOD_${nome}`,estado:'ok',descricao:'Carregado',modulo:nome})),

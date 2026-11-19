@@ -12,7 +12,7 @@ const jsFiles = ['csv.js','analytics.js','folder-backup.js',
   'modules/log.js','modules/validacao.js','modules/preferencias.js','modules/regras-financeiras.js',
   'modules/integridade.js','modules/catalogo-diagnostico.js','modules/lancamentos.js','modules/objetivos.js',
   'modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
-  'modules/ajustes.js','modules/diagnostico.js','modules/registro-modulos.js','app.js'];
+  'modules/ajustes.js','modules/auditoria-codigo.js','modules/diagnostico.js','modules/registro-modulos.js','app.js'];
 
 const css = cssFiles.map(filename=>`/* ${filename} */\n${read(filename)}`).join('\n');
 const js = jsFiles.map(filename=>{
@@ -28,11 +28,12 @@ let html=read('index.html')
   .replace(/\s*<link rel="apple-touch-icon"[^>]*>/,'')
   .replace(/\s*<link rel="stylesheet" href="\.\/styles\.css"\s*\/>/,'')
   .replace(/\s*<link rel="stylesheet" href="\.\/prototype\.css"\s*\/>/,'')
-  .replace('</head>',`  <style>\n${css.replace(/<\/style/gi,'<\\/style')}\n  </style>\n</head>`);
+  .replace('</head>',()=>`  <style>\n${css.replace(/<\/style/gi,'<\\/style')}\n  </style>\n</head>`);
 
 const marker='<script type="module" src="./app.js"></script>';
 if(!html.includes(marker))throw Error('Entrada JavaScript não localizada no HTML original.');
-html=html.replace(marker,`<script>\n${js.replace(/<\/script/gi,'<\\/script')}\n</script>`);
+// Callback de replace impede que símbolos como $' no JavaScript sejam expandidos.
+html=html.replace(marker,()=>`<script>\n${js.replace(/<\/script/gi,'<\\/script')}\n</script>`);
 fs.mkdirSync(path.dirname(output),{recursive:true});
 fs.writeFileSync(output,html);
 console.log(`Prévia HTML criada: ${output} (${Buffer.byteLength(html)} bytes)`);

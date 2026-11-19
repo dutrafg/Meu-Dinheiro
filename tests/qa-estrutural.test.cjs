@@ -65,3 +65,33 @@ test('Análises não injetam categorias não confiáveis em atributos HTML',()=>
   assert.match(resumo,/aria-label="Total \$\{money\(stats\.currentTotal\)\}\. \$\{esc\(stats\.current\.map/);
   assert.match(read('dist/modules/notificacoes.js'),/\$\{esc\(a\.description\)\}/);
 });
+
+test('CSS limpa componentes aposentados sem remover a base do app',()=>{
+  const base=read('dist/styles.css');
+  for(const className of ['app-shell','header','nav-button','mobile-nav','backup-menu',
+    'form-dialog','two-col','dialog-actions','button-primary','toast','bar-chart','chart-legend',
+    'empty-state','filter-panel','search-field','section-note','field-hint']){
+    assert.ok(base.includes(`.${className}`),`Componente ainda utilizado sem estilo-base: ${className}`);
+  }
+  for(const antigo of ['.stat-card','.overview-hero','.brand-mark','.entry-actions','.goal-card','.page-header']){
+    assert.ok(!base.includes(antigo),`Estilo obsoleto ainda publicado: ${antigo}`);
+  }
+  assert.match(base,/button:focus-visible/);
+  assert.match(base,/textarea:focus-visible/);
+  assert.match(base,/summary:focus-visible/);
+});
+
+test('Acessibilidade: áreas seguras, números alinhados e movimento reduzido',()=>{
+  const media=read('dist/css/responsivo.css');
+  const resumo=read('dist/css/resumo.css');
+  const saude=read('dist/css/saude.css');
+  const estrutura=read('dist/css/estrutura.css');
+  assert.match(media,/env\(safe-area-inset-left\)/);
+  assert.match(media,/env\(safe-area-inset-right\)/);
+  assert.match(media,/env\(safe-area-inset-bottom\)/);
+  assert.match(media,/@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(media,/@media\(prefers-reduced-motion:no-preference\)/);
+  assert.match(media,/\.form-dialog\[open\]\{animation:/);
+  for(const css of [resumo,saude,estrutura])assert.match(css,/font-variant-numeric:tabular-nums/);
+  assert.match(read('dist/css/ajustes.css'),/:root\[data-theme="escuro"\]/);
+});

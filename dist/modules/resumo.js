@@ -75,7 +75,7 @@ export function criarModuloResumo(ctx) {
     if(!goals.some(g=>g.kind==='goal')) {const another=data.goals.find(g=>g.kind==='goal');if(another)goals.unshift(another);}
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);
-    return `${header('Resumo','Seu dinheiro em um só lugar.','',true)}
+    return `${header('',true)}
       <div class="proto-overview">
         <section class="card proto-donut-card"><h3>Visão financeira</h3>${donut(s.income,s.expense)}<div class="proto-donut-legend"><span><i style="background:var(--green)"></i>Renda</span><span><i style="background:var(--red)"></i>Despesas</span></div></section>
         <div class="proto-overview-secondary">

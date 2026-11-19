@@ -1,6 +1,7 @@
 import { verificarIntegridade } from './integridade.js';
 import { executarVerificacoesModulos,MODULOS_OBRIGATORIOS,totalRegistros } from './catalogo-diagnostico.js';
 import { CORES,TEMAS } from './preferencias.js';
+import { auditarCodigoPublicado } from './auditoria-codigo.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -142,6 +143,24 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');
     }
   }
+  // Auditoria de manutenção: percorre os próprios módulos e folhas CSS publicados.
+  // Os achados são sugestões, sem remoção automática ou leitura dos dados pessoais.
+  const auditoria=await auditarCodigoPublicado();
+  if(auditoria.disponivel){
+    conferir('AUDITORIA_FONTES',true,`${auditoria.arquivosInspecionados} arquivos CSS/JS inspecionados`,'Arquivos de código indisponíveis','auditoria-codigo');
+    adicionar('AUDITORIA_CSS_TOTAL','ok',`${auditoria.seletoresVerificados} classes CSS analisadas`,'auditoria-codigo');
+    adicionar('AUDITORIA_FUNCOES_TOTAL','ok',`${auditoria.funcoesVerificadas} funções privadas analisadas`,'auditoria-codigo');
+    for(const [i,item] of auditoria.cssNaoUsados.entries()){
+      adicionar(`CSS_POSSIVELMENTE_SEM_USO_${i+1}`,'aviso',
+        `Revisar .${item.nome} em ${item.arquivo}: classe sem referência estática`,'auditoria-codigo');
+    }
+    for(const [i,item] of auditoria.funcoesSemUso.entries()){
+      adicionar(`FUNCAO_POSSIVELMENTE_SEM_USO_${i+1}`,'aviso',
+        `Revisar ${item.nome}() em ${item.arquivo}: função sem chamada estática`,'auditoria-codigo');
+    }
+  }else{
+    adicionar('AUDITORIA_FONTES','aviso',auditoria.motivo,'auditoria-codigo');
+  }
   // Cada arquivo em dist/modules/ é declarado e inspecionado nesta lista.
   if(typeof executarVerificacoesModulos==='function'){
     integridade.itens.push(...executarVerificacoesModulos());
@@ -182,7 +201,12 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
     notificacoes:notificacoes?{ocultas:notificacoes.ocultas,armazenamentoOk:Boolean(notificacoes.armazenamentoOk)}:null,
-    integridade,bibliotecas,logs:obterLogs()
+    integridade,bibliotecas,logs:obterLogs(),
+    auditoriaCodigo:auditoria.disponivel?{
+      arquivos:auditoria.arquivosInspecionados,classes:auditoria.seletoresVerificados,
+      funcoes:auditoria.funcoesVerificadas,candidatosCss:auditoria.cssNaoUsados.length,
+      candidatosFuncoes:auditoria.funcoesSemUso.length
+    }:{disponivel:false}
   };
 }
 

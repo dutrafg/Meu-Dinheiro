@@ -219,13 +219,11 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
       document.getElementById(id).innerHTML = NAV.map(([key,title,symbol]) => `<button class="nav-button ${key===view?'active':''}" type="button" data-view="${key}" aria-current="${key===view?'page':'false'}">${icon(symbol)}<span>${title}</span></button>`).join('');
     }
   }
-  function header(title, subtitle, button, monthPicker=false) {
+  function header(subtitle='',monthPicker=false) {
     return `<div class="proto-page-meta">${monthPicker?monthControl():`<p>${esc(subtitle)}</p>`}</div>`;
   }
   function monthControl() { return `<div class="month-control" aria-label="Mês selecionado"><button type="button" data-month="-1" aria-label="Mês anterior">${icon('chevron-left')}</button><span style="text-transform:none">${esc(monthLabel(month))}</span><button type="button" data-month="1" aria-label="Próximo mês">${icon('chevron-right')}</button></div>`; }
-  function actionButton(title, action, type) { return `<button type="button" class="button button-primary" data-action="${action}"${type?` data-type="${type}"`:''}>${icon('plus')}${title}</button>`; }
   function empty(text, symbol='wallet') { return `<div class="empty-state">${icon(symbol)}<p>${esc(text)}</p></div>`; }
-  function stat(title, val, symbol, extra, color='') { return `<div class="stat-card"><div class="stat-top"><span class="stat-icon ${color}">${icon(symbol)}</span>${title}</div><div class="stat-value">${money(val)}</div><div class="stat-sub">${extra}</div></div>`; }
   function render() {
     renderReminderCount();
     const tituloImpressao=document.getElementById('print-report-title');

@@ -18,7 +18,7 @@ export function criarModuloObjetivos(ctx) {
     const looseAllocations=(data.allocations||[]).filter(a=>!(data.goals||[]).some(g=>g.id===a.goalId)&&(isDream?a.kind==='dream':['reserve','goal'].includes(a.kind)));
     const sumSaved=Math.max(0,n2(goals.reduce((s,g)=>s+g.saved,0)+looseAllocations.reduce((s,a)=>s+a.amount,0)));
     const sumTarget=n2(goals.reduce((s,g)=>s+g.target,0));
-    return `${header(isDream?'Sonho':'Metas','',null)}
+    return `${header('')}
       <section class="card proto-total-card"><h3>${isDream?'✨ Seu sonho':'🎯 Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
       ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:

@@ -76,6 +76,34 @@ test('Extrato classifica gastos específicos sem perder categorias antigas', () 
     ['Faculdade','Farmácia','Cursos','Cartão de crédito','Internet','Telefone','Saúde']);
 });
 
+test('Categorias antigas recebem opções gerais antes de cair em Outros', () => {
+  const antigas={income:['Salário','Renda extra','Outros'],
+    expense:['Contas','Saúde','Educação','Alimentação','Outros']};
+  const lines=['Data;Descrição;Valor',
+    '18/11/2026;Internet fibra ótica;-85,00',
+    '18/11/2026;Plano de telefone celular;-45,00',
+    '18/11/2026;Pagamento fatura cartão;-310,00',
+    '18/11/2026;Mensalidade Faculdade;-700,00',
+    '18/11/2026;Farmácia do bairro;-52,50',
+    '18/11/2026;Curso de inglês;-150,00',
+    '18/11/2026;Compras sem correspondência;-10,00'];
+  assert.deepEqual(csv.importCSV(lines.join('\n'),antigas).items.map(item=>item.category),
+    ['Contas','Contas','Contas','Educação','Saúde','Educação','Outros']);
+});
+
+test('Categorias reconhecidas e selecionadas no CSV têm prioridade sobre inferências', () => {
+  const explicita='Data;Descrição;Categoria;Valor\n18/11/2026;Internet fibra ótica;Saúde;-22,00';
+  assert.equal(csv.importCSV(explicita,categories).items[0].category,'Saúde');
+  assert.equal(csv.importCSV('Data;Descrição;Valor\n18/11/2026;Internet fibra ótica;-22,00',categories).items[0].category,'Internet');
+});
+
+test('Valores bancários com separador de milhar mantêm interpretação brasileira', () => {
+  for(const [texto,esperado] of [['1.234',1234],['1,234',1234],['1.234,56',1234.56],
+    ['1,234.56',1234.56],['(1.234,56)',-1234.56],['-0,01',-.01],['',null],['R$ 1 234,50',1234.5]]){
+    assert.equal(csv.moneyNumber(texto),esperado,`Valor ${texto}`);
+  }
+});
+
 test('Importa doze mil linhas sem perder datas e valores', () => {
   const content=['Data;Descrição;Valor'];
   for(let i=0;i<12000;i++) content.push(`18/11/2026;Despesa de teste ${i};-12,34`);

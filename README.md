@@ -44,6 +44,8 @@ Em **Ajustes → Atualizações e integridade → Executar diagnóstico completo
 
 Cada módulo em `dist/modules/` deve constar no catálogo com uma autoverificação funcional. Testes de arquitetura impedem que arquivos novos fiquem sem registro. Não há limite fixo para a quantidade de verificações. A **animação** da barra segue 5 segundos iniciais e mais 0,5 segundo por verificação acima das 9 primeiras, limitada a **25 segundos**. O relógio não interrompe testes: todos são executados, mesmo quando a análise demorar mais do que a animação. O relatório JSON só é liberado após concluir.
 
+O Diagnóstico também **audita código não utilizado**: analisa as folhas CSS e os módulos JavaScript publicados, conta classes e funções verificadas e exibe alertas para seletores e funções sem referência detectável. Esses achados são apenas candidatos a remoção, pois o código pode ser chamado indiretamente. Nada é excluído automaticamente. Essa verificação funciona na versão web/PWA modular, inclusive com os arquivos em cache offline; no HTML único independente, a inspeção dos arquivos separados não está disponível.
+
 O relatório é gerado **apenas no dispositivo**, sem envio automático. Contém contagens, estado técnico, datas de registros, versão do navegador e códigos de erros; **não contém nomes, descrições, valores financeiros, saldos nem nomes/caminhos de pastas**. Se precisar reproduzir uma falha, marque **Registrar eventos técnicos detalhados nesta sessão**. Esta opção começa desligada, registra somente códigos de ação permitidos e não captura conteúdo de formulários. Os últimos 50 eventos técnicos ficam em `sessionStorage`, com fallback para memória caso esse armazenamento falhe.
 
 Exclusões e restauração de backup agora usam confirmações visuais do aplicativo. Edições de lançamentos recorrentes avisam que a mudança afeta a série inteira. Falhas de sincronização da pasta exibem um aviso além do indicador no menu.
@@ -73,6 +75,7 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Registro técnico sanitizado e privacidade | `dist/modules/log.js` |
 | Regras puras de integridade | `dist/modules/integridade.js` |
 | Painel e relatório de diagnóstico | `dist/modules/diagnostico.js` |
+| Auditoria de CSS e funções possivelmente sem uso | `dist/modules/auditoria-codigo.js` |
 | Diálogos de confirmação e avisos | `dist/modules/dialogos.js` |
 | Aparência e painel de Ajustes | `dist/modules/ajustes.js` + `dist/css/ajustes.css` |
 | Preferências persistidas e validadas | `dist/modules/preferencias.js` |

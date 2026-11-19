@@ -1,7 +1,7 @@
 // Inventário obrigatório: toda adição em dist/modules deve entrar aqui com teste real.
 // O teste de arquitetura compara esta lista com o diretório inteiro, sem exceções.
 export const MODULOS_OBRIGATORIOS = Object.freeze([
-  'ajustes','atualizador','backup','catalogo-diagnostico','csv-interface','diagnostico','dialogos',
+  'ajustes','atualizador','auditoria-codigo','backup','catalogo-diagnostico','csv-interface','diagnostico','dialogos',
   'integridade','lancamentos','log','notificacoes','objetivos','preferencias','registro-modulos','regras-financeiras','relatorio-pdf','resumo','saude','validacao'
 ]);
 

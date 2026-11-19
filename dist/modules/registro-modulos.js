@@ -2,6 +2,7 @@ import {registrarModuloDiagnostico,executarVerificacoesModulos,MODULOS_OBRIGATOR
 import {verificarIntegridade} from './integridade.js';
 import {validarDataISO} from './validacao.js';
 import {calcularSaudeFinanceira} from './saude.js';
+import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -19,6 +20,8 @@ export function registrarModulosDoApp(api) {
     Number.isSafeInteger(notificacoes.getStatus().ocultas));
   registrar('saude',()=>typeof moduloSaude.renderSaude==='function'&&typeof moduloSaude.calcular==='function'&&
     calcularSaudeFinanceira({renda:100,despesas:85,saldo:15,reserva:300,despesasPeriodo:90,diasPeriodo:30}).situacao==='crescendo');
+  registrar('auditoria-codigo',()=>typeof auditarCodigoPublicado==='function'&&
+    analisarCodigoEstatico({fontesCss:{'teste.css':'.sem-uso{}'},fontesJs:{'teste.js':'function usada(){} usada();'}}).cssNaoUsados.length===1);
   registrar('relatorio-pdf',()=>typeof relatorioPdf.imprimir==='function'&&Boolean(document.getElementById('export-pdf')));
   registrar('preferencias',()=>['auto','claro','escuro'].includes(preferencias.obter().tema));
   registrar('regras-financeiras',()=>regras.calcularAporte({type:'income',category:'Salário base',amount:100},{percentual:10,categoriasAporte:['Salário base']})===10);
