@@ -144,7 +144,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
       AJUSTES:['settings-dialog','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
-      PDF:['export-pdf','print-report-title'],SAUDE:['main-content'],
+      PDF:['export-pdf','print-report'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
       CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel']})) {
       conferir(`UI_${codigo}`,ids.every(id=>Boolean(document.getElementById(id))),`Interface ${codigo.toLowerCase()} completa`,`Faltam componentes da interface ${codigo.toLowerCase()}`,'interface');

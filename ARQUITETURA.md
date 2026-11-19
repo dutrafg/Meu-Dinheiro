@@ -25,7 +25,8 @@ dist/
     resumo.js              # Tela Resumo e gráficos por categoria
     saude.js               # Poupança, fôlego e temperatura: regras puras e card
     notificacoes.js        # Dispensar/restaurar lembretes sem concluir aportes
-    relatorio-pdf.js       # Imprimir tela atual e salvar PDF via navegador
+    relatorio-pdf.js       # Controle da impressão local e limpeza temporária
+    relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
     objetivos.js           # Metas/Sonho, progresso, reserva e formulário
     backup.js              # Backup completo JSON e cópias na pasta

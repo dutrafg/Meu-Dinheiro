@@ -226,8 +226,6 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   function empty(text, symbol='wallet') { return `<div class="empty-state">${icon(symbol)}<p>${esc(text)}</p></div>`; }
   function render() {
     renderReminderCount();
-    const tituloImpressao=document.getElementById('print-report-title');
-    tituloImpressao.textContent=`${NAV.find(v=>v[0]===view)?.[1]||'Resumo'} · ${monthLabel(month)}`;
     document.getElementById('header-label').textContent=NAV.find(v=>v[0]===view)?.[1]||'Resumo';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
     document.getElementById('quick-add').setAttribute('aria-label',view==='metas'?'Criar meta':view==='sonho'?'Criar sonho':'Adicionar lançamento');
@@ -358,7 +356,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
     onSave:()=>folderBackup?.schedule()});
-  const relatorioPdf=iniciarRelatorioPdf({hideBackupMenu:backup.hideBackupMenu,registrar});
+  const relatorioPdf=iniciarRelatorioPdf({...common,getView:()=>view,hideBackupMenu:backup.hideBackupMenu,registrar});
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),

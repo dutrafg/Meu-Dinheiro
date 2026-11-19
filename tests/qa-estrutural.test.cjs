@@ -55,7 +55,7 @@ test('Layout pequeno empilha os indicadores e impressão preserva contraste no e
   assert.match(read('dist/css/saude.css'),/@media\(max-width:620px\)\{\.saude-grid\{grid-template-columns:1fr/);
   assert.match(read('dist/css/ajustes.css'),/\.settings-heading\{position:sticky/);
   const print=read('dist/css/impressao.css');
-  assert.match(print,/:root\[data-theme\]\{color-scheme:light/);
+  assert.match(print,/:root\[data-theme\],:root\{color-scheme:light/);
   assert.match(print,/print-color-adjust:exact/);
   assert.match(print,/break-inside:avoid/);
 });

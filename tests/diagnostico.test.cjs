@@ -181,7 +181,7 @@ test('Diagnóstico apresenta CSS e funções candidatas como avisos sem apagar c
 });
 
 test('Diagnóstico informa a versão carregada e avisa se o indicador visual divergir',async()=>{
-  const versao={textContent:'v19'};
+  const versao={textContent:'v20'};
   const context={Date,Intl,Blob,
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Sem acesso a código no teste'}),
@@ -191,9 +191,9 @@ test('Diagnóstico informa a versão carregada e avisa se o indicador visual div
   };
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
-    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v19'})});
+    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v20'})});
   const certo=await gerar();
-  assert.equal(certo.atualizador.versaoEmExecucao,'v19');
+  assert.equal(certo.atualizador.versaoEmExecucao,'v20');
   assert.equal(certo.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok');
   versao.textContent='v18';
   const errado=await gerar();

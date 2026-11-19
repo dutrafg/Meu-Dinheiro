@@ -36,7 +36,7 @@ São estimativas baseadas no que foi registrado no aparelho. Não movimentam din
 
 Toque no **sino** e em **Limpar notificações** para dispensar os lembretes pendentes. Uma confirmação evita limpezas acidentais. Isso **não marca aportes como realizados e não exclui lançamentos**. O botão **Restaurar avisos ocultos** permite recuperar a lista; novas rendas continuam produzindo lembretes. As dispensas são salvas em uma chave separada dos dados financeiros.
 
-Em **Ajustes → Arquivos, importação e backup → Imprimir / salvar PDF da tela**, o navegador abre a impressão da área financeira atual, sem botões nem menus. Selecione **Salvar como PDF** no diálogo nativo. Não há envio de dados para servidores do aplicativo.
+Em **Ajustes → Arquivos, importação e backup → Imprimir / salvar PDF da tela**, o aplicativo monta um relatório financeiro A4 independente do layout do celular. O documento apresenta a identidade Meu Dinheiro, período, indicadores, categorias e **todas as movimentações do mês**; nas áreas Metas e Sonho, mostra objetivos, progresso, prazos, aplicações e resgates. Selecione **Salvar como PDF** no diálogo nativo. Não há envio de dados para servidores do aplicativo.
 
 ## Diagnóstico e integridade (Etapas 1–2)
 
@@ -56,7 +56,7 @@ O aplicativo instalado no navegador verifica automaticamente se há novas versõ
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
-Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (por exemplo, `v19`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (por exemplo, `v20`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
 
 ## Estrutura modular do código
 
@@ -67,7 +67,7 @@ O aplicativo continua sendo um PWA estático, sem etapa de compilação. A pági
 | Resumo e gráficos | `dist/modules/resumo.js` |
 | Saúde Financeira | `dist/modules/saude.js` + `dist/css/saude.css` |
 | Limpeza e restauração de notificações | `dist/modules/notificacoes.js` |
-| Impressão e PDF | `dist/modules/relatorio-pdf.js` + `dist/css/impressao.css` |
+| Impressão e PDF | `dist/modules/relatorio-pdf.js` (controle) + `dist/modules/relatorio-pdf-conteudo.js` (conteúdo) + `dist/css/impressao.css` (A4) |
 | Renda e Despesas | `dist/modules/lancamentos.js` |
 | Metas, Reserva e Sonho | `dist/modules/objetivos.js` |
 | Backup JSON e pasta do PC | `dist/modules/backup.js` |

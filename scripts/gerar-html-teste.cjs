@@ -11,7 +11,7 @@ const cssFiles = ['styles.css','css/estrutura.css','css/resumo.css','css/saude.c
 const jsFiles = ['csv.js','analytics.js','folder-backup.js',
   'modules/log.js','modules/validacao.js','modules/preferencias.js','modules/regras-financeiras.js',
   'modules/integridade.js','modules/catalogo-diagnostico.js','modules/lancamentos.js','modules/objetivos.js',
-  'modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
+  'modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf-conteudo.js','modules/relatorio-pdf.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
   'modules/ajustes.js','modules/auditoria-codigo.js','modules/diagnostico.js','modules/registro-modulos.js','app.js'];
 
 const css = cssFiles.map(filename=>`/* ${filename} */\n${read(filename)}`).join('\n');
