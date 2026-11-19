@@ -4,6 +4,7 @@ import {validarDataISO} from './validacao.js';
 import {calcularSaudeFinanceira} from './saude.js';
 import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.js';
 import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
+import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -34,6 +35,10 @@ export function registrarModulosDoApp(api) {
   registrar('validacao',()=>validarDataISO('2024-02-29')&&!validarDataISO('2025-02-29'));
   registrar('integridade',()=>verificarIntegridade({transactions:[],goals:[],allocations:[],completedAportes:[]},{income:[],expense:[]}).erros===0);
   registrar('diagnostico',()=>typeof diagnostico.executar==='function');
+  registrar('diagnostico-proposta',()=>{
+    const relatorio=avaliarRequisitosProposta({TEMA_AUTO:true,TEMA_AZUL:false});
+    return relatorio.total===REQUISITOS_PROPOSTA.length&&relatorio.implementados===1&&relatorio.pendentes===1;
+  });
   registrar('catalogo-diagnostico',()=>typeof executarVerificacoesModulos==='function'&&MODULOS_OBRIGATORIOS.length>0);
   registrar('registro-modulos',()=>typeof registrarModulosDoApp==='function');
 }

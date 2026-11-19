@@ -2,17 +2,13 @@ import {normalizarPreferencias} from './preferencias.js';
 
 export function iniciarModuloBackup(ctx) {
   const {getData, getPreferences, salvarPreferencias, aplicarPreferencias, icon, isoDate, notify, persist, resetToSummary, validarBackup, CATEGORIES, confirmar, registrar, registrarEvento} = ctx;
-  const backupButton=document.getElementById('backup-menu-button');
-  const backupMenu=document.getElementById('backup-menu');
   const folderConnectButton=document.getElementById('folder-backup-connect');
   const folderReconnectButton=document.getElementById('folder-backup-reconnect');
   const folderStatus=document.getElementById('folder-backup-status');
   const folderAlert=document.getElementById('folder-backup-alert');
   let ultimoAlerta='';
-  function hideBackupMenu() {
-    backupMenu.classList.add('hidden');
-    backupButton.setAttribute('aria-expanded','false');
-  }
+  // API mantida para os módulos que fechavam o menu antigo; a aba Ajustes o substitui.
+  function hideBackupMenu() {}
   const folderBackup=window.MeuDinheiroFolderBackup.createBrowserManager({
     getSnapshot:()=>{
       const data=getData();
@@ -48,16 +44,14 @@ export function iniciarModuloBackup(ctx) {
     const result=await folderBackup.reauthorize();
     notify(result?'Backup na pasta atualizado.':'Não foi possível salvar na pasta. Confira as permissões.');
   });
-  backupButton.addEventListener('click',()=>{const show=backupMenu.classList.toggle('hidden')===false;backupButton.setAttribute('aria-expanded',show?'true':'false');});
-  document.addEventListener('click',event=>{if(!event.target.closest('#backup-menu')&&!event.target.closest('#backup-menu-button')){backupMenu.classList.add('hidden');backupButton.setAttribute('aria-expanded','false');}});
   document.getElementById('export-data').addEventListener('click',()=>{
     const data=getData();
     const contents=JSON.stringify({app:'meu-dinheiro-essencial',version:1,exportedAt:new Date().toISOString(),...data,preferences:getPreferences()},null,2);
     const url=URL.createObjectURL(new Blob([contents],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download=`meu-dinheiro-backup-${isoDate(new Date())}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
-    backupMenu.classList.add('hidden');backupButton.setAttribute('aria-expanded','false');notify('Backup gerado. Guarde o arquivo em local seguro.');
+    notify('Backup gerado. Guarde o arquivo em local seguro.');
   });
-  document.getElementById('import-data').addEventListener('click',()=>{document.getElementById('import-file').click();backupMenu.classList.add('hidden');backupButton.setAttribute('aria-expanded','false');});
+  document.getElementById('import-data').addEventListener('click',()=>document.getElementById('import-file').click());
   document.getElementById('import-file').addEventListener('change',async event=>{
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
     if(file.size>5*1024*1024){registrar('aviso','BACKUP_ARQUIVO_GRANDE','backup');notify('Arquivo muito grande (limite: 5 MB).');return;}

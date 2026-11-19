@@ -42,22 +42,49 @@
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3m0 0-5 5m5-5 5 5M4 17v3h16v-3"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
     <symbol id="i-activity" viewBox="0 0 24 24"><path d="M2 12h4l3-8 6 16 3-8h4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.6 7.6 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></symbol>
   </svg>
   <div class="app-shell">
     <header class="header">
       <div class="prototype-heading"><span id="header-label">Resumo</span><strong id="header-balance">R$ 0,00</strong></div>
       <div class="proto-header-actions">
         <button type="button" id="reminder-button" class="icon-button quiet proto-reminder-button" aria-label="Lembretes de aporte" title="Lembretes de aporte"><svg><use href="#i-bell"/></svg><span id="reminder-count" class="proto-reminder-count hidden" aria-hidden="true"></span></button>
-        <button type="button" id="backup-menu-button" class="icon-button quiet" aria-label="Opções e ajustes" aria-expanded="false" title="Ajustes e atualizações"><svg><use href="#i-ellipsis"/></svg><span id="folder-backup-alert" class="folder-backup-alert hidden" aria-hidden="true"></span><span id="app-update-alert" class="app-update-alert hidden" aria-hidden="true"></span></button>
-      </div>
-      <div id="backup-menu" class="backup-menu hidden" role="menu">
-        <button type="button" id="open-settings" role="menuitem"><svg><use href="#i-edit"/></svg> Abrir Ajustes e diagnósticos</button>
+        <span class="nav-alert-sources" aria-hidden="true"><span id="folder-backup-alert" class="folder-backup-alert hidden"></span><span id="app-update-alert" class="app-update-alert hidden"></span></span>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
       <input type="file" id="csv-import-file" accept="text/csv,.csv,text/plain" hidden />
     </header>
     <nav class="desktop-nav" aria-label="Áreas do aplicativo" id="desktop-nav"></nav>
-    <main id="main-content" tabindex="-1" aria-live="polite"></main>
+    <main id="main-content" tabindex="-1"><div id="view-content" aria-live="polite"></div>
+      <section id="settings-page" class="settings-page hidden" aria-labelledby="settings-title">
+        <div class="settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-settings"/></svg> Ajustes</h2></div><div class="settings-heading-actions"><button type="submit" form="settings-form" class="button button-primary" id="settings-save-top">Salvar alterações</button><button type="button" id="settings-cancel" class="button button-secondary">Descartar</button></div></div>
+        <form id="settings-form">
+          <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-settings"/></svg> Aparência</h3>
+            <div class="settings-row"><label for="settings-theme">Tema</label><select id="settings-theme" name="tema"><option value="auto">Automático (sistema)</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></div>
+            <fieldset><legend>Cor de destaque (botões e navegação)</legend><div id="settings-colors" class="settings-colors"></div></fieldset>
+            <p class="settings-preview-hint">Aparência em prévia até tocar em Salvar. Descartar restaura o tema e a cor anteriores.</p>
+          </section>
+          <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-target"/></svg> Planejamento do aporte</h3>
+            <div class="settings-row"><label for="settings-percentual">Percentual por renda</label><input id="settings-percentual" name="percentual" type="number" min="0" max="100" step="0.01" required /></div>
+            <fieldset><legend>Categorias de renda incluídas</legend><div id="settings-categories" class="settings-categories"></div></fieldset>
+            <div class="settings-row"><label for="settings-reserve">Meta principal de reserva</label><select id="settings-reserve" name="reservaGoalId"></select></div>
+            <p class="field-hint">A configuração apenas calcula sugestões: não movimenta dinheiro nem altera lançamentos.</p>
+          </section>
+          <div class="settings-save-actions"><button class="button button-secondary" id="settings-form-cancel" type="button">Descartar</button><button class="button button-primary" type="submit">Salvar ajustes</button></div>
+        </form>
+        <details class="settings-section settings-tools"><summary><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Arquivos, importação e backup</summary>
+          <div class="settings-tool-buttons"><button type="button" id="export-pdf">Imprimir / salvar PDF da tela</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
+          <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
+          <p class="folder-backup-warning">Backup JSON sem criptografia: proteja a pasta.</p>
+        </details>
+        <section class="settings-section settings-tools" aria-labelledby="settings-update-title"><h3 id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e integridade</h3>
+          <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>
+          <div class="settings-tool-buttons"><button type="button" id="check-update">Verificar atualizações</button><button type="button" id="install-update" class="hidden">Atualizar agora</button></div>
+          <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
+          <div class="settings-tool-buttons"><button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button></div>
+        </section>
+      </section>
+    </main>
     <section id="print-report" class="print-report" aria-hidden="true"></section>
     <button type="button" id="quick-add" class="fab" aria-label="Adicionar lançamento">+</button>
     <nav class="mobile-nav" aria-label="Áreas do aplicativo" id="mobile-nav"></nav>
@@ -68,7 +95,7 @@
       <div class="dialog-heading"><div><span class="eyebrow">LANÇAMENTO</span><h2 id="transaction-title">Nova renda</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
       <input name="id" type="hidden" />
       <input name="type" type="hidden" />
-      <div class="tipo-toggle" id="transaction-type-toggle"><button type="button" data-trans-type="income">💵 Renda</button><button type="button" data-trans-type="expense">🧾 Despesa</button></div>
+      <div class="tipo-toggle" id="transaction-type-toggle"><button type="button" data-trans-type="income"><svg aria-hidden="true"><use href="#i-wallet"/></svg> Renda</button><button type="button" data-trans-type="expense"><svg aria-hidden="true"><use href="#i-receipt"/></svg> Despesa</button></div>
       <label>Descrição <input name="description" maxlength="80" placeholder="Ex.: Salário, mercado..." required /></label>
       <label>Valor (R$) <input name="amount" inputmode="decimal" type="number" min="0.01" max="999999999" step="0.01" placeholder="0,00" required /></label>
       <div class="two-col"><label>Data <input name="date" type="date" required /></label><label>Categoria <select name="category" required></select></label></div>
@@ -100,7 +127,7 @@
     <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button type="button" id="csv-confirm-import" class="button button-primary">Importar</button></div>
   </dialog>
   <dialog id="reminder-dialog" class="form-dialog reminder-dialog">
-    <div class="dialog-heading"><div><span class="eyebrow">LEMBRETES</span><h2>🔔 Hora de guardar</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+    <div class="dialog-heading"><div><span class="eyebrow">LEMBRETES</span><h2><svg class="settings-section-icon" aria-hidden="true"><use href="#i-bell"/></svg> Hora de guardar</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
     <p class="field-hint">Ao receber uma renda, lembre-se de fazer o aporte. Marcar como feito só confirma o lembrete; não movimenta dinheiro.</p>
     <div class="reminder-actions"><button type="button" id="notifications-clear" class="button button-secondary">Limpar notificações</button><button type="button" id="notifications-restore" class="button button-secondary hidden">Restaurar avisos ocultos</button></div>
     <div id="reminder-list" class="proto-reminder-list"></div>
@@ -111,40 +138,13 @@
     <p id="confirmation-message" class="confirmation-message"></p>
     <div class="dialog-actions"><button id="confirmation-cancel" type="button" class="button button-secondary">Cancelar</button><button id="confirmation-accept" type="button" class="button button-primary">Confirmar</button></div>
   </dialog>
-  <dialog id="settings-dialog" class="form-dialog settings-dialog" aria-labelledby="settings-title">
-    <div class="dialog-heading settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title">⚙️ Ajustes</h2></div><div class="settings-heading-actions"><button type="submit" form="settings-form" class="button button-primary" id="settings-save-top">Salvar</button><button type="button" id="settings-cancel" class="icon-button" aria-label="Fechar ajustes"><svg><use href="#i-close"/></svg></button></div></div>
-    <form id="settings-form">
-      <section class="settings-section"><h3>Aparência</h3>
-        <label>Tema <select name="tema"><option value="auto">Automático (sistema)</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></label>
-        <fieldset><legend>Cor de destaque (botões e navegação)</legend><div id="settings-colors" class="settings-colors"></div></fieldset>
-        <p class="settings-preview-hint">A aparência muda na hora para você testar. Toque em <strong>Salvar</strong> para manter ou em <strong>Cancelar</strong> para desfazer.</p>
-      </section>
-      <section class="settings-section"><h3>Planejamento do aporte</h3>
-        <label>Percentual por renda selecionada <input name="percentual" type="number" min="0" max="100" step="0.01" required /></label>
-        <fieldset><legend>Categorias de renda incluídas</legend><div id="settings-categories" class="settings-categories"></div></fieldset>
-        <label>Meta principal de reserva <select id="settings-reserve" name="reservaGoalId"></select></label>
-        <p class="field-hint">A configuração apenas calcula sugestões: não movimenta dinheiro nem altera lançamentos.</p>
-      </section>
-      <div class="dialog-actions"><button class="button button-secondary" id="settings-form-cancel" type="button">Cancelar</button><button class="button button-primary" type="submit">Salvar ajustes</button></div>
-    </form>
-    <details class="settings-section settings-tools"><summary>Arquivos, importação e backup</summary>
-      <div class="settings-tool-buttons"><button type="button" id="export-pdf">Imprimir / salvar PDF da tela</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
-      <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
-      <p class="folder-backup-warning">Backup JSON sem criptografia: proteja a pasta.</p>
-    </details>
-    <details class="settings-section settings-tools"><summary>Atualizações e integridade</summary>
-      <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>
-      <div class="settings-tool-buttons"><button type="button" id="check-update">Verificar atualizações</button><button type="button" id="install-update" class="hidden">Atualizar agora</button></div>
-      <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
-      <div class="settings-tool-buttons"><button type="button" id="open-diagnostics">🩺 Executar diagnóstico completo</button></div>
-    </details>
-  </dialog>
   <dialog id="diagnostics-dialog" class="form-dialog diagnostics-dialog" aria-labelledby="diagnostics-title">
     <div class="dialog-heading"><div><span class="eyebrow">INTEGRIDADE LOCAL</span><h2 id="diagnostics-title">Diagnóstico do aplicativo</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
     <p class="diagnostics-privacy">O relatório contém somente informações técnicas e contagens. Não inclui descrições, saldos, valores financeiros ou caminhos de pasta.</p>
+    <p class="diagnostics-privacy">Itens <strong>pendentes</strong> da proposta visual indicam melhorias futuras, não falhas de integridade. Toque em um módulo para ver os testes.</p>
     <p id="diagnostics-summary" role="status" aria-live="polite">Aguardando verificação.</p>
-    <div id="diagnostics-progress-area" class="diagnostics-progress-area"><div id="diagnostics-progress" class="diagnostics-progress" role="progressbar" aria-label="Progresso do diagnóstico" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="diagnostics-progress-fill"></span></div><p id="diagnostics-progress-label">Pronto para iniciar.</p></div>
-    <div id="diagnostics-checks" class="diagnostics-checks" aria-label="Resultado das verificações"></div>
+    <div id="diagnostics-progress-area" class="diagnostics-progress-area"><div id="diagnostics-progress" class="diagnostics-progress progress-bar progress-bar-large" role="progressbar" aria-label="Progresso do diagnóstico" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="diagnostics-progress-fill" class="progress-bar-fill"></span></div><p id="diagnostics-progress-label">Pronto para iniciar.</p></div>
+    <div id="diagnostics-checks" class="diagnostics-checks diagnostics-groups" aria-label="Resultado das verificações"></div>
     <label class="diagnostics-toggle"><input type="checkbox" id="diagnostics-verbose" /> Registrar eventos técnicos detalhados nesta sessão</label>
     <p class="field-hint">Desligado por padrão. Não registra informações preenchidas nos formulários.</p>
     <div class="diagnostics-actions"><button type="button" id="diagnostics-run" class="button button-secondary">Verificar novamente</button><button type="button" id="diagnostics-export" class="button button-primary">Baixar JSON</button></div>

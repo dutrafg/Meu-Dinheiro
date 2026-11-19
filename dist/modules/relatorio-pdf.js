@@ -4,7 +4,6 @@ import { montarRelatorioFinanceiro } from './relatorio-pdf-conteudo.js';
 export function iniciarRelatorioPdf({hideBackupMenu,registrar=()=>{},getData,getView,getMonth,monthLabel,
   transactionsInMonth,money}) {
   const botao=document.getElementById('export-pdf');
-  const dialogo=document.getElementById('settings-dialog');
   const destino=document.getElementById('print-report');
   function limpar(){destino.replaceChildren();}
   function preparar(){
@@ -19,7 +18,6 @@ export function iniciarRelatorioPdf({hideBackupMenu,registrar=()=>{},getData,get
   }
   function imprimir() {
     hideBackupMenu();
-    dialogo.close();
     if(typeof window.print!=='function'){
       registrar('aviso','PDF_IMPRESSAO_INDISPONIVEL','relatorio-pdf');
       return false;

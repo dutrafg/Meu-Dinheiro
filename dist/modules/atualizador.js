@@ -1,6 +1,6 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
 // Este número identifica o código da página aberta, não o Service Worker em espera.
-export const VERSAO_EM_EXECUCAO = 'v20';
+export const VERSAO_EM_EXECUCAO = 'v21';
 export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');
@@ -25,7 +25,7 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
     if (!registration?.waiting || !navigator.serviceWorker.controller) return false;
     installButton.classList.remove('hidden');
     alertBadge.classList.remove('hidden');
-    if (status.dataset.state !== 'ready') notify('Nova versão disponível! Abra os três pontos para atualizar.');
+    if (status.dataset.state !== 'ready') notify('Nova versão disponível! Abra Ajustes para atualizar.');
     mostrarEstado('Nova versão pronta. Salve o que estiver editando e toque em Atualizar agora.', 'ready');
     return true;
   }

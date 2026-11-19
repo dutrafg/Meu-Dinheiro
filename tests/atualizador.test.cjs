@@ -54,8 +54,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('Primeira instalação não avisa uma atualização inexistente', async () => {
   const app=scenario({controlled:false});
-  assert.equal(app.elements['app-running-version'].textContent,'v20');
-  assert.equal(app.updater.getStatus().versaoEmExecucao,'v20');
+  assert.equal(app.elements['app-running-version'].textContent,'v21');
+  assert.equal(app.updater.getStatus().versaoEmExecucao,'v21');
   await flush();
   assert.equal(app.serviceWorker.registerCalls,1);
   assert.equal(app.registration.updateCalls,1);
@@ -82,7 +82,7 @@ test('Nova versão avisa sem instalar; apenas o clique solicita ativação e rec
   assert.equal(app.elements['install-update'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-alert'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-status'].dataset.state,'ready');
-  assert.equal(app.elements['app-running-version'].textContent,'v20','Uma versão aguardando autorização não muda a versão da página');
+  assert.equal(app.elements['app-running-version'].textContent,'v21','Uma versão aguardando autorização não muda a versão da página');
   assert.equal(app.notifications.length,1);
   assert.equal(messages.length,0);
   app.serviceWorker.emit('controllerchange');
@@ -120,7 +120,7 @@ test('Prévia HTML local e browsers sem Service Worker não tentam registrar', (
     assert.equal(app.elements['check-update'].disabled,true);
     assert.equal(app.serviceWorker.registerCalls,0);
     assert.match(app.elements['app-update-status'].textContent,/aplicativo publicado/);
-    assert.equal(app.elements['app-running-version'].textContent,'v20','A versão precisa aparecer até no HTML de homologação');
+    assert.equal(app.elements['app-running-version'].textContent,'v21','A versão precisa aparecer até no HTML de homologação');
   }
 });
 

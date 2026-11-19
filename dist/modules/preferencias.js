@@ -7,7 +7,7 @@ export const TEMAS = Object.freeze(['auto','claro','escuro']);
 export const CATEGORIAS_APORTE_PADRAO = Object.freeze(['Salário base','Salário','Personal']);
 
 export function preferenciasPadrao() {
-  return {tema:'auto',cor:'verde',percentual:10,categoriasAporte:[...CATEGORIAS_APORTE_PADRAO],reservaGoalId:''};
+  return {tema:'auto',cor:'azul',percentual:10,categoriasAporte:[...CATEGORIAS_APORTE_PADRAO],reservaGoalId:''};
 }
 
 export function normalizarPreferencias(valor, categoriasRenda=[]) {

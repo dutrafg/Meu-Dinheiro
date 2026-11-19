@@ -5,7 +5,9 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
-const semImports = file=>read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
+const semImports = file=>(file==='dist/modules/diagnostico.js'?
+  'const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n':'')+
+  read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({
   transactions:[{id:'id-1',description:'Despesa CPF 123.456.789-00',type:'expense',amount:741.59,date:'2026-11-05',category:'Alimentação',recurring:false,createdAt:'2026-11-05T12:00:00.000Z'}],
   goals:[{id:'meta-1',kind:'goal',name:'Viagem particular',target:5000,saved:700,deadline:''}],
@@ -181,7 +183,7 @@ test('Diagnóstico apresenta CSS e funções candidatas como avisos sem apagar c
 });
 
 test('Diagnóstico informa a versão carregada e avisa se o indicador visual divergir',async()=>{
-  const versao={textContent:'v20'};
+  const versao={textContent:'v21'};
   const context={Date,Intl,Blob,
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Sem acesso a código no teste'}),
@@ -191,9 +193,9 @@ test('Diagnóstico informa a versão carregada e avisa se o indicador visual div
   };
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
-    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v20'})});
+    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v21'})});
   const certo=await gerar();
-  assert.equal(certo.atualizador.versaoEmExecucao,'v20');
+  assert.equal(certo.atualizador.versaoEmExecucao,'v21');
   assert.equal(certo.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok');
   versao.textContent='v18';
   const errado=await gerar();
@@ -218,5 +220,5 @@ test('PWA instalado verifica o cache de cada módulo separadamente',async()=>{
   assert.equal(cache.length,3);
   assert.equal(cache.find(v=>v.modulo==='pwa'&&v.codigo==='CACHE_MOD_INTEGRIDADE').estado,'aviso');
   assert.equal(cache.find(v=>v.codigo==='CACHE_MOD_RESUMO').estado,'ok');
-  assert.equal(report.duracaoPrevistaMs,5000+Math.max(0,report.integridade.itens.length-9)*500);
+  assert.equal(report.duracaoPrevistaMs,Math.min(25000,5000+Math.max(0,report.integridade.itens.length-9)*500));
 });

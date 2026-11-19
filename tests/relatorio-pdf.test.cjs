@@ -9,8 +9,7 @@ function iniciar({semImpressao=false,erroAoImprimir=false,erroAoPreparar=false}=
   const eventos=[];const logs=[];const callbacks={};
   const destino={innerHTML:'',replaceChildren(){this.innerHTML='';eventos.push('limpar');},hasChildNodes(){return !!this.innerHTML;}};
   const botao={addEventListener:(nome,cb)=>{callbacks[nome]=cb;}};
-  const dialogo={close:()=>eventos.push('fechar ajustes')};
-  const document={getElementById:id=>({'export-pdf':botao,'settings-dialog':dialogo,'print-report':destino}[id])};
+  const document={getElementById:id=>({'export-pdf':botao,'print-report':destino}[id])};
   const window={addEventListener:(nome,cb)=>{callbacks[nome]=cb;},requestAnimationFrame:cb=>{eventos.push('agendar');cb();}};
   if(!semImpressao)window.print=()=>{if(erroAoImprimir)throw Error('Impressora bloqueada');eventos.push('imprimir');};
   const montarRelatorioFinanceiro=()=>'<article class="pdf-document">Meu Dinheiro</article>';
@@ -26,10 +25,10 @@ function iniciar({semImpressao=false,erroAoImprimir=false,erroAoPreparar=false}=
   return {api,eventos,logs,callbacks,destino};
 }
 
-test('PDF prepara conteúdo financeiro local, fecha Ajustes antes de imprimir e limpa depois',()=>{
+test('PDF prepara conteúdo financeiro sem alterar a aba Ajustes e limpa depois',()=>{
   const {api,eventos,callbacks,destino}=iniciar();
   assert.equal(callbacks.click(),true);
-  assert.deepEqual(eventos,['fechar menu','fechar ajustes','agendar','imprimir']);
+  assert.deepEqual(eventos,['fechar menu','agendar','imprimir']);
   assert.match(destino.innerHTML,/Meu Dinheiro/);
   callbacks.afterprint();
   assert.equal(destino.innerHTML,'');
@@ -84,6 +83,6 @@ test('PDF possui identidade própria, paginação A4 e tabelas repetidas entre p
   assert.match(css,/dialog/);
   assert.match(html,/id="print-report"/);
   assert.match(html,/id="export-pdf"/);
-  assert.match(app,/getView:\(\)=>view/);
+  assert.match(app,/getView:\(\)=>ultimaVisaoFinanceira/);
   assert.doesNotMatch(app,/print-report-title/);
 });

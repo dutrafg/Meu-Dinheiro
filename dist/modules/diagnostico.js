@@ -1,7 +1,8 @@
 import { verificarIntegridade } from './integridade.js';
 import { executarVerificacoesModulos,MODULOS_OBRIGATORIOS,totalRegistros } from './catalogo-diagnostico.js';
-import { CORES,TEMAS } from './preferencias.js';
+import { CORES,TEMAS,preferenciasPadrao } from './preferencias.js';
 import { auditarCodigoPublicado } from './auditoria-codigo.js';
+import { verificarPropostaInterface } from './diagnostico-proposta.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -143,7 +144,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       NAVEGACAO:['desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
       OBJETIVOS:['goal-dialog','goal-form'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
-      AJUSTES:['settings-dialog','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
+      AJUSTES:['settings-page','settings-form','settings-reserve'],ATUALIZACAO:['check-update','install-update','app-update-status'],
       PDF:['export-pdf','print-report'],SAUDE:['main-content'],
       DIAGNOSTICO:['diagnostics-dialog','diagnostics-run','diagnostics-progress','diagnostics-export'],
       CONFIRMACAO:['confirmation-dialog','confirmation-accept','confirmation-cancel']})) {
@@ -187,10 +188,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       }catch{adicionar('CACHE_LEITURA','aviso','Não foi possível ler os arquivos do cache PWA','pwa');}
     }
   }
+  const propostaInterface=verificarPropostaInterface({documento:typeof document!=='undefined'?document:null,
+    janela:window,padrao:preferenciasPadrao()});
+  if(propostaInterface)integridade.itens.push(...propostaInterface.itens);
   integridade.erros=integridade.itens.filter(item=>item.estado==='erro').length;
   integridade.avisos=integridade.itens.filter(item=>item.estado==='aviso').length;
   return {
-    aplicativo:'meu-dinheiro-essencial',formatoRelatorio:2,geradoEm:new Date().toISOString(),
+    aplicativo:'meu-dinheiro-essencial',formatoRelatorio:3,geradoEm:new Date().toISOString(),
     duracaoPrevistaMs:calcularDuracaoDiagnostico(integridade.itens.length),
     modulosPrevistos:typeof MODULOS_OBRIGATORIOS!=='undefined'?MODULOS_OBRIGATORIOS.length:null,
     privacidade:'Diagnóstico local sem descrições, nomes, saldos, valores financeiros ou caminhos de pasta.',
@@ -209,6 +213,9 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
     notificacoes:notificacoes?{ocultas:notificacoes.ocultas,armazenamentoOk:Boolean(notificacoes.armazenamentoOk)}:null,
     integridade,bibliotecas,logs:obterLogs(),
+    propostaInterface:propostaInterface?{referencia:propostaInterface.referencia,total:propostaInterface.total,
+      implementados:propostaInterface.implementados,pendentes:propostaInterface.pendentes,
+      naoAvaliados:propostaInterface.naoAvaliados}:null,
     auditoriaCodigo:auditoria.disponivel?{
       arquivos:auditoria.arquivosInspecionados,classes:auditoria.seletoresVerificados,
       funcoes:auditoria.funcoesVerificadas,candidatosCss:auditoria.cssNaoUsados.length,
@@ -230,6 +237,28 @@ export function iniciarDiagnostico(ctx) {
   const exportarBotao=document.getElementById('diagnostics-export');
   let ultimoRelatorio=null;
   let rodada=0;
+  const grupos=new Map();
+  const sinais=Object.freeze({ok:'✓',aviso:'!',erro:'✕',pendente:'○',nao_avaliado:'−'});
+  function anexarResultado(item){
+    const nome=item.modulo||'dados';
+    let grupo=grupos.get(nome);
+    if(!grupo){
+      const elemento=document.createElement('details');elemento.className='diagnostics-group';
+      const titulo=document.createElement('summary');titulo.className='diagnostics-group-heading';
+      const conteudo=document.createElement('div');conteudo.className='diagnostics-group-items';
+      elemento.append(titulo,conteudo);lista.append(elemento);
+      grupo={elemento,titulo,conteudo,contagens:{ok:0,aviso:0,erro:0,pendente:0,nao_avaliado:0}};
+      grupos.set(nome,grupo);
+    }
+    const estado=Object.hasOwn(sinais,item.estado)?item.estado:'aviso';
+    grupo.contagens[estado]++;
+    const c=grupo.contagens;
+    grupo.titulo.textContent=`${nome.replaceAll('-',' ')} · ${c.ok} ok · ${c.erro} erros · ${c.aviso} avisos${c.pendente?` · ${c.pendente} pendentes`:''}`;
+    grupo.elemento.dataset.state=c.erro?'erro':c.aviso?'aviso':c.pendente?'pendente':'ok';
+    const linha=document.createElement('p');linha.className=`diagnostics-check diagnostics-${estado}`;
+    linha.textContent=`${sinais[estado]} ${item.descricao}`;
+    grupo.conteudo.append(linha);
+  }
   function desenharProgresso(porcentagem,concluidas,total,restam) {
     barra.setAttribute('aria-valuenow',String(porcentagem));
     preenchimento.style.width=`${porcentagem}%`;
@@ -239,7 +268,7 @@ export function iniciarDiagnostico(ctx) {
   async function executar() {
     const atual=++rodada;
     resumo.textContent='Analisando integridade, módulos e ambiente…';
-    ultimoRelatorio=null;lista.replaceChildren();desenharProgresso(0,0,0,0);
+    ultimoRelatorio=null;lista.replaceChildren();grupos.clear();desenharProgresso(0,0,0,0);
     executarBotao.disabled=true;exportarBotao.disabled=true;
     try {
       registrarEvento('INICIAR_VERIFICACAO','integridade');
@@ -260,10 +289,7 @@ export function iniciarDiagnostico(ctx) {
           const percentual=Math.min(100,Math.floor(decorrido/tempoRestante*100));
           const ate=Math.min(itens.length,Math.floor(decorrido/tempoRestante*itens.length));
           while(exibidas<ate){
-            const item=itens[exibidas++];
-            const linha=document.createElement('p');linha.className=`diagnostics-check diagnostics-${item.estado}`;
-            linha.textContent=`${item.estado==='ok'?'✓':item.estado==='aviso'?'!':'✕'} [${item.modulo||'dados'}] ${item.descricao}`;
-            lista.append(linha);
+            anexarResultado(itens[exibidas++]);
           }
           desenharProgresso(percentual,exibidas,itens.length,tempoRestante-decorrido);
           if(decorrido>=tempoRestante){clearInterval(timer);resolve();}
@@ -271,7 +297,7 @@ export function iniciarDiagnostico(ctx) {
       });
       if(atual!==rodada)return null;
       ultimoRelatorio=relatorio;
-      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s).`;
+      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
       if(integridade.erros)registrar('erro','INTEGRIDADE_FALHOU','integridade');
       else if(integridade.avisos)registrar('aviso','INTEGRIDADE_ALERTA','integridade');
       return relatorio;

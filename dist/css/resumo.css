@@ -19,8 +19,11 @@
 .proto-progress:last-child{margin-bottom:0}
 .proto-progress-top{display:flex;gap:12px;justify-content:space-between;align-items:baseline;font-size:.93rem;font-weight:650}
 .proto-progress-top strong{font-size:.9rem;white-space:nowrap}
-.proto-progress .bar{width:100%;min-width:0;height:10px;border-radius:99px;background:var(--border);overflow:hidden;margin-top:10px}
-.proto-progress .bar>div{height:100%;border-radius:99px;transition:width .25s}
+.proto-progress.goal{--goal-accent:var(--green)}
+.proto-progress.dream{--goal-accent:var(--purple)}
+.proto-progress .bar{width:100%;margin-top:10px}
+.proto-progress .bar>div{background:var(--goal-accent)}
+.proto-progress-top svg{width:18px;height:18px;vertical-align:middle;color:var(--goal-accent)}
 .proto-progress small{display:block;color:var(--sub);font-size:.82rem;margin-top:7px}
 .proto-empty{padding:25px 10px;text-align:center;color:var(--sub);font-size:.9rem;line-height:1.6}
 .proto-list-card{padding-top:18px;padding-bottom:7px}
@@ -64,8 +67,7 @@
 .proto-average-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:.87rem}
 .proto-average-top>span{display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
 .proto-average-top strong{font-size:.86rem;white-space:nowrap}
-.proto-average-track{width:100%;height:9px;background:var(--border);border-radius:99px;overflow:hidden;margin:9px 0 5px}
-.proto-average-track>div{height:100%;border-radius:99px}
+.proto-average-track{width:100%;margin:9px 0 5px}
 .proto-average-item>small{font-size:.75rem;color:var(--sub)}
 .filter-panel{gap:10px;margin-bottom:14px}
 .search-field,.filter-panel select{min-height:46px;border-radius:11px;background:var(--card);color:var(--text);border-color:var(--border);font-size:.92rem}
@@ -88,6 +90,7 @@
 .proto-goal-progress{margin-top:22px}
 .proto-goal-progress-label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.84rem;color:var(--sub)}
 .proto-goal-progress-label strong{font-size:1.08rem;font-weight:780;color:var(--goal-accent)}
-.proto-goal-track{display:block;width:100%;min-width:0;height:12px;border-radius:99px;overflow:hidden;background:var(--border);margin-top:10px}
-.proto-goal-fill{display:block;height:100%;border-radius:inherit;background:var(--goal-accent);transition:width .25s ease}
+.proto-goal-track{display:block;width:100%;margin-top:10px}
+.proto-goal-fill{background:var(--goal-accent)}
+.proto-goal-icon svg,.proto-total-card h3 svg,.proto-saving-heading h3 svg{width:21px;height:21px;vertical-align:middle}
 .proto-goal-info{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px;font-size:.87rem;color:var(--sub)}

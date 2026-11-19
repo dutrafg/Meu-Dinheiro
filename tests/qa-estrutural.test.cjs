@@ -68,7 +68,7 @@ test('Análises não injetam categorias não confiáveis em atributos HTML',()=>
 
 test('CSS limpa componentes aposentados sem remover a base do app',()=>{
   const base=read('dist/styles.css');
-  for(const className of ['app-shell','header','nav-button','mobile-nav','backup-menu',
+  for(const className of ['app-shell','header','nav-button','mobile-nav',
     'form-dialog','two-col','dialog-actions','button-primary','toast','bar-chart','chart-legend',
     'empty-state','filter-panel','search-field','section-note','field-hint']){
     assert.ok(base.includes(`.${className}`),`Componente ainda utilizado sem estilo-base: ${className}`);
@@ -76,6 +76,7 @@ test('CSS limpa componentes aposentados sem remover a base do app',()=>{
   for(const antigo of ['.stat-card','.overview-hero','.brand-mark','.entry-actions','.goal-card','.page-header']){
     assert.ok(!base.includes(antigo),`Estilo obsoleto ainda publicado: ${antigo}`);
   }
+  assert.doesNotMatch(base,/\.backup-menu/);
   assert.match(base,/button:focus-visible/);
   assert.match(base,/textarea:focus-visible/);
   assert.match(base,/summary:focus-visible/);

@@ -8,7 +8,7 @@ Manter HTML, estilos, módulos de tela, importação/exportação e backup separ
 
 ```text
 dist/
-  index.html               # Estrutura da página e formulários (<dialog>)
+  index.html               # Áreas fixas (inclui Ajustes) e formulários modais
   styles.css               # Estilos base compartilhados (sem regras antigas inativas)
   prototype.css            # Entrada dos arquivos CSS temáticos
   css/
@@ -16,9 +16,10 @@ dist/
     resumo.css             # Painéis, gráficos e cartões
     saude.css              # Indicadores de saúde financeira, desktop e celular
     objetivos.css          # Metas, sonho e componentes de progresso
+    progresso.css          # Barras reutilizáveis, animação e movimento reduzido
     dialogos.css           # Formulários, CSV, reserva e lembretes
     responsivo.css         # Smartphone, tablet e tema do sistema
-    ajustes.css            # Tema, cores e janela de Ajustes
+    ajustes.css            # Tema, cores e página fixa de Ajustes
     impressao.css          # Saída A4 sem controles, incluindo tema claro
   app.js                   # Orquestração, persistência e eventos legados
   modules/
@@ -36,6 +37,7 @@ dist/
     log.js                 # Eventos técnicos sanitizados e limite de 50 registros
     integridade.js         # Regras puras de verificação dos dados
     diagnostico.js         # Painel e relatório JSON sem valores pessoais
+    diagnostico-proposta.js # Checklist da proposta de UI e contraste
     auditoria-codigo.js    # Inspeção não destrutiva de CSS e funções sem uso
     dialogos.js            # Confirmações visuais acessíveis
     preferencias.js        # Validação e armazenamento isolado de preferências
@@ -55,7 +57,7 @@ dist/
 2. `app.js` carrega os utilitários existentes e inicia os módulos com dependências explícitas (funções e getters).
 3. Cada tela devolve HTML, mas **não grava dados por conta própria**.
 4. Os controladores alteram os registros por `persist(next)`, que atualiza `localStorage` e agenda o backup automático em pasta, quando habilitado.
-5. `render()` atualiza a tela corrente. Os módulos recebem o estado atualizado via `getData()` e `getMonth()`, evitando referências obsoletas após restauração.
+5. `render()` atualiza somente `#view-content`, preservando os formulários fixos em `#settings-page` para que controladores de backup, CSV e atualização não percam referências/eventos. Ajustes é a sexta view e fica oculta quando outra área está ativa.
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
 
@@ -65,7 +67,8 @@ dist/
 - **Regra permanente:** cada funcionalidade, verificador, serviço e controle de interface deve ocupar seu próprio módulo em `dist/modules/`, com dependências explícitas e testes próprios. `app.js` permanece como orquestrador, sem concentrar lógica nova.
 - Logs aceitam apenas códigos técnicos predefinidos e indicação de módulo. Nunca registre valores, nomes, descrições, objetos completos de erro, stacks, conteúdo CSV/JSON ou caminhos de pasta.
 - Diagnósticos são operações somente leitura sobre os dados financeiros. O log usa somente a sessão, limitado a 50 códigos técnicos. Preferências são armazenadas separadamente dos registros financeiros.
-- A prévia de tema/cor nunca grava dados antes de Salvar e deve ser revertida em qualquer fechamento do diálogo. O Diagnóstico valida atributos e estilos CSS calculados, não apenas preferências JSON.
+- A prévia de tema/cor nunca grava dados antes de Salvar e é revertida ao tocar Descartar ou mudar de aba. O Diagnóstico valida atributos e estilos CSS calculados, não apenas preferências JSON. O padrão azul vale somente para novos usuários; valores persistidos continuam válidos.
+- **Checklist da proposta:** `diagnostico-proposta.js` cobre os 22 requisitos de navegação, barra de progresso, ícones, tema e interface. Estados `pendente` e `nao_avaliado` têm contagens próprias no JSON e não elevam `integridade.erros` nem `integridade.avisos`; apenas `ok`, `aviso` e `erro` representam integridade técnica. Os resultados são agrupados por módulo em `<details>`, sem expor dados financeiros.
 - **Registro obrigatório do Diagnóstico:** ao criar/renomear módulo em `dist/modules/`, adicione seu nome em `MODULOS_OBRIGATORIOS` (`catalogo-diagnostico.js`) e uma autoverificação executável em `registro-modulos.js`. Inclua verificações específicas do comportamento e possíveis falhas. `tests/arquitetura.test.cjs` falha quando falta registro.
 - **Auditoria contínua:** `auditoria-codigo.js` lê somente os arquivos públicos locais (`index.html`, bibliotecas, todos os módulos registrados e CSS importado por `prototype.css`). Sinaliza classes CSS e funções privadas sem referência estática como **avisos**, inclusive após novas versões publicadas; reconhece classes produzidas dinamicamente. Não remove nada automaticamente, porque usos indiretos podem não aparecer nessa análise. O teste `tests/auditoria-codigo.test.cjs` valida a cobertura e exige revisão de código obsoleto antes de publicar. Na prévia HTML independente, a consulta de arquivos modulares é indisponível e o diagnóstico mostra o motivo.
 - A barra do Diagnóstico segue **5 s para até 9 verificações +0,5 s por verificação adicional, com teto de 25 s somente para a animação**. O catálogo não tem limite de verificações e a execução real nunca é interrompida pelo relógio visual. Todos os resultados são coletados antes da animação; se os testes demorarem mais, a interface continua aguardando. O JSON só fica disponível ao final.
@@ -85,10 +88,11 @@ node --test tests/*.test.cjs
 python -m http.server 4173 --directory dist
 ```
 
-Abrir `http://localhost:4173` em um navegador moderno. Testar as cinco áreas, formulários, gráficos, importação/exportação CSV, backup JSON e modo offline. O acesso direto à pasta requer Chrome/Edge em contexto seguro (`localhost` ou HTTPS).
+Abrir `http://localhost:4173` em um navegador moderno. Testar as seis áreas, formulários, gráficos, importação/exportação CSV, backup JSON e modo offline. O acesso direto à pasta requer Chrome/Edge em contexto seguro (`localhost` ou HTTPS).
 
 O teste `tests/modulos.test.cjs` exercita os renderizadores separadamente e verifica os arquivos CSS; `tests/pwa.test.cjs` garante que todos os módulos estejam no cache offline.
 O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão, instalação inicial e a exigência de confirmação antes do recarregamento. `tests/validacao.test.cjs` cobre dados antigos, backups e recuperação de falhas. `tests/standalone.test.cjs` verifica a prévia HTML independente.
 `tests/diagnostico.test.cjs` valida integridade, privacidade e duração; `tests/registro-diagnostico.test.cjs` exige autoverificações; `tests/preferencias.test.cjs` cobre validação e isolamento; `tests/dialogos.test.cjs` comprova cancelamento seguro; `tests/recorrencia-formulario.test.cjs` verifica aviso sobre séries mensais. Toda mudança de interface deve ser conferida também em desktop e smartphone antes da publicação.
 `tests/saude.test.cjs` verifica limites, ausência de dados e datas futuras; `tests/notificacoes.test.cjs` cobre limpar, cancelar, restaurar, dados adulterados e falhas de armazenamento; `tests/relatorio-pdf.test.cjs` garante impressão local. `tests/ajustes.test.cjs` simula prévia, cancelamento e gravação.
 `tests/auditoria-codigo.test.cjs` verifica detecção de CSS/funções sem uso, preservação de classes dinâmicas, leitura dos módulos e catálogo e mantém a revisão estática ativa na integração contínua.
+`tests/diagnostico-proposta.test.cjs` valida os requisitos da proposta e sua integração sem falsear erros; `tests/navegacao.test.cjs` simula as seis abas, o descarte de prévias e os alertas de atualização/backup.

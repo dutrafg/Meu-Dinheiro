@@ -11,10 +11,10 @@ function carregar() {
   return sandbox.api;
 }
 
-test('Preferências mantêm os padrões antigos de 10% e modo automático',()=>{
+test('Instalações novas usam azul, tema automático e aporte de 10%',()=>{
   const {preferenciasPadrao}=carregar();
   const p=preferenciasPadrao();
-  assert.equal(p.tema,'auto');assert.equal(p.cor,'verde');assert.equal(p.percentual,10);
+  assert.equal(p.tema,'auto');assert.equal(p.cor,'azul');assert.equal(p.percentual,10);
   assert.deepEqual([...p.categoriasAporte],['Salário base','Salário','Personal']);
 });
 
@@ -22,7 +22,7 @@ test('Preferências rejeitam valores manipulados, categorias estranhas e percent
   const {normalizarPreferencias}=carregar();
   const p=normalizarPreferencias({tema:'__proto__',cor:'não existe',percentual:1000,
     categoriasAporte:['Salário','Salário','CPF 123','Personal'],reservaGoalId:42},['Salário','Personal']);
-  assert.equal(p.tema,'auto');assert.equal(p.cor,'verde');assert.equal(p.percentual,10);
+  assert.equal(p.tema,'auto');assert.equal(p.cor,'azul');assert.equal(p.percentual,10);
   assert.deepEqual([...p.categoriasAporte],['Salário','Personal']);
   assert.equal(p.reservaGoalId,'');
 });
