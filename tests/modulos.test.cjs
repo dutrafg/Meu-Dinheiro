@@ -43,8 +43,11 @@ test('Os cinco módulos de negócio exportam inicializadores independentes', asy
   const files = ['resumo','lancamentos','objetivos','backup','csv-interface'];
   for (const name of files) {
     const loaded = await load(`dist/modules/${name}.js`);
-    assert.equal(Object.keys(loaded).length, 1, `Exportação do módulo ${name}`);
-    assert.equal(typeof Object.values(loaded)[0], 'function');
+    const inicializadores=Object.keys(loaded).filter(chave=>/^(criar|iniciar)Modulo/.test(chave));
+    assert.equal(inicializadores.length, 1, `Inicializador do módulo ${name}`);
+    assert.equal(typeof loaded[inicializadores[0]], 'function');
+    assert.ok(Object.keys(loaded).every(chave=>chave===inicializadores[0]||
+      (name==='resumo'&&chave==='calcularSaldoDisponivelHoje')),`Exports permitidos do módulo ${name}`);
   }
 });
 
@@ -70,6 +73,8 @@ test('Resumo, Renda, Despesas, Metas e Sonho renderizam com os mesmos dados', as
     const summary = (await load('dist/modules/resumo.js')).criarModuloResumo({...ctx,
       renderEntry: transactions.renderEntry, progressLine: goals.progressLine});
     assert.match(summary.renderSummary(), /Visão financeira/);
+    assert.match(summary.renderSummary(), /Saldo disponível hoje/);
+    assert.match(summary.renderSummary(), /Não é o saldo bancário/);
     assert.match(summary.renderSummary(), /Gastos por categoria/);
     assert.match(summary.renderSummary(), /Média por categoria/);
     assert.match(transactions.renderTransactions('income'), /Salário/);

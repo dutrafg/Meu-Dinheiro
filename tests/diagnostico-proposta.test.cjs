@@ -4,7 +4,25 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const read=relative=>fs.readFileSync(path.join(__dirname,'..',relative),'utf8');
-const carregar=async()=>import(`data:text/javascript;base64,${Buffer.from(read('dist/modules/diagnostico-proposta.js')).toString('base64')}`);
+const carregar=async()=>{
+  const objetivos=read('dist/modules/objetivos.js').replace(/^export /gm,'');
+  const diagnostico=read('dist/modules/diagnostico-proposta.js').replace(/^import .*$/gm,'');
+  return import(`data:text/javascript;base64,${Buffer.from(`${objetivos}\n${diagnostico}`).toString('base64')}`);
+};
+
+function elementoDeTeste(){
+  let markup='';
+  return {
+    set innerHTML(valor){markup=valor;},get innerHTML(){return markup;},
+    querySelectorAll(){
+      return [...markup.matchAll(/<(?:div|span)\b[^>]*\brole="progressbar"[^>]*>/g)].map(match=>({
+        getAttribute:nome=>match[0].match(new RegExp(`\\b${nome}="([^"]*)"`))?.[1]||null,
+        querySelector:()=>({style:{width:markup.slice(match.index+match[0].length)
+          .match(/<(?:div|span)\b[^>]*\bclass="[^"]*progress-bar-fill[^"]*"[^>]*style="width:([^"]+)"/)?.[1]||''}})
+      }));
+    }
+  };
+}
 
 function ambiente({css=true,dark=true,nav=true}={}){
   const make=()=>({querySelector:()=>({}),contains:()=>true,classList:{contains:()=>true}});
@@ -22,7 +40,12 @@ function ambiente({css=true,dark=true,nav=true}={}){
   const bar={style:{background:'var(--goal-accent)'},getAttribute:n=>n==='role'?'progressbar':n==='aria-valuenow'?'25':null};
   const rules={
     '.progress-bar':{'height':'10px'},'.progress-bar-large':{'height':'12px'},
+    '.proto-progress.goal':{'--goal-accent':'var(--green)'},
+    '.proto-progress.dream':{'--goal-accent':'var(--purple)'},
     '.proto-progress .bar>div':{'background':'var(--goal-accent)'},
+    '.proto-goal-card':{'--goal-accent':'var(--green)'},
+    '.proto-goal-card.dream':{'--goal-accent':'var(--purple)'},
+    '.proto-goal-fill':{'background':'var(--goal-accent)'},
     '.progress-bar-fill':{'animation':'progress-reveal .5s ease-out'},
     '.diagnostics-progress::after':{'background-image':'linear-gradient(...)'}
   };
@@ -31,6 +54,7 @@ function ambiente({css=true,dark=true,nav=true}={}){
   const documento={documentElement:root,
     getElementById:id=>dom.get(id)||null,
     querySelector:selector=>selector==='.proto-progress .bar>div'||selector==='.proto-progress .bar'?bar:{},
+    createElement:()=>elementoDeTeste(),
     styleSheets:css?[{cssRules}]:[]};
   const janela={getComputedStyle:el=>el===root?{
     colorScheme:dark?'dark':'light',getPropertyValue:n=>n==='--accent-text'?'#8fb7ff':n==='--card'?'#1d1e23':''
@@ -57,6 +81,38 @@ test('Uma interface com todos os recursos previstos satisfaz o checklist',async(
   assert.equal(resultado.pendentes,0);
   assert.equal(resultado.naoAvaliados,0);
   assert.equal(resultado.implementados,resultado.total);
+});
+
+test('Metas de exemplo verificam acessibilidade sem exigir registros financeiros reais',async()=>{
+  const {testarAcessibilidadeMetasExemplo,verificarPropostaInterface}=await carregar();
+  const mock=ambiente();
+  assert.equal(testarAcessibilidadeMetasExemplo(mock.documento),true);
+  const relatorio=verificarPropostaInterface(mock);
+  assert.equal(relatorio.itens.find(i=>i.codigo==='PROPOSTA_BARRAS_ACESSIVEIS').estado,'ok');
+  assert.equal(relatorio.implementados,22);
+});
+
+test('A auditoria reconhece seletores normalizados pelo navegador e detecta CSS semanticamente inválido',async()=>{
+  const {verificarPropostaInterface}=await carregar();
+  const mock=ambiente();
+  const regras=mock.documento.styleSheets[0].cssRules;
+  const regraBarra=regras.find(r=>r.selectorText==='.proto-progress .bar>div');
+  regraBarra.selectorText='.proto-progress .bar > div';
+  assert.equal(verificarPropostaInterface(mock).itens.find(i=>i.codigo==='PROPOSTA_BARRAS_CORES').estado,'ok');
+  regraBarra.style.getPropertyValue=()=> 'var(--red)';
+  assert.equal(verificarPropostaInterface(mock).itens.find(i=>i.codigo==='PROPOSTA_BARRAS_CORES').estado,'pendente');
+});
+
+test('Teste de exemplo informa falha real ou indisponibilidade do DOM, sem gravar em armazenamento',async()=>{
+  const {testarAcessibilidadeMetasExemplo}=await carregar();
+  assert.equal(testarAcessibilidadeMetasExemplo({}),undefined);
+  assert.equal(testarAcessibilidadeMetasExemplo({createElement:()=>({querySelectorAll:()=>[]})}),false);
+  const mock=ambiente();
+  let criada=0;
+  const original=mock.documento.createElement;
+  mock.documento.createElement=()=>{criada++;return original();};
+  assert.equal(testarAcessibilidadeMetasExemplo(mock.documento),true);
+  assert.equal(criada,1,'Apenas um nó de diagnóstico desconectado é criado');
 });
 
 test('Falhas reais na navegação e alterações de padrão aparecem como pendências, não erros',async()=>{
@@ -147,7 +203,7 @@ test('Relatório principal incorpora o checklist sem classificar propostas pende
       verificarPropostaInterface:()=>comProposta?avaliarRequisitosProposta({TEMA_AUTO:true,TEMA_AZUL:false}):null,
       preferenciasPadrao:()=>({tema:'auto',cor:'azul'}),navigator:{userAgent:'Browser teste',serviceWorker:{}},
       window:{},localStorage:{getItem:()=>null}};
-    vm.runInNewContext(`${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
+    vm.runInNewContext(`${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
     return contexto.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
   };
   const sem=await gerar(false),com=await gerar(true);

@@ -3,6 +3,7 @@ import { executarVerificacoesModulos,MODULOS_OBRIGATORIOS,totalRegistros } from 
 import { CORES,TEMAS,preferenciasPadrao } from './preferencias.js';
 import { auditarCodigoPublicado } from './auditoria-codigo.js';
 import { verificarPropostaInterface } from './diagnostico-proposta.js';
+import { calcularSaldoDisponivelHoje } from './resumo.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
@@ -66,6 +67,16 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   };
   const adicionar=(codigo,estado,descricao,modulo='ambiente')=>integridade.itens.push({codigo,estado,descricao,modulo});
   const conferir=(codigo,ok,correto,problema,modulo='ambiente',estadoRuim='erro')=>adicionar(codigo,ok?'ok':estadoRuim,ok?correto:problema,modulo);
+  // Cenário sintético: passado, recorrência mensal e transação futura, sem expor saldos.
+  const saldoExemplo=calcularSaldoDisponivelHoje([
+    {type:'income',date:'2026-02-10',amount:100,recurring:true},
+    {type:'expense',date:'2026-03-14',amount:30},
+    {type:'expense',date:'2026-03-20',amount:40},
+    {type:'expense',date:'2026-01-31',amount:10,recurring:true}
+  ],'2026-03-15');
+  conferir('SALDO_DISPONIVEL_HOJE',saldoExemplo===150,
+    'Saldo disponível calculado corretamente com recorrências e lançamentos futuros',
+    'Cálculo do saldo disponível não corresponde ao cenário de referência','resumo');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');

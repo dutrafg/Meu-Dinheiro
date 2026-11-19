@@ -5,13 +5,17 @@ import {calcularSaudeFinanceira} from './saude.js';
 import {analisarCodigoEstatico,auditarCodigoPublicado} from './auditoria-codigo.js';
 import {montarRelatorioFinanceiro} from './relatorio-pdf-conteudo.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
+import {calcularSaldoDisponivelHoje} from './resumo.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
     atualizador,ajustes,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
-  registrar('resumo',()=>typeof moduloResumo.renderSummary==='function');
+  registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
+    calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
+      {type:'expense',amount:40,date:'2026-02-02'},
+      {type:'expense',amount:20,date:'2026-02-20'}],'2026-02-10')===60);
   registrar('lancamentos',()=>typeof moduloLancamentos.renderTransactions==='function'&&typeof moduloLancamentos.openTransaction==='function');
   registrar('objetivos',()=>typeof moduloObjetivos.renderGoals==='function'&&typeof moduloObjetivos.openGoal==='function');
   registrar('backup',()=>typeof moduloBackup.folderBackup?.getState==='function');

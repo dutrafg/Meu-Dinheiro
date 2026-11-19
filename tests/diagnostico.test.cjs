@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const semImports = file=>(file==='dist/modules/diagnostico.js'?
-  'const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n':'')+
+  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n`:'')+
   read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({
   transactions:[{id:'id-1',description:'Despesa CPF 123.456.789-00',type:'expense',amount:741.59,date:'2026-11-05',category:'Alimentação',recurring:false,createdAt:'2026-11-05T12:00:00.000Z'}],
@@ -183,7 +183,7 @@ test('Diagnóstico apresenta CSS e funções candidatas como avisos sem apagar c
 });
 
 test('Diagnóstico informa a versão carregada e avisa se o indicador visual divergir',async()=>{
-  const versao={textContent:'v21'};
+  const versao={textContent:'v22'};
   const context={Date,Intl,Blob,
     verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Sem acesso a código no teste'}),
@@ -193,9 +193,9 @@ test('Diagnóstico informa a versão carregada e avisa se o indicador visual div
   };
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
-    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v21'})});
+    CATEGORIES:{income:[],expense:[]},getUpdateStatus:()=>({versaoEmExecucao:'v22'})});
   const certo=await gerar();
-  assert.equal(certo.atualizador.versaoEmExecucao,'v21');
+  assert.equal(certo.atualizador.versaoEmExecucao,'v22');
   assert.equal(certo.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok');
   versao.textContent='v18';
   const errado=await gerar();

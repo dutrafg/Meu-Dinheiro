@@ -11,6 +11,8 @@ Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progre
 - **Sonho:** acompanhamento de objetivos pessoais.
 - **Ajustes:** sexta aba da navegação, com aparência, planejamento, backup, atualizações e diagnóstico.
 
+No Resumo Geral, **Saldo disponível hoje** mostra o acumulado de receitas menos despesas até a data atual, independentemente do mês selecionado. Lançamentos futuros não entram nesse valor; recorrências são contadas somente após a data mensal correspondente. Trata-se de uma estimativa baseada nos lançamentos cadastrados, não de uma consulta ao saldo bancário. As reservas continuam acompanhadas separadamente, sem desconto duplo.
+
 O aplicativo também oferece importação e exportação CSV, backup/restauração JSON, **backup automático em pasta escolhida no computador** e confirmação obrigatória de Reserva, Meta ou Sonho para aplicações identificadas no extrato bancário.
 
 ## Ajustes e aparência (v21)
@@ -41,6 +43,8 @@ Em **Ajustes → Arquivos, importação e backup → Imprimir / salvar PDF da te
 
 ## Diagnóstico e integridade (Etapas 1–2)
 
+**Atualização v22:** a verificação de cores semânticas reconhece seletores CSS normalizados pelo navegador e valida metas e sonhos. A verificação de acessibilidade renderiza duas metas fictícias em um elemento desconectado, inspecionando rótulos e percentuais mesmo sem objetivos reais cadastrados. Nenhum dado é salvo ou alterado. O saldo disponível também possui teste de lógica com lançamentos de exemplo, inclusive recorrências e datas futuras.
+
 Em **Ajustes → Executar diagnóstico completo**, o aplicativo verifica, sem modificar registros, dezenas de itens independentes: datas, valores, IDs, categorias, vínculos, lembretes, notificações dispensadas, estilo efetivo do tema e das cores, Saúde Financeira, PDF, limites de backup, bibliotecas, interface, cada módulo, preferências, armazenamento, cache PWA, atualização e pasta de backup.
 
 O checklist adicional da proposta de navegação e aparência acompanha **22 requisitos**: presença de Ajustes na navegação desktop/mobile, botão flutuante e seletor de mês, acesso ao Diagnóstico, ícones SVG, componentes de progresso, cores semânticas, contraste no modo escuro, tema padrão e apresentação dos controles. Os itens ficam agrupados em cartões expansíveis por módulo. **Pendente** é uma sugestão de evolução e **não** conta como erro ou aviso de integridade; **não avaliado** aparece quando a página ou o navegador não permite a inspeção.
@@ -51,15 +55,15 @@ O Diagnóstico também **audita código não utilizado**: analisa as folhas CSS 
 
 O relatório é gerado **apenas no dispositivo**, sem envio automático. Contém contagens, estado técnico, datas de registros, versão do navegador e códigos de erros; **não contém nomes, descrições, valores financeiros, saldos nem nomes/caminhos de pastas**. Se precisar reproduzir uma falha, marque **Registrar eventos técnicos detalhados nesta sessão**. Esta opção começa desligada, registra somente códigos de ação permitidos e não captura conteúdo de formulários. Os últimos 50 eventos técnicos ficam em `sessionStorage`, com fallback para memória caso esse armazenamento falhe.
 
-Exclusões e restauração de backup agora usam confirmações visuais do aplicativo. Edições de lançamentos recorrentes avisam que a mudança afeta a série inteira. Falhas de sincronização da pasta exibem um aviso além do indicador no menu.
+Exclusões e restauração de backup agora usam confirmações visuais do aplicativo. Edições de lançamentos recorrentes avisam que a mudança afeta a série inteira. Falhas de sincronização da pasta exibem um aviso além do indicador na aba Ajustes.
 
 ## Atualizações do aplicativo
 
-O aplicativo instalado no navegador verifica automaticamente se há novas versões **ao abrir, ao voltar para a aba e periodicamente enquanto estiver em uso**. Um ponto azul nos três pontos (`⋯`) do cabeçalho e um aviso informam quando existe uma versão pronta. Abra o menu e toque em **Atualizar agora** para ativá-la. A página **só é recarregada após sua confirmação**, para não interromper formulários em andamento; salve lançamentos ainda não enviados antes de atualizar.
+O aplicativo instalado no navegador verifica automaticamente se há novas versões **ao abrir, ao voltar para a aba e periodicamente enquanto estiver em uso**. Um ponto azul na aba **Ajustes** e um aviso informam quando existe uma versão pronta. Em **Ajustes → Atualizações e integridade**, toque em **Atualizar agora** para ativá-la. A página **só é recarregada após sua confirmação**, para não interromper formulários em andamento; salve lançamentos ainda não enviados antes de atualizar.
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
-Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (por exemplo, `v20`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (por exemplo, `v22`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
 
 ## Estrutura modular do código
 

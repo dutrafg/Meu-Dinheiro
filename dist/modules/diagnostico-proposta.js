@@ -1,5 +1,6 @@
 // Checklist da proposta de navegação/Ajustes v19-2.
 // Pendências de design não são erros de integridade nem entram nos logs de falha.
+import { criarModuloObjetivos } from './objetivos.js';
 export const REQUISITOS_PROPOSTA = Object.freeze([
   ['NAV_AJUSTES_DESKTOP','Navegação','Aba Ajustes disponível na navegação desktop'],
   ['NAV_AJUSTES_MOBILE','Navegação','Aba Ajustes disponível na navegação móvel'],
@@ -44,7 +45,49 @@ function regrasCSS(documento){
 }
 
 function regraDe(regras,seletor){
-  return regras?.find(regra=>regra.selectorText.split(',').some(s=>s.trim()===seletor))?.style||null;
+  const normalizar=texto=>texto.replace(/\s*([>+~])\s*/g,'$1').replace(/\s+/g,' ').trim();
+  return regras?.find(regra=>regra.selectorText.split(',').some(s=>normalizar(s)===normalizar(seletor)))?.style||null;
+}
+
+function corSemanticaObjetivos(css){
+  if(!css)return undefined;
+  const tem=(seletor,propriedade,valor)=>String(regraDe(css,seletor)?.getPropertyValue(propriedade)||'')
+    .replace(/\s+/g,'').includes(valor);
+  return tem('.proto-progress.goal','--goal-accent','var(--green)')&&
+    tem('.proto-progress.dream','--goal-accent','var(--purple)')&&
+    tem('.proto-progress .bar>div','background','var(--goal-accent)')&&
+    tem('.proto-goal-card','--goal-accent','var(--green)')&&
+    tem('.proto-goal-card.dream','--goal-accent','var(--purple)')&&
+    tem('.proto-goal-fill','background','var(--goal-accent)');
+}
+
+// Renderiza metas fictícias em um nó desconectado: não lê nem altera dados reais.
+export function testarAcessibilidadeMetasExemplo(documento){
+  if(typeof documento?.createElement!=='function')return undefined;
+  try{
+    const exemplos=[
+      {id:'diagnostico-meta',kind:'goal',name:'Meta temporária',target:200,saved:50,deadline:''},
+      {id:'diagnostico-sonho',kind:'dream',name:'Sonho temporário',target:400,saved:100,deadline:''}
+    ];
+    const renderizador=criarModuloObjetivos({
+      getData:()=>({goals:exemplos,allocations:[]}),n2:n=>Math.round(n*100)/100,
+      esc:valor=>String(valor),money:valor=>`R$ ${Number(valor).toFixed(2)}`,
+      icon:()=>'',header:()=>'',empty:()=>'',savingPlan:()=>({percentual:10,grupos:[],total:0}),
+      currentMonth:'2026-11',monthLabel:()=>'',reserveYieldEstimate:()=>'',
+      fmtDate:{format:()=>''},parseDate:valor=>valor
+    });
+    const caixa=documento.createElement('div');
+    caixa.innerHTML=exemplos.map(meta=>renderizador.progressLine(meta)).join('')+
+      renderizador.renderGoals('goal')+renderizador.renderGoals('dream');
+    const barras=[...caixa.querySelectorAll('[role="progressbar"]')];
+    return barras.length===4&&barras.every(barra=>{
+      const rotulo=barra.getAttribute('aria-label')||'';
+      return /^Progresso de (Meta temporária|Sonho temporário)$/.test(rotulo)&&
+        barra.getAttribute('aria-valuemin')==='0'&&barra.getAttribute('aria-valuemax')==='100'&&
+        barra.getAttribute('aria-valuenow')==='25'&&
+        barra.querySelector('.progress-bar-fill')?.style?.width==='25%';
+    });
+  }catch{return false;}
 }
 
 function luminancia(cor){
@@ -79,11 +122,8 @@ export function verificarPropostaInterface({documento,janela,padrao}={}) {
     !Boolean(botaoDiagnostico.closest?.('details:not([open])'));
   const css=regrasCSS(documento);
   const altura=seletor=>regraDe(css,seletor)?.getPropertyValue('height')?.trim()||null;
-  const inicio=regraDe(css,'.proto-progress .bar>div');
   const animacao=Boolean(regraDe(css,'.progress-bar-fill')?.getPropertyValue('animation'));
   const movimentoReduzido=Boolean(documento.styleSheets&&css?.some(r=>r.parentRule?.conditionText?.includes('prefers-reduced-motion')));
-  const resumoBarra=ler(documento,'querySelector','.proto-progress .bar>div');
-  const barraMeta=ler(documento,'querySelector','.proto-progress .bar');
   const titulo=String(get('settings-title')?.textContent||'');
   const textoDiagnostico=String(botaoDiagnostico?.textContent||'');
   const emoji=/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u;
@@ -113,9 +153,8 @@ export function verificarPropostaInterface({documento,janela,padrao}={}) {
     ICONE_DIAGNOSTICO:Boolean(ler(botaoDiagnostico,'querySelector','svg use[href="#i-activity"]')),
     ICONES_SEM_EMOJI:!emoji.test(titulo)&&!emoji.test(textoDiagnostico),
     BARRAS_ALTURAS:css?altura('.progress-bar')==='10px'&&altura('.progress-bar-large')==='12px':undefined,
-    BARRAS_CORES:resumoBarra&&String(resumoBarra.style?.background||'').includes('--goal-accent')||
-      (css?String(inicio?.getPropertyValue('background')||'').includes('--goal-accent'):undefined),
-    BARRAS_ACESSIVEIS:barraMeta?barraMeta.getAttribute?.('role')==='progressbar'&&Boolean(barraMeta.getAttribute('aria-valuenow')):undefined,
+    BARRAS_CORES:corSemanticaObjetivos(css),
+    BARRAS_ACESSIVEIS:testarAcessibilidadeMetasExemplo(documento),
     BARRAS_ANIMACAO:css?animacao&&movimentoReduzido:undefined,
     DIAGNOSTICO_ETAPAS:css?Boolean(css.some(r=>r.selectorText.includes('.diagnostics-progress::after')&&
       r.style.getPropertyValue('background-image').includes('linear-gradient'))):undefined,

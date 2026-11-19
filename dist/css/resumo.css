@@ -7,6 +7,13 @@
 .proto-donut-legend span{display:flex;align-items:center;gap:7px}
 .proto-donut-legend i{display:inline-block;height:10px;width:10px;border-radius:50%}
 .proto-overview-secondary{display:flex;flex-direction:column;gap:0}
+.proto-today-balance{padding:19px 20px;margin-bottom:15px;background:var(--card)}
+.proto-today-balance-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.proto-today-balance-heading h3{margin:0;color:var(--sub)}
+.proto-today-balance-heading span{color:var(--sub);font-size:.79rem;white-space:nowrap}
+.proto-today-balance-value{display:block;color:var(--green);font-size:clamp(1.5rem,3vw,2rem);font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:9px 0 5px;overflow-wrap:anywhere}
+.proto-today-balance.is-negative .proto-today-balance-value{color:var(--red)}
+.proto-today-balance p{color:var(--sub);font-size:.77rem;line-height:1.4;margin:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 15px}
 .minicard{border-radius:16px;padding:20px;min-width:0}
 .minicard .lbl{font-size:.85rem;opacity:.86;font-weight:650}
