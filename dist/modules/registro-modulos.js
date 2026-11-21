@@ -14,6 +14,7 @@ import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './concorrencia-dados.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
+import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -25,6 +26,13 @@ export function registrarModulosDoApp(api) {
       {type:'expense',amount:40,date:'2026-02-02'},
       {type:'expense',amount:20,date:'2026-02-20'}],'2026-02-10')===60);
   registrar('lancamentos',()=>typeof moduloLancamentos.renderTransactions==='function'&&typeof moduloLancamentos.openTransaction==='function');
+  registrar('categorias-brasileiras',()=>{
+    const obrigatorias=['Aluguel','Água e esgoto','Energia elétrica','Supermercado','Combustível','IPVA',
+      'Condomínio','IPTU','Farmácia','Cartão de crédito','Plano de saúde'];
+    return obrigatorias.every(nome=>CATEGORIAS_DESPESA.includes(nome))&&
+      new Set(CATEGORIAS_DESPESA).size===CATEGORIAS_DESPESA.length&&
+      GRUPOS_DESPESA.length>=5&&renderizarOpcoesDespesas(texto=>texto).includes('<optgroup');
+  });
   registrar('objetivos',()=>typeof moduloObjetivos.renderGoals==='function'&&typeof moduloObjetivos.openGoal==='function');
   registrar('backup',()=>typeof moduloBackup.folderBackup?.getState==='function');
   registrar('csv-interface',()=>typeof moduloCsv==='function');

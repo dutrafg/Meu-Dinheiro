@@ -264,9 +264,16 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   conferir('API_BLOB',typeof Blob==='function','API de arquivos Blob disponível','API de arquivos indisponível','armazenamento');
   conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
   conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
-  conferir('SW_ATIVO',swRegistrado,'Service Worker ativo','Service Worker ainda não está ativo (ou modo HTML independente)','pwa','aviso');
-  conferir('SW_CONTROLE',Boolean(navigator.serviceWorker?.controller),'Página sob controle do Service Worker','Página ainda sem controle offline (ou modo HTML independente)','pwa','aviso');
-  conferir('CACHE_PWA',cacheInstalado.length>0,'Cache PWA encontrado','Cache PWA ainda não encontrado','pwa','aviso');
+  const htmlIndependente=typeof location!=='undefined'&&!['https:','http:'].includes(location.protocol);
+  if(htmlIndependente){
+    adicionar('SW_ATIVO','nao_avaliado','Service Worker não se aplica ao HTML independente; testar no PWA publicado','pwa');
+    adicionar('SW_CONTROLE','nao_avaliado','Controle offline não se aplica ao HTML independente; testar no PWA publicado','pwa');
+    adicionar('CACHE_PWA','nao_avaliado','Cache PWA não se aplica ao HTML independente; testar no PWA publicado','pwa');
+  }else{
+    conferir('SW_ATIVO',swRegistrado,'Service Worker ativo','Service Worker ainda não está ativo','pwa','aviso');
+    conferir('SW_CONTROLE',Boolean(navigator.serviceWorker?.controller),'Página sob controle do Service Worker','Página ainda sem controle offline','pwa','aviso');
+    conferir('CACHE_PWA',cacheInstalado.length>0,'Cache PWA encontrado','Cache PWA ainda não encontrado','pwa','aviso');
+  }
   conferir('CACHE_VERSAO',cacheInstalado.length<=1||swEmEspera,
     swEmEspera&&cacheInstalado.length>1?'Caches em transição: atualização aguarda sua autorização':'Versões de cache consistentes',
     'Mais de uma versão de cache sem atualização pendente','pwa','aviso');
@@ -279,9 +286,14 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   if(update.versaoEmExecucao!==undefined){
     conferir('ATUALIZADOR_VERSAO',/^v\d+$/.test(update.versaoEmExecucao),
       'Identificador da versão em execução válido','Identificador da versão em execução inválido','atualizador');
-    if(typeof document!=='undefined')conferir('ATUALIZADOR_VERSAO_VISIVEL',
-      document.getElementById('app-running-version')?.textContent===update.versaoEmExecucao,
+    if(typeof document!=='undefined'){
+      const textoVersao=document.getElementById('app-running-version')?.textContent?.trim()||'';
+      // Na prévia independente, o rótulo mostra a versão visual e o motor PWA separadamente.
+      const motorVisivel=/(?:^|\W)motor\s+(v\d+)(?:\W|$)/i.exec(textoVersao)?.[1];
+      conferir('ATUALIZADOR_VERSAO_VISIVEL',
+      textoVersao===update.versaoEmExecucao||motorVisivel===update.versaoEmExecucao,
       'Versão em execução exibida corretamente nos Ajustes','Número da versão não corresponde ao código em execução','atualizador');
+    }
   }
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
@@ -307,14 +319,18 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       const estilo=window.getComputedStyle(root);
       const corEsperada=CORES[prefs.cor];
       const escuro=prefs.tema==='escuro'||(prefs.tema==='auto'&&Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches));
-      const fundoEsperado=escuro?'#131417':'#f5f6f8';
+      // Duas paletas legítimas: produção (v31) e prévia visual modular (v32+).
+      // O teste ainda rejeita um tema claro aplicado quando o escuro está selecionado.
+      const fundosPermitidos=escuro?['#131417','#111318']:['#f5f6f8','#f6f7fa'];
       const rgb=hex=>`rgb(${[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(', ')})`;
       const normalizarCor=valor=>String(valor||'').toLowerCase().replace(/\s+/g,'');
+      const fundoCss=normalizarCor(estilo.getPropertyValue('--bg'));
+      const fundoValido=fundosPermitidos.includes(fundoCss);
       conferir('APARENCIA_TEMA_ATIVO',root.dataset.theme===prefs.tema,'Tema selecionado está ativo','Tema salvo não foi aplicado à página','ajustes');
       conferir('APARENCIA_COR_ATIVA',root.dataset.accent===prefs.cor,'Cor selecionada está ativa','Cor salva não foi aplicada à página','ajustes');
-      conferir('APARENCIA_TEMA_CSS',normalizarCor(estilo.getPropertyValue('--bg'))===fundoEsperado,'Variáveis do tema carregadas','Variáveis CSS do tema não correspondem à seleção','ajustes');
+      conferir('APARENCIA_TEMA_CSS',fundoValido,'Variáveis do tema carregadas','Variáveis CSS do tema não correspondem à seleção','ajustes');
       conferir('APARENCIA_COR_CSS',normalizarCor(estilo.getPropertyValue('--accent'))===corEsperada,'Variável CSS da cor de destaque carregada','Variável CSS da cor de destaque não corresponde à seleção','ajustes');
-      conferir('APARENCIA_FUNDO',normalizarCor(window.getComputedStyle(document.body).backgroundColor)===normalizarCor(rgb(fundoEsperado)),
+      conferir('APARENCIA_FUNDO',fundoValido&&normalizarCor(window.getComputedStyle(document.body).backgroundColor)===normalizarCor(rgb(fundoCss)),
         'Fundo da tela corresponde ao tema','Fundo visível não corresponde ao tema configurado','ajustes');
       conferir('APARENCIA_ESQUEMA',String(estilo.colorScheme||'').split(' ').includes(escuro?'dark':'light'),
         'Esquema claro/escuro corresponde à seleção','Esquema de cores nativo não corresponde ao tema','ajustes');
@@ -465,7 +481,8 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
         `Revisar ${item.nome}() em ${item.arquivo}: função sem chamada estática`,'auditoria-codigo');
     }
   }else{
-    adicionar('AUDITORIA_FONTES','aviso',auditoria.motivo,'auditoria-codigo');
+    adicionar('AUDITORIA_FONTES',htmlIndependente?'nao_avaliado':'aviso',
+      htmlIndependente?'Auditoria estática de arquivos externos não se aplica ao HTML único; executar no PWA publicado':auditoria.motivo,'auditoria-codigo');
   }
   // Cada arquivo em dist/modules/ é declarado e inspecionado nesta lista.
   if(typeof executarVerificacoesModulos==='function'){
@@ -491,6 +508,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   if(propostaInterface)integridade.itens.push(...propostaInterface.itens);
   integridade.erros=integridade.itens.filter(item=>item.estado==='erro').length;
   integridade.avisos=integridade.itens.filter(item=>item.estado==='aviso').length;
+  integridade.naoAvaliados=integridade.itens.filter(item=>item.estado==='nao_avaliado').length;
   return {
     aplicativo:'meu-dinheiro-essencial',formatoRelatorio:3,geradoEm:new Date().toISOString(),
     duracaoPrevistaMs:calcularDuracaoDiagnostico(integridade.itens.length),
@@ -522,6 +540,43 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   };
 }
 
+// Converte os testes complementares em itens nativos do mesmo relatório.
+// Nenhum complemento lê ou escreve o armazenamento financeiro durante a junção.
+export function unificarResultadosDiagnosticos(relatorio,complementos=[]) {
+  const itensBase=relatorio.integridade.itens;
+  const usados=new Set(itensBase.map(item=>item.codigo));
+  const extras=[];
+  const modulos=[];
+  for(const grupo of complementos){
+    const nome=String(grupo.nome||'extensao').replace(/[^a-z0-9-]/gi,'').slice(0,48)||'extensao';
+    const resultados=Array.isArray(grupo.resultados)?grupo.resultados:[];
+    let aprovados=0,erros=0;
+    const totalEsperado=Number.isInteger(grupo.esperados)&&grupo.esperados>=0?grupo.esperados:resultados.length;
+    for(const [indice,item] of resultados.entries()){
+      const id=String(item?.code||'').trim();
+      const valido=/^[A-Z][A-Z0-9_]{2,90}$/.test(id)&&!usados.has(id);
+      const codigo=valido?id:`EXTENSAO_${nome.toUpperCase().replaceAll('-','_')}_${indice+1}`;
+      usados.add(codigo);
+      const ok=valido&&item?.status==='ok'&&typeof item?.description==='string'&&item.description.length>0;
+      const descricao=typeof item?.description==='string'?item.description.slice(0,240):'Teste complementar sem descrição válida';
+      extras.push({codigo,modulo:nome,estado:ok?'ok':'erro',descricao});
+      if(ok)aprovados++;else erros++;
+    }
+    for(let indice=resultados.length;indice<totalEsperado;indice++){
+      const codigo=`EXTENSAO_${nome.toUpperCase().replaceAll('-','_')}_AUSENTE_${indice+1}`;
+      extras.push({codigo,modulo:nome,estado:'erro',descricao:'Verificação registrada não retornou resultado'});
+      erros++;
+    }
+    modulos.push({nome,total:Math.max(resultados.length,totalEsperado),aprovados,erros});
+  }
+  const itens=[...itensBase,...extras];
+  return {...relatorio,formatoRelatorio:4,duracaoPrevistaMs:calcularDuracaoDiagnostico(itens.length),
+    integridade:{...relatorio.integridade,itens,erros:itens.filter(item=>item.estado==='erro').length,
+      avisos:itens.filter(item=>item.estado==='aviso').length,
+      naoAvaliados:itens.filter(item=>item.estado==='nao_avaliado').length},
+    complementos:{total:extras.length,modulos}};
+}
+
 export function iniciarDiagnostico(ctx) {
   const {notify,hideBackupMenu,registrar,registrarEvento,configurarDetalhado,modoDetalhado} = ctx;
   const dialogo=document.getElementById('diagnostics-dialog');
@@ -535,6 +590,15 @@ export function iniciarDiagnostico(ctx) {
   const exportarBotao=document.getElementById('diagnostics-export');
   let ultimoRelatorio=null;
   let rodada=0;
+  const extensoes=new Map();
+  const hub=Object.freeze({
+    registrar(nome,executar,esperados){
+      if(!/^[a-z0-9-]{2,48}$/.test(nome)||typeof executar!=='function'||extensoes.has(nome))return false;
+      extensoes.set(nome,{executar,esperados});return true;
+    },
+    quantidade:()=>extensoes.size
+  });
+  window.MeuDinheiroDiagnosticoHub=hub;
   const grupos=new Map();
   const sinais=Object.freeze({ok:'✓',aviso:'!',erro:'✕',pendente:'○',nao_avaliado:'−'});
   function anexarResultado(item){
@@ -551,8 +615,8 @@ export function iniciarDiagnostico(ctx) {
     const estado=Object.hasOwn(sinais,item.estado)?item.estado:'aviso';
     grupo.contagens[estado]++;
     const c=grupo.contagens;
-    grupo.titulo.textContent=`${nome.replaceAll('-',' ')} · ${c.ok} ok · ${c.erro} erros · ${c.aviso} avisos${c.pendente?` · ${c.pendente} pendentes`:''}`;
-    grupo.elemento.dataset.state=c.erro?'erro':c.aviso?'aviso':c.pendente?'pendente':'ok';
+    grupo.titulo.textContent=`${nome.replaceAll('-',' ')} · ${c.ok} ok · ${c.erro} erros · ${c.aviso} avisos${c.nao_avaliado?` · ${c.nao_avaliado} não avaliados`:''}${c.pendente?` · ${c.pendente} pendentes`:''}`;
+    grupo.elemento.dataset.state=c.erro?'erro':c.aviso?'aviso':c.nao_avaliado?'nao_avaliado':c.pendente?'pendente':'ok';
     const linha=document.createElement('p');linha.className=`diagnostics-check diagnostics-${estado}`;
     linha.textContent=`${sinais[estado]} ${item.descricao}`;
     grupo.conteudo.append(linha);
@@ -571,7 +635,15 @@ export function iniciarDiagnostico(ctx) {
     try {
       registrarEvento('INICIAR_VERIFICACAO','integridade');
       // A duração é visual: a coleta nunca é abreviada pelo limite da animação.
-      const relatorio=await criarRelatorioDiagnostico(ctx);
+      const base=await criarRelatorioDiagnostico(ctx);
+      const complementos=[];
+      for(const [nome,extensao] of extensoes){
+        let resultados;
+        try{resultados=extensao.executar();}
+        catch(_){resultados=[{code:`EXTENSAO_${nome.toUpperCase().replaceAll('-','_')}_FALHA`,description:'Falha ao executar módulo complementar',status:'falha'}];}
+        complementos.push({nome,resultados,esperados:extensao.esperados});
+      }
+      const relatorio=unificarResultadosDiagnosticos(base,complementos);
       if(atual!==rodada)return null;
       const {integridade}=relatorio;
       const itens=integridade.itens;
@@ -595,7 +667,7 @@ export function iniciarDiagnostico(ctx) {
       });
       if(atual!==rodada)return null;
       ultimoRelatorio=relatorio;
-      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
+      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${integridade.naoAvaliados?` · ${integridade.naoAvaliados} não avaliadas`:''}${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
       if(integridade.erros)registrar('erro','INTEGRIDADE_FALHOU','integridade');
       else if(integridade.avisos)registrar('aviso','INTEGRIDADE_ALERTA','integridade');
       return relatorio;

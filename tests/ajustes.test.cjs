@@ -8,7 +8,7 @@ const read=rel=>fs.readFileSync(path.join(__dirname,'..',rel),'utf8');
 
 function montarAjustes(){
   const eventos=new Map();
-  const elemento=(id)=>({id,children:[],value:'',selectedIndex:0,
+  const elemento=(id)=>({id,children:[],value:'',selectedIndex:0,dataset:{},
     addEventListener:(tipo,cb)=>eventos.set(`${id}:${tipo}`,cb),
     replaceChildren(){this.children=[];},
     append(...filhos){this.children.push(...filhos);}});
@@ -31,55 +31,53 @@ function montarAjustes(){
   const gestor={obter:()=>({...salvo}),salvar:novas=>{salvo=novas;return true;}};
   const mensagens=[];
   const sandbox={document,window:{matchMedia:()=>({matches:false,addEventListener:()=>{}})},
+    setTimeout:()=>1,clearTimeout:()=>{},
     CORES:{azul:'#2563eb',roxo:'#7c3aed'},TEMAS:['auto','claro','escuro'],normalizarPreferencias:p=>p};
   const source=read('dist/modules/ajustes.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   vm.runInNewContext(`${source}\nthis.api={aplicarAparencia,iniciarAjustes}`,sandbox);
   const api=sandbox.api.iniciarAjustes({gestor,getData:()=>({goals:[]}),CATEGORIES:{income:[]},
-    notify:mensagem=>mensagens.push(mensagem),render:()=>{},hideBackupMenu:()=>{},onCancel:()=>mensagens.push('voltar')});
+    notify:mensagem=>mensagens.push(mensagem),render:()=>{},hideBackupMenu:()=>{}});
   const selecionar=(novoTema,novaCor)=>{
     tema.value=novoTema;
     for(const label of cores.children)for(const input of label.children){if(input.name==='cor')input.checked=input.value===novaCor;}
     eventos.get('settings-form:change')({target:{name:'tema'}});
   };
-  return {eventos,pagina,root,meta,gestor,mensagens,selecionar,api};
+  return {eventos,pagina,root,meta,gestor,mensagens,selecionar,percentual,api};
 }
 
-test('Tema e cor aparecem imediatamente, sem gravar dados financeiros nem preferências',()=>{
+test('Tema e cor são aplicados e gravados automaticamente ao alterar preferência',()=>{
   const app=montarAjustes();
   app.api.abrir();
   app.selecionar('escuro','roxo');
   assert.equal(app.root.dataset.theme,'escuro');
   assert.equal(app.root.dataset.accent,'roxo');
   assert.equal(app.meta.content,'#131417');
-  assert.equal(app.gestor.obter().tema,'auto');
-  assert.equal(app.gestor.obter().cor,'azul');
+  assert.equal(app.gestor.obter().tema,'escuro');
+  assert.equal(app.gestor.obter().cor,'roxo');
 });
 
-test('Cancelar ou fechar sem salvar desfaz a prévia; Salvar mantém a escolha',()=>{
+test('Sair de Ajustes não desfaz mudanças e valores inválidos não substituem preferências',()=>{
   const app=montarAjustes();
   app.api.abrir();
   app.selecionar('escuro','roxo');
-  app.eventos.get('settings-form-cancel:click')();
-  assert.equal(app.root.dataset.theme,'auto');
-  assert.equal(app.root.dataset.accent,'azul');
-  assert.equal(app.meta.content,'#f5f6f8');
-  assert.ok(app.mensagens.includes('voltar'));
-  app.api.abrir();
-  app.selecionar('escuro','roxo');
-  app.eventos.get('settings-form:submit')({preventDefault:()=>{}});
+  app.api.concluirEdicao();
   assert.equal(app.gestor.obter().tema,'escuro');
   assert.equal(app.gestor.obter().cor,'roxo');
-  assert.equal(typeof app.api.descartar,'function');
+  app.percentual.value='';
+  app.eventos.get('settings-form:change')({target:{name:'percentual'}});
+  assert.equal(app.gestor.obter().percentual,10);
+  assert.ok(app.mensagens.every(m=>!m.includes('Ajustes salvos')));
+  assert.equal(typeof app.api.concluirEdicao,'function');
   assert.equal(app.root.dataset.theme,'escuro');
   assert.equal(app.root.dataset.accent,'roxo');
-  assert.ok(app.mensagens.some(m=>m.includes('Ajustes salvos')));
 });
 
-test('Há botão Salvar visível no cabeçalho e dica clara sobre a prévia',()=>{
+test('Ajustes têm estado de gravação acessível e nenhum botão Salvar/Descartar',()=>{
   const html=read('dist/index.html');
   const css=read('dist/css/ajustes.css');
-  assert.match(html,/<button type="submit" form="settings-form"[^>]+id="settings-save-top">Salvar alterações<\/button>/);
-  assert.match(html,/Aparência em prévia/);
+  assert.match(html,/id="settings-autosave-status"[^>]+aria-live="polite"/);
+  assert.match(html,/Tema e cores são aplicados e salvos automaticamente/);
+  assert.doesNotMatch(html,/settings-save-top|settings-form-cancel|id="settings-cancel"/);
   assert.match(css,/\.settings-page>\.settings-heading\{position:sticky/);
   assert.match(html,/id="settings-page" class="settings-page hidden"/);
 });

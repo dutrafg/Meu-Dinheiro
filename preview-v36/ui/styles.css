@@ -1,0 +1,61 @@
+/* V36 — cores em chips compactos, sem perder a área de toque e o foco visível. */
+.settings-page .settings-colors{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(108px,128px));
+  justify-content:start;
+  gap:8px;
+}
+.settings-page .settings-section label.settings-color-option{
+  flex-direction:row;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  min-height:48px;
+  padding:8px 10px;
+  border-radius:12px;
+  font-size:.82rem;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.settings-page .settings-color-dot{
+  width:20px;
+  height:20px;
+  border:1px solid var(--card);
+  box-shadow:0 0 0 1px var(--border);
+}
+.settings-page .settings-preview-hint{display:none}
+.settings-page .v35-settings-panel{margin:9px 0;border-radius:14px}
+.settings-page .v35-settings-panel>summary{min-height:50px;padding:11px 16px}
+.settings-page .v35-inner-section{padding:0 16px 16px}
+.settings-page .settings-section fieldset{margin:9px 0}
+.settings-page .settings-section legend{margin-bottom:9px}
+.settings-page .settings-row{padding:9px 0;gap:9px}
+.settings-page .settings-autosave-status{font-size:.77rem;padding:6px 10px}
+@media(max-width:879px){
+  body[data-v34-view="ajustes"] .header{height:62px;padding:7px 0}
+  body[data-v34-view="ajustes"] .header .prototype-heading{display:none}
+  body[data-v34-view="ajustes"] .header .proto-header-actions{margin-left:auto}
+  body[data-v34-view="ajustes"] .settings-page>.settings-heading{
+    position:static;
+    padding:8px 0 13px;
+    gap:7px;
+  }
+  body[data-v34-view="ajustes"] .settings-page>.settings-heading .eyebrow{font-size:.68rem}
+  body[data-v34-view="ajustes"] .settings-page>.settings-heading h2{font-size:1.27rem;margin:0}
+  .settings-page .settings-colors{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .settings-page .settings-section label.settings-color-option{
+    gap:5px;
+    padding:7px 4px;
+    min-width:0;
+    font-size:clamp(.71rem,2.5vw,.81rem);
+  }
+  .settings-page .settings-color-dot{width:17px;height:17px}
+  .settings-page .v35-settings-panel>summary{padding:11px 14px}
+}
+@media(max-width:359px){
+  .settings-page .settings-colors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .settings-page .settings-section label.settings-color-option{font-size:.79rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .settings-page .settings-section label.settings-color-option{transition:none}
+}

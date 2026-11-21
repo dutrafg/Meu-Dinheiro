@@ -70,12 +70,12 @@
     </div>
     <main id="main-content" tabindex="-1"><div id="view-content" aria-live="polite"></div>
       <section id="settings-page" class="settings-page hidden" aria-labelledby="settings-title">
-        <div class="settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-settings"/></svg> Ajustes</h2></div><div class="settings-heading-actions"><button type="submit" form="settings-form" class="button button-primary" id="settings-save-top">Salvar alterações</button><button type="button" id="settings-cancel" class="button button-secondary">Descartar</button></div></div>
+        <div class="settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-settings"/></svg> Ajustes</h2></div><p id="settings-autosave-status" class="settings-autosave-status" role="status" aria-live="polite">Alterações salvas automaticamente.</p></div>
         <form id="settings-form">
           <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-settings"/></svg> Aparência</h3>
             <div class="settings-row"><label for="settings-theme">Tema</label><select id="settings-theme" name="tema"><option value="auto">Automático (sistema)</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></div>
             <fieldset><legend>Cor de destaque (botões e navegação)</legend><div id="settings-colors" class="settings-colors"></div></fieldset>
-            <p class="settings-preview-hint">Aparência em prévia até tocar em Salvar. Descartar restaura o tema e a cor anteriores.</p>
+            <p class="settings-preview-hint">Tema e cores são aplicados e salvos automaticamente neste dispositivo.</p>
           </section>
           <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-target"/></svg> Planejamento do aporte</h3>
             <div class="settings-row"><label for="settings-percentual">Percentual por renda</label><input id="settings-percentual" name="percentual" type="number" min="0" max="100" step="0.01" required /></div>
@@ -83,25 +83,24 @@
             <div class="settings-row"><label for="settings-reserve">Meta principal de reserva</label><select id="settings-reserve" name="reservaGoalId"></select></div>
             <p class="field-hint">A configuração apenas calcula sugestões: não movimenta dinheiro nem altera lançamentos.</p>
           </section>
-          <div class="settings-save-actions"><button class="button button-secondary" id="settings-form-cancel" type="button">Descartar</button><button class="button button-primary" type="submit">Salvar ajustes</button></div>
         </form>
-        <details class="settings-section settings-tools"><summary><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Relatórios PDF, CSV, importação e backup</summary>
+        <details class="settings-section settings-tools"><summary><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Relatórios PDF, CSV e backup</summary>
           <div class="settings-report-options"><label for="pdf-report-type">Conteúdo do relatório PDF</label><select id="pdf-report-type" name="tipoRelatorio"><option value="resumo" selected>Resumo completo do mês (inclui metas e aplicações)</option><option value="renda">Somente receitas do mês</option><option value="despesas">Somente despesas do mês</option><option value="metas">Metas e reserva</option><option value="sonho">Meus sonhos</option></select><p class="field-hint">O PDF usa a opção escolhida acima, independentemente da última área visitada. As movimentações consideram o mês selecionado no aplicativo.</p></div>
-          <div class="settings-tool-buttons"><button type="button" id="export-pdf">Gerar PDF financeiro</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
+          <div class="settings-tool-buttons"><button type="button" data-open-calendar-settings><svg aria-hidden="true"><use href="#i-calendar"/></svg> Abrir calendário financeiro</button><button type="button" id="export-pdf">Gerar PDF financeiro</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
           <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
           <p class="folder-backup-warning">Backup JSON sem criptografia: proteja a pasta.</p>
         </details>
-        <section class="settings-section settings-tools" aria-labelledby="settings-update-title"><h3 id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e integridade</h3>
+        <details class="settings-section settings-tools" aria-labelledby="settings-update-title"><summary id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e diagnóstico</summary>
           <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>
           <div class="settings-tool-buttons"><button type="button" id="check-update">Verificar atualizações</button><button type="button" id="install-update" class="hidden">Atualizar agora</button></div>
           <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
           <div class="settings-tool-buttons"><button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button></div>
-        </section>
-        <section class="settings-section settings-danger-zone" aria-labelledby="settings-danger-title">
-          <h3 id="settings-danger-title">Apagar dados financeiros</h3>
+        </details>
+        <details class="settings-section settings-danger-zone" aria-labelledby="settings-danger-title">
+          <summary id="settings-danger-title">Apagar dados financeiros</summary>
           <p>Remove deste navegador lançamentos, metas, sonhos, aplicações e lembretes. Preferências e arquivos de backup serão preservados. O backup automático na pasta será pausado.</p>
           <button type="button" id="delete-all-data" class="button button-danger">Apagar dados deste dispositivo</button>
-        </section>
+        </details>
       </section>
     </main>
     <section id="print-report" class="print-report" aria-hidden="true"></section>
@@ -206,14 +205,13 @@
   </dialog>
   <dialog id="diagnostics-dialog" class="form-dialog diagnostics-dialog" aria-labelledby="diagnostics-title">
     <div class="dialog-heading"><div><span class="eyebrow">INTEGRIDADE LOCAL</span><h2 id="diagnostics-title">Diagnóstico do aplicativo</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
-    <p class="diagnostics-privacy">O relatório contém somente informações técnicas e contagens. Não inclui descrições, saldos, valores financeiros ou caminhos de pasta.</p>
-    <p class="diagnostics-privacy">Itens <strong>pendentes</strong> da proposta visual indicam melhorias futuras, não falhas de integridade. Toque em um módulo para ver os testes.</p>
+    <p class="diagnostics-privacy">Um único diagnóstico reúne integridade, orçamento, objetivos e interface. O JSON contém somente informações técnicas e contagens — sem descrições, saldos, valores financeiros ou caminhos de pasta. Melhorias pendentes não são falhas de integridade.</p>
     <p id="diagnostics-summary" role="status" aria-live="polite">Aguardando verificação.</p>
     <div id="diagnostics-progress-area" class="diagnostics-progress-area"><div id="diagnostics-progress" class="diagnostics-progress progress-bar progress-bar-large" role="progressbar" aria-label="Progresso do diagnóstico" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="diagnostics-progress-fill" class="progress-bar-fill"></span></div><p id="diagnostics-progress-label">Pronto para iniciar.</p></div>
     <div id="diagnostics-checks" class="diagnostics-checks diagnostics-groups" aria-label="Resultado das verificações"></div>
     <label class="diagnostics-toggle"><input type="checkbox" id="diagnostics-verbose" /> Registrar eventos técnicos detalhados nesta sessão</label>
     <p class="field-hint">Desligado por padrão. Não registra informações preenchidas nos formulários.</p>
-    <div class="diagnostics-actions"><button type="button" id="diagnostics-run" class="button button-secondary">Verificar novamente</button><button type="button" id="diagnostics-export" class="button button-primary">Baixar JSON</button></div>
+    <div class="diagnostics-actions"><button type="button" id="diagnostics-run" class="button button-secondary">Executar novamente</button><button type="button" id="diagnostics-export" class="button button-primary">Baixar JSON completo</button></div>
     <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Fechar</button></div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

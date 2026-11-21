@@ -54,8 +54,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('Primeira instalação não avisa uma atualização inexistente', async () => {
   const app=scenario({controlled:false});
-  assert.equal(app.elements['app-running-version'].textContent,'v31');
-  assert.equal(app.updater.getStatus().versaoEmExecucao,'v31');
+  assert.equal(app.elements['app-running-version'].textContent,'v38');
+  assert.equal(app.updater.getStatus().versaoEmExecucao,'v38');
   await flush();
   assert.equal(app.serviceWorker.registerCalls,1);
   assert.equal(app.registration.updateCalls,1);
@@ -82,7 +82,7 @@ test('Nova versão avisa sem instalar; apenas o clique solicita ativação e rec
   assert.equal(app.elements['install-update'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-alert'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-status'].dataset.state,'ready');
-  assert.equal(app.elements['app-running-version'].textContent,'v31','Uma versão aguardando autorização não muda a versão da página');
+  assert.equal(app.elements['app-running-version'].textContent,'v38','Uma versão aguardando autorização não muda a versão da página');
   assert.equal(app.notifications.length,1);
   assert.equal(messages.length,0);
   app.serviceWorker.emit('controllerchange');
@@ -114,13 +114,13 @@ test('Checagem manual funciona e falha de conexão não apaga o aviso pendente',
   assert.equal(app.elements['app-update-status'].dataset.state,'ready');
 });
 
-test('Prévia HTML local e browsers sem Service Worker não tentam registrar', () => {
-  for (const options of [{protocol:'file:'},{supported:false}]) {
+test('Prévia HTML local, Android content: e browsers sem Service Worker não tentam registrar', () => {
+  for (const options of [{protocol:'file:'},{protocol:'content:'},{protocol:'blob:'},{supported:false}]) {
     const app=scenario(options);
     assert.equal(app.elements['check-update'].disabled,true);
     assert.equal(app.serviceWorker.registerCalls,0);
     assert.match(app.elements['app-update-status'].textContent,/aplicativo publicado/);
-    assert.equal(app.elements['app-running-version'].textContent,'v31','A versão precisa aparecer até no HTML de homologação');
+    assert.equal(app.elements['app-running-version'].textContent,'v38','A versão precisa aparecer até no HTML de homologação');
   }
 });
 

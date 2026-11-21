@@ -1,0 +1,13 @@
+.proto-goals-grid .proto-goal-card { border-radius:20px; display:flex; flex-direction:column; min-width:0; }
+.proto-goal-card .proto-goal-progress { display:flex; flex-wrap:wrap; align-items:center; column-gap:17px; }
+.proto-goal-card .v34-goal-ring { flex:none; width:116px; aspect-ratio:1; border-radius:50%; background:conic-gradient(var(--accent) var(--goal-progress),var(--border) 0); display:grid; place-items:center; }
+.proto-goal-card.dream .v34-goal-ring { background:conic-gradient(#a573db var(--goal-progress),var(--border) 0); }
+.v34-goal-ring>span { display:flex; flex-direction:column; align-items:center; justify-content:center; width:91px; aspect-ratio:1; border-radius:50%; background:var(--card); color:var(--text); }
+.v34-goal-ring strong { font-size:1.33rem; line-height:1.2; font-variant-numeric:tabular-nums; }
+.v34-goal-ring small { font-size:.7rem; color:var(--sub); }
+.proto-goal-card .proto-goal-progress-label { display:none; }
+.proto-goal-card .proto-goal-track { flex:1; min-width:90px; }
+.proto-goal-card .proto-goal-info { flex:1; min-width:120px; }
+.proto-goal-card .proto-goal-actions { margin-top:auto; flex-wrap:wrap; }
+.proto-goal-card .proto-goal-actions [data-action="add-investment"] { border-radius:11px; }
+@media(max-width:420px){.proto-goal-card .v34-goal-ring{width:99px}.v34-goal-ring>span{width:77px}}

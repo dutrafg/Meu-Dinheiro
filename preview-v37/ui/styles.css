@@ -1,0 +1,14 @@
+/* Um único resumo, uma barra e uma lista expansível para toda a cobertura. */
+.diagnostics-dialog .diagnostics-privacy{margin:0 0 16px;padding:12px 15px;border-radius:13px;line-height:1.5}
+.diagnostics-dialog .diagnostics-groups{display:grid;gap:9px}
+.diagnostics-dialog .diagnostics-group{margin:0;border-radius:13px;overflow:hidden}
+.diagnostics-dialog .diagnostics-group-heading{min-height:48px;display:flex;align-items:center}
+.diagnostics-dialog .diagnostics-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.diagnostics-dialog .diagnostics-actions button{min-height:48px}
+@media(max-width:599px){
+  .diagnostics-dialog .diagnostics-privacy{font-size:.81rem;padding:10px 12px}
+  .diagnostics-dialog .diagnostics-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .diagnostics-dialog .diagnostics-progress span{transition:none}
+}

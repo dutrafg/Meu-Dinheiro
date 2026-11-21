@@ -191,7 +191,7 @@ test('Diagnóstico trata proposta como categoria separada de erros e avisa sobre
   assert.match(codigo,/formatoRelatorio:3/);
   assert.match(codigo,/propostaInterface:propostaInterface\?/);
   assert.match(codigo,/melhorias pendentes/);
-  assert.match(read('dist/index.html'),/Itens <strong>pendentes<\/strong> da proposta visual/);
+  assert.match(read('dist/index.html'),/Melhorias pendentes não são falhas de integridade/);
 });
 
 test('Relatório principal incorpora o checklist sem classificar propostas pendentes como falhas',async()=>{

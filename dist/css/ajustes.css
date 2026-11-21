@@ -40,9 +40,6 @@
 .settings-heading h2{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:1.35rem}
 .settings-title-icon{width:23px;height:23px;color:var(--accent-text)}
 .settings-section-icon{width:20px;height:20px;vertical-align:middle;margin-right:7px;color:var(--accent-text)}
-.settings-heading-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.settings-heading-actions .button{min-height:40px;padding:9px 15px}
-.settings-save-actions{display:flex;justify-content:flex-end;gap:10px;padding:5px 0 12px}
 .settings-preview-hint{font-size:.8rem;line-height:1.5;color:var(--sub);margin:13px 0 0}
 .settings-section{border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;background:var(--card)}
 .settings-section h3{font-size:.95rem;margin:0 0 13px}
@@ -87,4 +84,4 @@
 .diagnostics-progress span{width:0%;background:var(--accent);transition:width .2s linear}
 .diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
 @media(max-width:879px){.settings-page>.settings-heading{top:92px}}
-@media(max-width:540px){.settings-colors{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-section{padding:13px}.settings-heading-actions .button{padding:9px 10px}.settings-heading h2{font-size:1.15rem}.settings-row{align-items:flex-start;flex-direction:column;gap:7px}.settings-row>select,.settings-row>input{max-width:100%;width:100%}.settings-page>.settings-heading{top:92px}.settings-heading-actions{width:100%;justify-content:flex-end}}
+@media(max-width:540px){.settings-colors{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-section{padding:13px}.settings-heading h2{font-size:1.15rem}.settings-row{align-items:flex-start;flex-direction:column;gap:7px}.settings-row>select,.settings-row>input{max-width:100%;width:100%}.settings-page>.settings-heading{top:92px}}

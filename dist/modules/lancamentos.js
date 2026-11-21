@@ -1,7 +1,7 @@
 export function criarModuloLancamentos(ctx) {
   const {getData, getMonth, getSearch, getFilterCategory, transactionsInMonth,
     n2, categorySet, header, money, esc, CATEGORY_ICONS, fmtDate, parseDate,
-    icon, transactionForm, transactionDialog, currentMonth, getCurrentMonth, isoDate} = ctx;
+    icon, transactionForm, transactionDialog, currentMonth, getCurrentMonth, isoDate, renderizarOpcoesDespesas} = ctx;
   const mesAtual=()=>getCurrentMonth?.()||currentMonth;
 
   function entryList(items, emptyText) {
@@ -51,7 +51,9 @@ export function criarModuloLancamentos(ctx) {
     form.namedItem('type').value=type;
     const cat=form.namedItem('category');
     const choice=selectedCategory||cat.value;
-    cat.innerHTML=categorySet(type).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    cat.innerHTML=type==='expense'&&typeof renderizarOpcoesDespesas==='function'
+      ?renderizarOpcoesDespesas(esc)
+      :categorySet(type).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
     cat.value=categorySet(type).includes(choice)?choice:categorySet(type)[0];
     document.querySelectorAll('[data-trans-type]').forEach(button=>button.classList.toggle('on',button.dataset.transType===type));
     document.getElementById('transaction-title').textContent=`Adicionar ${type==='income'?'renda':'despesa'}`;

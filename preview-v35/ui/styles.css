@@ -1,0 +1,55 @@
+/* V35 — superfícies simples e densidade confortável, seguindo as cinco referências. */
+.settings-autosave-status{font-size:.81rem;color:var(--green-text);background:var(--green-bg);border-radius:99px;padding:8px 12px;margin:0;line-height:1.4}
+.settings-autosave-status[data-state="error"]{color:var(--red-text);background:var(--red-bg)}
+.settings-page .v35-settings-panel{padding:0;overflow:hidden;border-radius:17px;margin:12px 0;box-shadow:none}
+.v35-settings-panel>summary,.settings-page>details.settings-tools>summary,.settings-page>details.settings-danger-zone>summary{display:flex;align-items:center;gap:9px;min-height:55px;padding:16px 20px;font-size:.96rem;font-weight:730;color:var(--text);list-style:none;cursor:pointer}
+.v35-settings-panel>summary::after,.settings-page>details.settings-tools>summary::after,.settings-page>details.settings-danger-zone>summary::after{content:'⌄';font-size:1.25rem;color:var(--sub);margin-left:auto;transition:transform .17s ease}
+.v35-settings-panel[open]>summary::after,.settings-page>details.settings-tools[open]>summary::after,.settings-page>details.settings-danger-zone[open]>summary::after{transform:rotate(180deg)}
+.v35-settings-panel>summary::-webkit-details-marker,.settings-page>details.settings-tools>summary::-webkit-details-marker,.settings-page>details.settings-danger-zone>summary::-webkit-details-marker{display:none}
+.v35-settings-panel>summary:focus-visible,.settings-page>details.settings-tools>summary:focus-visible{outline:3px solid var(--accent-text);outline-offset:-3px}
+.settings-page .v35-inner-section{margin:0;border:none;box-shadow:none;padding:0 20px 20px;border-radius:0}
+.settings-page .v35-budget-wrapper>.design-v33-budget-settings{margin:0;border:none;padding:1px 20px 21px;border-radius:0}
+.v35-budget-wrapper .design-v33-section-heading{display:none}
+.v35-budget-wrapper .design-v33-note{background:transparent;color:var(--sub);padding:0;font-size:.78rem}
+.v35-privacy-panel>p{padding:0 20px;color:var(--sub);font-size:.84rem;line-height:1.5}
+.v35-privacy-panel>button{margin:0 20px 20px}
+.settings-page>details.settings-tools,.settings-page>details.settings-danger-zone{padding:0;overflow:hidden}
+.settings-page>details.settings-tools>summary,.settings-page>details.settings-danger-zone>summary{margin:0}
+.settings-page>details.settings-tools>:not(summary),.settings-page>details.settings-danger-zone>:not(summary){margin-left:20px;margin-right:20px}
+.settings-page>details.settings-danger-zone{border-color:var(--border)}
+.settings-page>details.settings-danger-zone>summary{color:var(--red-text)}
+.settings-page .settings-tool-buttons button{min-height:48px;background:var(--card)}
+.settings-page .settings-row select,.settings-page .settings-row input{min-height:48px}
+body[data-v34-view="metas"] .header .prototype-heading span{font-size:.85rem;text-transform:none}
+.design-goal-tabs{margin:5px 0 17px;align-items:center}
+.design-goal-tabs .design-kicker{font-size:.68rem}
+.design-goal-tabs .design-segments{width:min(100%,360px);display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px}
+.design-goal-tabs .design-segments button{min-height:48px;font-size:.92rem}
+.proto-goals-grid{margin:0 0 12px;gap:12px}
+.proto-goals-grid .proto-goal-card{padding:20px;border:1px solid var(--border);box-shadow:none}
+.proto-goals-grid .v35-goal-guidance{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--sub);font-size:.83rem;line-height:1.45;margin:2px 0 15px}
+.v35-status{background:var(--accent-soft);color:var(--accent-text);font-size:.72rem;font-weight:720;border-radius:99px;padding:5px 10px}
+.v35-status[data-state="done"]{background:var(--green-bg);color:var(--green-text)}
+.v35-status[data-state="late"]{background:var(--red-bg);color:var(--red-text)}
+.v35-goal-history{width:100%;border-top:1px solid var(--border);margin-top:14px;padding-top:12px}
+.v35-goal-history>summary{font-size:.8rem;font-weight:730;color:var(--sub);cursor:pointer;min-height:35px}
+.v35-aporte-line{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);font-size:.77rem;color:var(--sub)}
+.v35-aporte-line span{flex:1}.v35-aporte-line strong{color:var(--green-text);white-space:nowrap}
+.v35-aporte-line button{min-height:40px;border:none;background:var(--accent-soft);color:var(--accent-text);border-radius:9px;padding:8px;cursor:pointer}
+.v35-plan-detail{border:1px solid var(--border);border-radius:16px;background:var(--card);overflow:hidden;margin:12px 0}
+.v35-plan-detail>summary{cursor:pointer;min-height:52px;display:flex;align-items:center;padding:14px 18px;font-weight:730;color:var(--text);font-size:.85rem}
+.v35-plan-detail>.proto-saving-card{margin:0;border:0;box-shadow:none;border-radius:0;padding-top:5px}
+.v35-duplicate-total{display:none!important}
+.design-more-list button{font-size:.95rem;border-radius:12px}
+.design-more-dialog .dialog-heading .eyebrow{font-size:.72rem}
+@media(max-width:599px){
+  .settings-page>.settings-heading{top:85px;gap:8px}
+  .settings-autosave-status{font-size:.73rem;padding:6px 9px}
+  .settings-page .v35-settings-panel>summary{padding:13px 16px}
+  .design-goal-tabs{flex-direction:column;align-items:stretch;gap:12px}
+  .design-goal-tabs .design-segments{width:100%;max-width:none}
+  .proto-goal-card .proto-goal-actions{max-width:none}
+  .proto-goal-card .proto-goal-actions .button{min-height:48px}
+  .proto-goal-card .v34-goal-ring{width:104px}
+}
+@media(prefers-reduced-motion:reduce){.v35-settings-panel>summary::after{transition:none}}

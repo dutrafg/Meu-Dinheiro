@@ -2,6 +2,12 @@
 
 Aplicativo financeiro pessoal simples, responsivo e instalável como PWA (Progressive Web App), preparado para publicar na Vercel e no GitHub Pages.
 
+## Homologação visual v38 e diagnóstico unificado
+
+A versão visual **v38** está disponível em `dist/homologacao-v38.html`, também acessível no servidor como `/homologacao-v38.html` (Vercel) ou `/Meu-Dinheiro/dist/homologacao-v38.html` (GitHub Pages). A prévia reúne todas as verificações v33–v38 em **um diagnóstico**, com **um arquivo JSON** e animação de até 25 segundos. Foram corrigidos os falsos erros de contraste (`#fff`), reconhecimento do tema das prévias e rótulo de versão visual/motor. Em HTML independente, Service Worker e auditoria de arquivos externos aparecem como **não avaliados**, pois exigem hospedagem HTTP(S).
+
+Esta página é uma **prévia de homologação**, não substitui automaticamente o `dist/index.html` do PWA estável. O código-fonte permanece modular, em `dist/modules/`, `dist/css/` e `preview-v32/` a `preview-v38/`. Para reconstruir: `node scripts/gerar-html-design-v38.cjs dist/homologacao-v38.html`.
+
 ## Áreas do aplicativo
 
 - **Resumo:** visão financeira, últimas transações, dois gráficos de gastos por categoria e o painel de Saúde Financeira.
@@ -81,7 +87,7 @@ O aplicativo instalado no navegador verifica automaticamente se há novas versõ
 
 Em **Ajustes → Atualizações e integridade** há também **Verificar atualizações** para consultar manualmente. O atualizador usa o Service Worker do PWA: requer HTTPS ou `localhost`, e funciona após uma primeira instalação online. Ele atualiza arquivos da interface **sem apagar os registros do navegador**. Na prévia HTML única, aberta como arquivo local, esse recurso não funciona. Uma versão nova só será detectada se sua publicação atualizar `dist/sw.js` e sua versão de cache.
 
-Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v31`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
+Nessa mesma seção, **Versão em execução** mostra permanentemente o número do código que está aberto (nesta atualização, `v38`). Durante o download de uma atualização, continua exibindo a versão anterior até que a atualização seja instalada e a página recarregue. O Diagnóstico registra e valida esse número.
 
 ## Estrutura modular do código
 

@@ -20,13 +20,13 @@ function simular(){
     ['view-content',criar('view-content')],['folder-backup-alert',criar('folder-backup-alert',['hidden'])],
     ['app-update-alert',criar('app-update-alert',['hidden'])]
   ]);
-  const navBotoes=['resumo','renda','despesas','metas','sonho','ajustes'].map(nome=>({dataset:{view:nome},classList:classList(`nav-${nome}`),setAttribute(){}}));
+  const navBotoes=['resumo','renda','despesas','metas','ajustes'].map(nome=>({dataset:{view:nome},classList:classList(`nav-${nome}`),setAttribute(){}}));
   const dots=[criar('dot1',['hidden']),criar('dot2',['hidden'])];
-  const document={getElementById:id=>elementos.get(id),querySelectorAll:selector=>selector==='.nav-button'?navBotoes:dots};
-  const variables={view:'resumo',search:'',filterCategory:'',month:'2026-11',
-    NAV:[['resumo','Resumo','chart-pie'],['renda','Renda','wallet'],['despesas','Despesas','receipt'],['metas','Metas','target'],['sonho','Sonho','sparkles'],['ajustes','Ajustes','settings']],
+  const document={body:{dataset:{}},getElementById:id=>elementos.get(id),querySelectorAll:selector=>selector==='.nav-button'?navBotoes:dots};
+  const variables={view:'resumo',objectiveKind:'goal',search:'',filterCategory:'',month:'2026-11',
+    NAV:[['resumo','Resumo','chart-pie'],['renda','Renda','wallet'],['despesas','Despesas','receipt'],['metas','Objetivos','target'],['ajustes','Ajustes','settings']],
     document,window:{scrollTo:()=>eventos.push('rolar')},viewContent:elementos.get('view-content'),settingsPage:elementos.get('settings-page'),
-    ajustes:{abrir:()=>eventos.push('abrir'),descartar:()=>eventos.push('descartar')},
+    ajustes:{abrir:()=>eventos.push('abrir'),concluirEdicao:()=>eventos.push('concluirEdicao')},
     renderReminderCount:()=>{},sums:()=>({balance:100}),money:n=>`R$ ${n}`,
     renderSummary:()=>'<div>Resumo</div>',renderTransactions:tipo=>`<div>${tipo}</div>`,renderGoals:kind=>`<div>${kind}</div>`,
     icon:n=>`<svg>${n}</svg>`,
@@ -40,14 +40,16 @@ function simular(){
   return {api:variables.acao,elementos,eventos,estados,variables,dots};
 }
 
-test('Seis abas aparecem na navegação desktop e móvel sem ocupar a tela financeira',()=>{
+test('Cinco rotas internas sem módulo Sonho duplicado e com destino Objetivos',()=>{
   const t=simular();t.api.renderNav();t.api.render();
   for(const id of ['desktop-nav','mobile-nav'])assert.match(t.elementos.get(id).innerHTML,/data-view="ajustes"/);
+  assert.match(t.elementos.get('desktop-nav').innerHTML,/data-view="metas"[^>]+>.*Objetivos/);
+  assert.doesNotMatch(t.elementos.get('desktop-nav').innerHTML,/data-view="sonho"/);
   assert.match(t.elementos.get('view-content').innerHTML,/Resumo/);
   assert.equal(t.elementos.get('settings-page').classList.contains('hidden'),true);
 });
 
-test('Abrir Ajustes preserva controles, esconde FAB e descartar restaura o modo financeiro',()=>{
+test('Abrir Ajustes esconde FAB e não desfaz as preferências ao mudar de área',()=>{
   const t=simular();t.api.render();const settings=t.elementos.get('settings-page');
   t.api.changeView('ajustes');
   assert.equal(settings.classList.contains('hidden'),false);
@@ -60,7 +62,7 @@ test('Abrir Ajustes preserva controles, esconde FAB e descartar restaura o modo 
   assert.equal(t.elementos.get('quick-add').classList.contains('hidden'),false);
   assert.equal(t.elementos.get('desktop-create-wrap').classList.contains('hidden'),false);
   assert.match(t.elementos.get('view-content').innerHTML,/expense/);
-  assert.ok(t.eventos.includes('descartar'));
+  assert.ok(t.eventos.includes('concluirEdicao'));
   assert.equal(t.variables.view,'despesas');
 });
 
@@ -75,9 +77,17 @@ test('Alertas de backup e PWA são espelhados nos indicadores da aba Ajustes',()
   assert.ok(t.dots.every(dot=>!dot.classList.contains('hidden')));
 });
 
-test('Navegação rejeita área inexistente sem mostrar Sonhos por engano',()=>{
+test('Navegação rejeita área inexistente e mantém o resumo',()=>{
   const t=simular();t.api.render();t.api.changeView('area-inexistente');
   assert.equal(t.variables.view,'resumo');
   assert.match(t.elementos.get('view-content').innerHTML,/Resumo/);
-  assert.ok(!t.eventos.includes('descartar'));
+  assert.ok(!t.eventos.includes('concluirEdicao'));
+});
+
+test('Rota antiga Sonho abre a aba interna sem criar novo módulo de navegação',()=>{
+  const t=simular();t.api.changeView('sonho');
+  assert.equal(t.variables.view,'metas');
+  assert.equal(t.variables.objectiveKind,'dream');
+  assert.match(t.elementos.get('view-content').innerHTML,/dream/);
+  assert.equal(t.elementos.get('header-label').textContent,'Objetivos');
 });

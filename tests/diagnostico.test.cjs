@@ -251,6 +251,13 @@ test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis'
   const aparencia=bom.integridade.itens.filter(v=>v.codigo.startsWith('APARENCIA_'));
   assert.equal(aparencia.length,7);
   assert.ok(aparencia.every(v=>v.estado==='ok'));
+  estado.fundo='#111318';estado.corFundo='rgb(17, 19, 24)';
+  const previa=await verificar();
+  assert.equal(previa.integridade.itens.find(v=>v.codigo==='APARENCIA_TEMA_CSS').estado,'ok',
+    'A paleta escura da prévia não deve disparar falso erro');
+  assert.equal(previa.integridade.itens.find(v=>v.codigo==='APARENCIA_FUNDO').estado,'ok',
+    'O fundo visível segue o CSS da prévia');
+  estado.fundo='#131417';estado.corFundo='rgb(19, 20, 23)';
   estado.hover=true;estado.corBotao='rgb(109, 40, 217)';
   const hover=await verificar();
   assert.equal(hover.integridade.itens.find(v=>v.codigo==='APARENCIA_BOTAO').estado,'ok','Hover em tela de toque usa --accent-hover');
@@ -280,7 +287,8 @@ test('Tempo de progresso inicia em 5 segundos e soma 0,5 segundo por nova verifi
 
 test('Limite visual de 25 segundos não corta a execução das verificações',()=>{
   const source=read('dist/modules/diagnostico.js');
-  assert.match(source,/const relatorio=await criarRelatorioDiagnostico\(ctx\)/);
+  assert.match(source,/const base=await criarRelatorioDiagnostico\(ctx\)/);
+  assert.match(source,/const relatorio=unificarResultadosDiagnosticos\(base,complementos\)/);
   assert.doesNotMatch(source,/Promise\.race|Tempo máximo de diagnóstico esgotado/);
   assert.match(source,/const tempoRestante=duracao/);
 });
@@ -321,6 +329,14 @@ test('Diagnóstico informa a versão carregada e avisa se o indicador visual div
   const certo=await gerar();
   assert.equal(certo.atualizador.versaoEmExecucao,'v22');
   assert.equal(certo.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok');
+  versao.textContent='Prévia visual v38 · motor v22';
+  const homologacao=await gerar();
+  assert.equal(homologacao.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'ok',
+    'A versão visual é diferente da versão do motor PWA');
+  versao.textContent='Prévia visual v38 · motor v21';
+  const motorErrado=await gerar();
+  assert.equal(motorErrado.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'erro',
+    'Motor divergente continua sendo detectado');
   versao.textContent='v18';
   const errado=await gerar();
   assert.equal(errado.integridade.itens.find(item=>item.codigo==='ATUALIZADOR_VERSAO_VISIVEL').estado,'erro');

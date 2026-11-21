@@ -12,16 +12,17 @@ export function aplicarAparencia(preferencias) {
   return esquema;
 }
 
-export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,onCancel,hideBackupMenu}) {
+export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,hideBackupMenu}) {
   const pagina=document.getElementById('settings-page');
   const form=document.getElementById('settings-form');
   const categorias=document.getElementById('settings-categories');
   const cores=document.getElementById('settings-colors');
   const reserva=document.getElementById('settings-reserve');
   const atual=()=>gestor.obter();
-  function previsualizar() {
-    aplicarAparencia({...atual(),tema:form.elements.namedItem('tema').value,
-      cor:form.querySelector('input[name="cor"]:checked')?.value||atual().cor});
+  const status=document.getElementById('settings-autosave-status');
+  let pending=null;
+  function estado(message,error=false){
+    if(status){status.textContent=message;status.dataset.state=error?'error':'ok';}
   }
   function abrir() {
     hideBackupMenu();
@@ -48,29 +49,45 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,o
     reserva.value=prefs.reservaGoalId;
     if(reserva.selectedIndex<0)reserva.value='';
   }
-  // A seleção é uma prévia: trocar de aba sem salvar restaura a preferência persistida.
-  form.addEventListener('change',event=>{
-    if(['tema','cor'].includes(event.target?.name))previsualizar();
-  });
-  function descartar(){aplicarAparencia(atual());}
-  form.addEventListener('submit',event=>{
-    event.preventDefault();
-    const percentual=Number(form.elements.namedItem('percentual').value);
-    if(!Number.isFinite(percentual)||percentual<0||percentual>100){notify('Informe um percentual entre 0% e 100%.');return;}
+  // Grava apenas configurações válidas. Mudanças em contas e lançamentos nunca
+  // passam por este formulário nem provocam uma escrita nesses dados.
+  function salvarAutomaticamente(){
+    if(pending!==null){clearTimeout(pending);pending=null;}
+    const campo=form.elements.namedItem('percentual');
+    const percentual=Number(campo.value);
+    if(String(campo.value).trim()===''||!Number.isFinite(percentual)||percentual<0||percentual>100){
+      estado('Informe um percentual válido de 0% a 100%. Nada foi alterado.',true);
+      return false;
+    }
     const prefs=normalizarPreferencias({tema:form.elements.namedItem('tema').value,
       cor:form.querySelector('input[name="cor"]:checked')?.value,
       percentual,categoriasAporte:[...form.querySelectorAll('input[name="categoriaAporte"]:checked')].map(el=>el.value),
       reservaGoalId:reserva.value},CATEGORIES.income);
-    if(!gestor.salvar(prefs)){notify('Não foi possível salvar as preferências neste dispositivo.');return;}
-    aplicarAparencia(prefs);render();onSave?.();notify('Ajustes salvos neste dispositivo.');
+    if(JSON.stringify(prefs)===JSON.stringify(atual())){
+      aplicarAparencia(prefs);estado('Tudo salvo automaticamente.');return true;
+    }
+    if(!gestor.salvar(prefs)){
+      estado('Não foi possível salvar neste dispositivo. Verifique o armazenamento.',true);
+      notify('Não foi possível salvar as preferências.');return false;
+    }
+    aplicarAparencia(prefs);render();onSave?.();estado('Alterações salvas automaticamente.');
+    return true;
+  }
+  form.addEventListener('change',salvarAutomaticamente);
+  form.addEventListener('input',event=>{
+    if(event.target?.name!=='percentual')return;
+    if(pending!==null)clearTimeout(pending);
+    pending=setTimeout(salvarAutomaticamente,500);
   });
-  for(const id of ['settings-cancel','settings-form-cancel'])
-    document.getElementById(id).addEventListener('click',()=>{descartar();onCancel?.();});
+  form.addEventListener('submit',event=>{
+    event.preventDefault();salvarAutomaticamente();
+  });
+  // Ao sair, grava a digitação válida ainda pendente e preserva o tema aplicado.
+  function concluirEdicao(){if(pending!==null)salvarAutomaticamente();aplicarAparencia(atual());}
   const scheme=window.matchMedia?.('(prefers-color-scheme: dark)');
   scheme?.addEventListener?.('change',()=>{
-    if(!pagina.classList.contains('hidden')){if(form.elements.namedItem('tema').value==='auto')previsualizar();}
-    else if(atual().tema==='auto')aplicarAparencia(atual());
+    if(atual().tema==='auto')aplicarAparencia(atual());
   });
   aplicarAparencia(atual());
-  return {abrir,descartar,aplicar:()=>aplicarAparencia(atual())};
+  return {abrir,concluirEdicao,aplicar:()=>aplicarAparencia(atual())};
 }

@@ -24,6 +24,7 @@ import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investi
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
+import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -32,21 +33,22 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
   const CDI_KEY = 'meu-dinheiro-essencial:cdi-oficial';
   const dialogos = iniciarDialogos();
   const CATEGORIES = {
-    income: ['Salário base', 'Personal', 'Salário', 'Renda extra', 'Vendas', 'Benefícios', 'Outros'],
-    expense: ['Moradia', 'Alimentação', 'Contas', 'Internet', 'Telefone', 'Cartão de crédito', 'Faculdade', 'Farmácia', 'Cursos', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Compras', 'Outros']
+    income: CATEGORIAS_RENDA,
+    expense: CATEGORIAS_DESPESA
   };
   const preferencias = criarGestorPreferencias({storage:localStorage,categoriasRenda:CATEGORIES.income});
   aplicarAparencia(preferencias.obter());
   const NAV = [
     ['resumo', 'Resumo', 'chart-pie'], ['renda', 'Renda', 'wallet'], ['despesas', 'Despesas', 'receipt'],
-    ['metas', 'Metas', 'target'], ['sonho', 'Sonho', 'sparkles'], ['ajustes', 'Ajustes', 'settings']
+    ['metas', 'Objetivos', 'target'], ['ajustes', 'Ajustes', 'settings']
   ];
   // Ícones e categorias adaptados do protótipo Finanças-2.html.
   const CATEGORY_ICONS = {
     'Salário':'💼', 'Salário base':'💼', 'Personal':'🏋️', 'Renda extra':'💻', 'Vendas':'🛍️', 'Benefícios':'🎁',
     'Moradia':'🏠', 'Alimentação':'🍔', 'Contas':'🧾', 'Internet':'🌐', 'Telefone':'📱', 'Cartão de crédito':'💳',
     'Faculdade':'🎓', 'Farmácia':'💊', 'Cursos':'📚', 'Transporte':'🚗',
-    'Saúde':'🩺', 'Educação':'📖', 'Lazer':'🎉', 'Compras':'🛍️', 'Outros':'📦'
+    'Saúde':'🩺', 'Educação':'📖', 'Lazer':'🎉', 'Compras':'🛍️', 'Outros':'📦',
+    ...ICONES_DESPESA
   };
   const EXPENSE_COLORS = {
     'Outros':'#8998a9', 'Moradia':'#6b86a9', 'Alimentação':'#e5a270', 'Contas':'#7b9eac',
@@ -65,6 +67,7 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
   let storageLocked = false;
   let data = readData();
   let view = 'resumo';
+  let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
   let month = currentMonth;
   let search = '';
   let filterCategory = '';
@@ -258,8 +261,9 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
     notificacoes.renderDialog();
   }
   function changeView(next) {
+    if(next==='sonho'){objectiveKind='dream';next='metas';} // Compatibilidade de rotas antigas.
     if(!NAV.some(item=>item[0]===next))return;
-    if(view==='ajustes'&&next!=='ajustes')ajustes.descartar();
+    if(view==='ajustes'&&next!=='ajustes')ajustes.concluirEdicao();
     view = next; search=''; filterCategory='';
     document.querySelectorAll('.nav-button').forEach(el => { const active = el.dataset.view === view; el.classList.toggle('active',active); el.setAttribute('aria-current',active?'page':'false'); });
     if(view==='ajustes')ajustes.abrir();
@@ -282,6 +286,7 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
   function monthControl() { return `<div class="month-control" aria-label="Mês selecionado"><button type="button" data-month="-1" aria-label="Mês anterior">${icon('chevron-left')}</button>${renderBotaoCalendario(month,monthLabel,esc)}<button type="button" data-month="1" aria-label="Próximo mês">${icon('chevron-right')}</button></div>`; }
   function empty(text, symbol='wallet') { return `<div class="empty-state">${icon(symbol)}<p>${esc(text)}</p></div>`; }
   function render() {
+    document.body.dataset.objectiveKind=objectiveKind;
     renderReminderCount();
     document.getElementById('header-label').textContent=NAV.find(v=>v[0]===view)?.[1]||'Resumo';
     document.getElementById('header-balance').textContent=money(sums(month).balance);
@@ -291,12 +296,12 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
     if(view==='ajustes')return;
     if (view === 'resumo') viewContent.innerHTML = renderSummary();
     else if (view === 'renda' || view === 'despesas') viewContent.innerHTML = renderTransactions(view==='renda'?'income':'expense');
-    else viewContent.innerHTML = renderGoals(view==='metas'?'goal':'dream');
+    else viewContent.innerHTML = renderGoals(objectiveKind);
   }
   // Os módulos recebem apenas dependências explícitas e o estado atual por getters.
   // Nenhum arquivo de tela lê ou sobrescreve diretamente os dados persistidos.
   const common = {
-    CATEGORIES, CATEGORY_ICONS, EXPENSE_COLORS, currentMonth,getCurrentMonth:()=>currentMonth,
+    CATEGORIES, CATEGORY_ICONS, EXPENSE_COLORS, renderizarOpcoesDespesas,currentMonth,getCurrentMonth:()=>currentMonth,
     getData: () => data, getMonth: () => month, getSearch: () => search,
     getPreferences:()=>preferencias.obter(),salvarPreferencias:valor=>preferencias.salvar(valor),
     aplicarPreferencias:()=>aplicarAparencia(preferencias.obter()),
@@ -315,7 +320,7 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
   const moduloObjetivos=criarModuloObjetivos(common);
   const {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates} = moduloObjetivos;
   const investimentos=iniciarInvestimentos({...common,dialog:investmentDialog,form:investmentForm,documento:document});
-  const acaoRapida=iniciarAcaoRapida({getView:()=>view,openTransaction,openGoal,openInvestment:investimentos.abrir});
+  const acaoRapida=iniciarAcaoRapida({getView:()=>view,getObjectiveKind:()=>objectiveKind,openTransaction,openGoal,openInvestment:investimentos.abrir});
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
   const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,dialogoCalendario:financeCalendarDialog,documento:document});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
@@ -324,6 +329,15 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
+    if(event.target.closest('[data-open-calendar-settings]')){
+      changeView('resumo');calendarioFinanceiro.abrirCalendario();return;
+    }
+    const objectiveTab=event.target.closest('[data-objective-tab]');
+    if(objectiveTab){
+      const kind=objectiveTab.dataset.objectiveTab;
+      if(view==='metas'&&['goal','dream'].includes(kind)&&kind!==objectiveKind){objectiveKind=kind;render();}
+      return;
+    }
     const nav=event.target.closest('[data-view]');
     if(nav){changeView(nav.dataset.view);return;}
     const typeButton=event.target.closest('[data-trans-type]');
@@ -419,14 +433,14 @@ import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
     const id=f.namedItem('id').value;
     const entry={id:id||uniqueId(),kind,name,target,saved,deadline};
     const next={...data,goals:id?data.goals.map(g=>g.id===id?entry:g):[...data.goals,entry]};
-    if(persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
+    if(persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();objectiveKind=kind;render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
   });
   const backup = iniciarModuloBackup(common);
   folderBackup = backup.folderBackup;
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
-    onSave:()=>folderBackup?.schedule(),onCancel:()=>changeView('resumo')});
+    onSave:()=>folderBackup?.schedule()});
   const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
     apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
       pausarBackup:()=>folderBackup?.pause(),

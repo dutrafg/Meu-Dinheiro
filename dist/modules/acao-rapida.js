@@ -2,9 +2,9 @@
 import {cliqueForaDoDialogo} from './dialogos.js';
 export const TIPOS_CRIACAO_RAPIDA=Object.freeze(['income','expense','goal','dream','investment']);
 
-export function acaoMovelParaVisao(visao){
+export function acaoMovelParaVisao(visao,objetivoAtual='goal'){
   switch(visao){
-    case 'metas':return {tipo:'goal',rotulo:'Criar meta'};
+    case 'metas':return objetivoAtual==='dream'?{tipo:'dream',rotulo:'Criar sonho'}:{tipo:'goal',rotulo:'Criar meta'};
     case 'sonho':return {tipo:'dream',rotulo:'Criar sonho'};
     case 'despesas':return {tipo:'expense',rotulo:'Adicionar despesa'};
     case 'renda':return {tipo:'income',rotulo:'Adicionar renda'};
@@ -12,7 +12,7 @@ export function acaoMovelParaVisao(visao){
   }
 }
 
-export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestment,documento=document}){
+export function iniciarAcaoRapida({getView,getObjectiveKind=()=> 'goal',openTransaction,openGoal,openInvestment,documento=document}){
   const botaoMovel=documento.getElementById('quick-add');
   const botaoDesktop=documento.getElementById('desktop-create-trigger');
   const grupoDesktop=documento.getElementById('desktop-create-wrap');
@@ -29,7 +29,7 @@ export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestme
   }
   function abrirMenuMovel(){
     if(getView()==='ajustes'||dialogoMovel.open)return false;
-    const preferido=acaoMovelParaVisao(getView()).tipo;
+    const preferido=acaoMovelParaVisao(getView(),getObjectiveKind()).tipo;
     dialogoMovel.querySelectorAll('[data-create-kind]').forEach(opcao=>{
       opcao.classList.toggle('is-context',opcao.dataset.createKind===preferido);
     });
@@ -52,7 +52,7 @@ export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestme
     const indisponivel=visao==='ajustes';
     botaoMovel.classList.toggle('hidden',indisponivel);
     grupoDesktop.classList.toggle('hidden',indisponivel);
-    botaoMovel.setAttribute('aria-label',`Abrir opções de cadastro; sugestão: ${acaoMovelParaVisao(visao).rotulo.toLowerCase()}`);
+    botaoMovel.setAttribute('aria-label',`Abrir opções de cadastro; sugestão: ${acaoMovelParaVisao(visao,getObjectiveKind()).rotulo.toLowerCase()}`);
     fecharMenu();
     fecharMenuMovel();
   }

@@ -52,6 +52,21 @@ test('Ação móvel preserva o destaque contextual sem retirar os cinco cadastro
   assert.deepEqual([...TIPOS_CRIACAO_RAPIDA],['income','expense','goal','dream','investment']);
   for(const [visao,tipo] of [['resumo','income'],['renda','income'],['despesas','expense'],['metas','goal'],['sonho','dream']])
     assert.equal(acaoMovelParaVisao(visao).tipo,tipo);
+  assert.equal(acaoMovelParaVisao('metas','dream').tipo,'dream','A aba Sonhos altera a sugestão sem criar outro módulo');
+});
+
+test('A aba Sonhos sugere criar sonho no + e mantém opção de investir',async()=>{
+  const {iniciarAcaoRapida}=await carregar();
+  const tela=ambiente();
+  tela.alterarVisao('metas');
+  const api=iniciarAcaoRapida({...tela,getView:tela.obterVisao,getObjectiveKind:()=> 'dream'});
+  api.atualizar('metas');
+  const fab=tela.elementos.get('quick-add');
+  assert.match(fab.getAttribute('aria-label'),/criar sonho/);
+  fab.emitir('click');
+  assert.equal(tela.opcoesMovel.find(item=>item.dataset.createKind==='dream').classList.marcado,true);
+  tela.menuMovel.emitir('click',{target:tela.opcoesMovel.find(item=>item.dataset.createKind==='investment')});
+  assert.deepEqual(tela.chamadas,['investimento']);
 });
 
 test('Ao tocar no + móvel são exibidos os cinco cadastros, inclusive investimento',async()=>{

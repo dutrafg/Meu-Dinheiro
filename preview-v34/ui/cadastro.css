@@ -1,0 +1,25 @@
+/* Cadastro rápido progressivo — mantém os inputs e as validações nativas. */
+#transaction-dialog { width:min(96vw,520px); }
+#transaction-form { gap:11px; }
+#transaction-form .v34-amount-label { font-size:.79rem; color:var(--sub); }
+#transaction-form .v34-amount-label input { font-size:1rem; min-height:43px; }
+.v34-keypad-value { font-size:clamp(2rem,5vw,2.7rem); font-weight:820; text-align:center; letter-spacing:-.05em; color:var(--text); padding:3px 0 0; font-variant-numeric:tabular-nums; }
+.v34-keypad { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; max-width:410px; margin:0 auto; width:100%; }
+.v34-keypad button { background:var(--card); border:1px solid var(--border); border-radius:12px; color:var(--text); font:inherit; font-size:1.12rem; font-weight:690; min-height:42px; cursor:pointer; }
+.v34-keypad button:hover { border-color:var(--accent-text); background:var(--accent-soft); }
+.v34-keypad button:focus-visible,.v34-category-chips button:focus-visible,.v34-date-shortcuts button:focus-visible { outline:3px solid var(--accent-text); outline-offset:2px; }
+.v34-category-selector h3 { font-size:.82rem; color:var(--sub); margin:0 0 9px; font-weight:740; }
+.v34-category-chips,.v34-date-shortcuts { display:flex; flex-wrap:wrap; gap:7px; }
+.v34-category-chips button,.v34-date-shortcuts button { border:1px solid var(--border); border-radius:999px; padding:9px 12px; background:var(--card); color:var(--sub); min-height:40px; font:inherit; font-size:.8rem; font-weight:720; cursor:pointer; }
+.v34-category-chips button[aria-pressed="true"],.v34-date-shortcuts button[aria-pressed="true"] { border-color:var(--accent-text); color:var(--accent-text); background:var(--accent-soft); }
+.v34-save-another { align-self:center; border:0; color:var(--accent-text); background:transparent; min-height:40px; padding:8px 14px; font:inherit; font-weight:730; cursor:pointer; }
+.v34-save-another:hover { text-decoration:underline; }
+@media(max-width:599px){
+  #transaction-dialog { max-height:min(92dvh,930px); padding:20px; margin:auto auto 0; border-radius:24px 24px 0 0; border-bottom:0; width:100%; }
+  #transaction-dialog .dialog-heading h2 { font-size:1.3rem; }
+  #transaction-form { gap:9px; }
+  #transaction-form .two-col { gap:9px; }
+  #transaction-form .dialog-actions { margin-top:6px; }
+  #transaction-form .dialog-actions button { flex:1; }
+}
+@media(max-height:720px){ #transaction-dialog { max-height:95dvh; overflow-y:auto; } }

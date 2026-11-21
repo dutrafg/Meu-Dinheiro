@@ -1,0 +1,14 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const {execFileSync}=require('node:child_process');
+const root=path.resolve(__dirname,'..');
+const output=path.resolve(process.argv[2]||path.join(root,'..','Meu-Dinheiro-v37-Diagnostico-Unificado.html'));
+execFileSync(process.execPath,[path.join(__dirname,'gerar-html-design-v36.cjs'),output],{stdio:'pipe'});
+const load=name=>fs.readFileSync(path.join(root,'preview-v37',name),'utf8');
+const protect=(source,tag)=>source.replace(new RegExp(`</${tag}`,'gi'),`<\\/${tag}`);
+let html=fs.readFileSync(output,'utf8');
+html=html.replace('</head>',`<style id="design-v37-css">\n${protect(load('ui/styles.css'),'style')}\n</style>\n</head>`);
+html=html.replace('</body>',`<script data-preview-v37="ui/versao.js">\n${protect(load('ui/versao.js'),'script')}\n</script>\n<script data-preview-v37="ui/diagnostico.js">\n${protect(load('ui/diagnostico.js'),'script')}\n</script>\n</body>`);
+html=html.replace('<title>Meu Dinheiro — v36 Ajustes Compactos</title>','<title>Meu Dinheiro — v37 Diagnóstico Unificado</title>');
+fs.writeFileSync(output,html);
+console.log(`Prévia completa v37: ${output} (${Buffer.byteLength(html)} bytes)`);

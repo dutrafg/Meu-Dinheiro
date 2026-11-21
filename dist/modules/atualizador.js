@@ -1,6 +1,6 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
 // Este número identifica o código da página aberta, não o Service Worker em espera.
-export const VERSAO_EM_EXECUCAO = 'v31';
+export const VERSAO_EM_EXECUCAO = 'v38';
 export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');
@@ -71,7 +71,9 @@ export function iniciarAtualizador({notify,registrar=()=>{}}) {
   }
 
   async function iniciar() {
-    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
+    // HTMLs independentes no Android podem abrir como content: (não apenas file:).
+    // Service Worker só é registrado em páginas HTTP(S), incluindo localhost.
+    if (!('serviceWorker' in navigator) || !['http:','https:'].includes(location.protocol)) {
       mostrarEstado('Atualizações automáticas disponíveis no aplicativo publicado (HTTPS).');
       checkButton.disabled = true;
       return;
