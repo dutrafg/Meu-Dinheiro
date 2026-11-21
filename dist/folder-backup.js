@@ -4,10 +4,12 @@
   const FILE = 'meu-dinheiro-dados.json';
   const HISTORY = 'historico';
   const FIELDS = ['transactions', 'goals', 'allocations', 'completedAportes'];
-  const DEFAULT_PREFERENCES = {tema:'auto',cor:'verde',percentual:10,categoriasAporte:['Salário base','Salário','Personal'],reservaGoalId:''};
+  // Preferências implícitas de arquivos históricos, anteriores ao campo preferences.
+  // O padrão da interface nova é azul, mas arquivos sem esse campo eram verdes.
+  const LEGACY_PREFERENCES = {tema:'auto',cor:'verde',percentual:10,categoriasAporte:['Salário base','Salário','Personal'],reservaGoalId:''};
 
   function samePreferences(a,b) {
-    const left=a||DEFAULT_PREFERENCES,right=b||DEFAULT_PREFERENCES;
+    const left=a||LEGACY_PREFERENCES,right=b||LEGACY_PREFERENCES;
     return ['tema','cor','percentual','reservaGoalId'].every(key=>left[key]===right[key]) &&
       Array.isArray(left.categoriasAporte)&&Array.isArray(right.categoriasAporte)&&
       JSON.stringify([...left.categoriasAporte].sort())===JSON.stringify([...right.categoriasAporte].sort());

@@ -58,8 +58,9 @@ export function iniciarModuloBackup(ctx) {
     try{
       const arquivo=JSON.parse(await file.text());
       const incoming=validarBackup(arquivo,CATEGORIES);
+      const categoriasAntigas=incoming.transactions.filter(t=>!CATEGORIES[t.type].includes(t.category)).length;
       if(arquivo.preferences!==undefined && JSON.stringify(arquivo.preferences).length>8192)throw Error('Preferências excessivas');
-      if(!await confirmar({titulo:'Restaurar backup completo',mensagem:`Este backup contém ${incoming.transactions.length} lançamentos e ${incoming.goals.length} objetivos. Deseja substituir todos os dados atuais?`,acao:'Restaurar dados',perigoso:true}))return;
+      if(!await confirmar({titulo:'Restaurar backup completo',mensagem:`Este backup contém ${incoming.transactions.length} lançamentos e ${incoming.goals.length} objetivos.${categoriasAntigas?` ${categoriasAntigas} lançamento(s) com categorias antigas serão preservados sem alteração.`:''} Deseja substituir todos os dados atuais?`,acao:'Restaurar dados',perigoso:true}))return;
       registrarEvento('RESTAURAR_BACKUP','backup');
       if(persist(incoming,{allowRecovery:true})){
         let preferenciaOk=true;

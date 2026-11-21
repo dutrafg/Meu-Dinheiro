@@ -2,7 +2,8 @@ const assert=require('node:assert/strict');
 const test=require('node:test');
 const fs=require('node:fs');
 const path=require('node:path');
-const source=fs.readFileSync(path.join(__dirname,'../dist/modules/calendario-financeiro.js'),'utf8');
+const helper=fs.readFileSync(path.join(__dirname,'../dist/modules/dialogos.js'),'utf8').replace(/^export /gm,'');
+const source=helper+'\n'+fs.readFileSync(path.join(__dirname,'../dist/modules/calendario-financeiro.js'),'utf8').replace(/^import .*$/gm,'');
 const carregar=()=>import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 test('Calendário respeita semanas, fevereiro bissexto e meses com 30 ou 31 dias',async()=>{
@@ -103,7 +104,8 @@ test('Calendário aparece apenas quando solicitado; navegação no diálogo e de
   };
   const dialog={open:false,showModal(){this.open=true;},close(){this.open=false;},addEventListener:()=>{}};
   const ouvintes={};let mes='2026-11',atualizacoes=0;
-  const dialogoCalendario={open:false,showModal(){this.open=true;},close(){this.open=false;},addEventListener:(tipo,fn)=>ouvintes[tipo]=fn};
+  const dialogoCalendario={open:false,showModal(){this.open=true;},close(){this.open=false;},addEventListener:(tipo,fn)=>ouvintes[tipo]=fn,
+    getBoundingClientRect:()=>({left:20,right:350,top:100,bottom:750})};
   const api=criarModuloCalendarioFinanceiro({getMonth:()=> mes,setMonth:novo=>{mes=novo;},
     render:()=>{atualizacoes++;},transactionsInMonth:ym=>originais.filter(item=>item.occurrence.startsWith(ym)),
     monthLabel:ym=>ym==='2026-11'?'novembro de 2026':'dezembro de 2026',
@@ -130,7 +132,9 @@ test('Calendário aparece apenas quando solicitado; navegação no diálogo e de
   assert.equal(atualizacoes,1,'Mudar o mês no calendário atualiza os indicadores do Resumo');
   assert.equal((elementos['finance-calendar-content'].innerHTML.match(/data-calendar-day=/g)||[]).length,31);
   assert.match(elementos['finance-calendar-content'].innerHTML,/dezembro de 2026/);
-  ouvintes.click({target:dialogoCalendario});
+  ouvintes.click({target:dialogoCalendario,clientX:50,clientY:150});
+  assert.equal(dialogoCalendario.open,true,'Tocar no padding não fecha o calendário');
+  ouvintes.click({target:dialogoCalendario,clientX:5,clientY:5});
   assert.equal(dialogoCalendario.open,false,'Clique no fundo fecha o calendário');
   assert.equal(JSON.stringify(originais),antes);
 });

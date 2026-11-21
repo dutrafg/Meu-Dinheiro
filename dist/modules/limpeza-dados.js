@@ -1,5 +1,6 @@
 // Exclusão voluntária de dados financeiros somente desta origem do navegador.
 // A primeira confirmação é visual; a segunda exige a frase exata digitada.
+import {cliqueForaDoDialogo} from './dialogos.js';
 export const FRASE_LIMPEZA='APAGAR';
 export const validarFraseLimpeza=valor=>valor===FRASE_LIMPEZA;
 
@@ -59,7 +60,7 @@ export function iniciarLimpezaDados({confirmar,apagarDados,notify,documento=docu
   });
   cancelar.addEventListener('click',()=>{if(!removendo)dialogo.close();});
   dialogo.addEventListener('cancel',event=>{if(removendo)event.preventDefault();});
-  dialogo.addEventListener('click',event=>{if(event.target===dialogo&&!removendo)dialogo.close();});
+  dialogo.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialogo)&&!removendo)dialogo.close();});
   dialogo.addEventListener('close',()=>{primeiroPasso=false;frase.value='';habilitar();});
   return {abrir:()=>abrir.click(),validarFrase:validarFraseLimpeza};
 }

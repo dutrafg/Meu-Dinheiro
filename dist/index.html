@@ -85,7 +85,7 @@
           </section>
           <div class="settings-save-actions"><button class="button button-secondary" id="settings-form-cancel" type="button">Descartar</button><button class="button button-primary" type="submit">Salvar ajustes</button></div>
         </form>
-        <details class="settings-section settings-tools"><summary><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Arquivos, importação e backup</summary>
+        <details class="settings-section settings-tools"><summary><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Relatórios PDF, CSV, importação e backup</summary>
           <div class="settings-report-options"><label for="pdf-report-type">Conteúdo do relatório PDF</label><select id="pdf-report-type" name="tipoRelatorio"><option value="resumo" selected>Resumo completo do mês (inclui metas e aplicações)</option><option value="renda">Somente receitas do mês</option><option value="despesas">Somente despesas do mês</option><option value="metas">Metas e reserva</option><option value="sonho">Meus sonhos</option></select><p class="field-hint">O PDF usa a opção escolhida acima, independentemente da última área visitada. As movimentações consideram o mês selecionado no aplicativo.</p></div>
           <div class="settings-tool-buttons"><button type="button" id="export-pdf">Gerar PDF financeiro</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
           <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
@@ -105,9 +105,22 @@
       </section>
     </main>
     <section id="print-report" class="print-report" aria-hidden="true"></section>
-    <button type="button" id="quick-add" class="fab" aria-label="Adicionar lançamento">+</button>
+    <button type="button" id="quick-add" class="fab" aria-label="Abrir opções de cadastro" aria-controls="mobile-create-dialog" aria-haspopup="dialog" aria-expanded="false">+</button>
     <nav class="mobile-nav" aria-label="Áreas do aplicativo" id="mobile-nav"></nav>
   </div>
+
+  <dialog id="mobile-create-dialog" class="form-dialog mobile-create-dialog" aria-labelledby="mobile-create-title">
+    <div class="dialog-heading mobile-create-heading"><div><span class="eyebrow">CADASTRO RÁPIDO</span><h2 id="mobile-create-title">O que deseja adicionar?</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar opções de cadastro"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="mobile-create-description">Todas as opções estão disponíveis em qualquer tela financeira.</p>
+    <div class="mobile-create-options">
+      <button type="button" data-create-kind="income"><svg aria-hidden="true"><use href="#i-wallet"/></svg><span>Nova renda</span></button>
+      <button type="button" data-create-kind="expense"><svg aria-hidden="true"><use href="#i-receipt"/></svg><span>Nova despesa</span></button>
+      <button type="button" data-create-kind="goal"><svg aria-hidden="true"><use href="#i-target"/></svg><span>Nova meta</span></button>
+      <button type="button" data-create-kind="dream"><svg aria-hidden="true"><use href="#i-sparkles"/></svg><span>Novo sonho</span></button>
+      <button type="button" data-create-kind="investment"><svg aria-hidden="true"><use href="#i-plus"/></svg><span>Novo investimento</span></button>
+    </div>
+    <p class="mobile-create-footnote">Investimentos são vinculados a uma meta ou sonho já criado.</p>
+  </dialog>
 
   <dialog id="transaction-dialog" class="form-dialog">
     <form id="transaction-form" autocomplete="off">
@@ -148,7 +161,7 @@
       <label>Categoria <input name="category" list="investment-category-suggestions" maxlength="120" placeholder="Ex.: CDB ou Nova categoria" required /></label>
       <datalist id="investment-category-suggestions"></datalist>
       <p class="investment-category-hint">Digite uma nova categoria ou escolha uma já usada.</p>
-      <label>Origem do dinheiro <select name="origin" required><option value="salary">Do salário registrado</option><option value="previous">Investimento antigo / já guardado</option></select></label>
+      <label>Origem do dinheiro <select name="origin" required><option value="" selected disabled>Selecione a origem do dinheiro</option><option value="salary">Do salário registrado</option><option value="previous">Investimento antigo / já guardado</option></select></label>
       <p class="investment-category-hint" id="investment-origin-note" role="status"></p>
       <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button id="investment-submit" type="submit" class="button button-primary">Salvar investimento</button></div>
     </form>

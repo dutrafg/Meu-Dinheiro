@@ -1,4 +1,5 @@
 import { podeAplicarNoObjetivo } from './validacao.js';
+import {cliqueForaDoDialogo} from './dialogos.js';
 export function iniciarModuloCsv(ctx) {
   const {getData, setMonth, goalCandidates, hideBackupMenu, isoDate, notify,
     esc, fmtDate, parseDate, money, CATEGORIES, uniqueId, n2, persist, render, registrar=()=>{}, registrarEvento=()=>{}} = ctx;
@@ -38,7 +39,7 @@ export function iniciarModuloCsv(ctx) {
       const choices=goalCandidates(item.kind);
       return `<div class="csv-investment-row"><div class="csv-investment-info"><strong>${esc(item.description)}</strong><small>${fmtDate.format(parseDate(item.date))} · ${item.allocationDelta>=0?'+':'−'}${money(Math.abs(item.allocationDelta))}</small></div><div class="csv-investment-fields"><label>Destino<select data-csv-kind="${esc(item.importKey)}" aria-label="Destino de ${esc(item.description)}"><option value="">Escolher...</option><option value="reserve" ${item.kind==='reserve'?'selected':''}>Reserva</option><option value="goal" ${item.kind==='goal'?'selected':''}>Meta</option><option value="dream" ${item.kind==='dream'?'selected':''}>Sonho</option></select></label><label>Vincular a objetivo (opcional)<select data-csv-goal="${esc(item.importKey)}" aria-label="Vincular ${esc(item.description)}" ${!item.kind?'disabled':''}><option value="">Sem vínculo por enquanto</option>${choices.map(g=>`<option value="${esc(g.id)}" ${g.id===item.goalId?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label></div></div>`;
     }).join('')}`:'';
-    document.getElementById('csv-preview-table').innerHTML=`<table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>${accepted.slice(0,6).map(t=>`<tr><td>${fmtDate.format(parseDate(t.date))}</td><td>${esc(t.description)}</td><td style="color:${t.type==='income'?'var(--green)':'var(--red)'}">${t.type==='income'?'+':'−'}${money(t.amount)}</td></tr>`).join('')}</tbody></table>${accepted.length>6?`<p class="proto-note" style="padding:0 10px">Exibindo 6 de ${accepted.length} lançamentos novos.</p>`:''}`;
+    document.getElementById('csv-preview-table').innerHTML=`<table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>${accepted.slice(0,6).map(t=>`<tr><td>${fmtDate.format(parseDate(t.date))}</td><td>${esc(t.description)}</td><td style="color:${t.type==='income'?'var(--green-text)':'var(--red-text)'}">${t.type==='income'?'+':'−'}${money(t.amount)}</td></tr>`).join('')}</tbody></table>${accepted.length>6?`<p class="proto-note" style="padding:0 10px">Exibindo 6 de ${accepted.length} lançamentos novos.</p>`:''}`;
     document.getElementById('csv-import-warning').textContent=investments.length?`Classifique as ${investments.length} aplicações. Valores vinculados a um objetivo serão somados ao que já está guardado; sem vínculo, ficam registrados separadamente na área escolhida. Aplicações não entram como despesas.`:'Confira os lançamentos antes de importar. Depois você poderá ajustar as categorias.';
     const button=document.getElementById('csv-confirm-import');
     button.disabled=(!accepted.length&&!investments.length)||unclassified>0;
@@ -80,6 +81,6 @@ export function iniciarModuloCsv(ctx) {
     }
   });
   csvDialog.addEventListener('close',()=>{pendingCsv=null;pendingAllocations=null;csvAnalysis=null;csvSelections=new Map();});
-  csvDialog.addEventListener('click',event=>{if(event.target===csvDialog)csvDialog.close();});
+  csvDialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,csvDialog))csvDialog.close();});
   csvDialog.querySelectorAll('.close-dialog').forEach(button=>button.addEventListener('click',()=>csvDialog.close()));
 }

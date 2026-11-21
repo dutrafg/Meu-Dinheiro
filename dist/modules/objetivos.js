@@ -1,5 +1,5 @@
 export function criarModuloObjetivos(ctx) {
-  const {getData, n2, esc, money, header, empty, savingPlan, currentMonth,
+  const {getData, n2, esc, money, header, empty, savingPlan, currentMonth, getCurrentMonth,
     monthLabel, reserveYieldEstimate, fmtDate, parseDate, icon, goalForm, goalDialog} = ctx;
 
   function goalProgressPercent(goal) {
@@ -27,8 +27,9 @@ export function criarModuloObjetivos(ctx) {
       <p class="proto-note">Os valores guardados são informados por você e não alteram o saldo automaticamente.</p>`;
   }
   function renderMonthlyReserve() {
-    const plan=savingPlan(currentMonth);
-    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>${icon('target')} Aporte planejado · ${plan.percentual}%</h3><small>${esc(monthLabel(currentMonth))}</small></div>
+    const mesAtual=getCurrentMonth?.()||currentMonth;
+    const plan=savingPlan(mesAtual);
+    return `<section class="card proto-saving-card"><div class="proto-saving-heading"><h3>${icon('target')} Aporte planejado · ${plan.percentual}%</h3><small>${esc(monthLabel(mesAtual))}</small></div>
       ${plan.grupos.length?plan.grupos.map(g=>`<div class="proto-saving-row"><span>${esc(g.categoria)} <small>(${plan.percentual}% de ${money(g.base)})</small></span><strong>${money(g.aporte)}</strong></div>`).join(''):'<p class="proto-note">Escolha categorias de renda em Ajustes para calcular um aporte.</p>'}
       <div class="proto-saving-total"><span>Total a separar</span><strong>${money(plan.total)}</strong></div>
       <p class="proto-note">Planejamento, não transferência automática. Categorias e percentual podem ser alterados em Ajustes.</p>
@@ -41,11 +42,11 @@ export function criarModuloObjetivos(ctx) {
     if(!items.length)return '';
     const unlinked=items.filter(a=>!data.goals.some(g=>g.id===a.goalId));
     const label=a=>a.kind==='reserve'?'Reserva':a.kind==='dream'?'Sonho':'Meta';
-    return `<details class="card proto-history" ${unlinked.length?'open':''}><summary>Histórico de investimentos (${items.length})${unlinked.length?` · ${unlinked.length} sem vínculo`:''}</summary>
+    return `<details class="card proto-history" ${unlinked.length?'open':''}><summary>Histórico de investimentos (${items.length})${unlinked.length?` · ${unlinked.length} sem vínculo`:''}<span class="investment-history-hint">Toque para consultar e editar os aportes</span></summary>
       ${items.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{
         const linked=data.goals.find(g=>g.id===a.goalId);
         const candidates=goalCandidates(a.kind);
-        return `<div class="proto-allocation-row"><div class="proto-allocation-top"><div><strong>${esc(label(a))} · ${esc(a.description)}</strong><small>${fmtDate.format(parseDate(a.date))} · ${linked?`Vinculado a ${esc(linked.name)}`:'Sem objetivo vinculado'}${a.origin==='salary'?' · Do salário':a.origin==='previous'?' · Investimento antigo':''}${a.category?` <span class="investment-category-label">${esc(a.category)}</span>`:''}</small></div><b style="color:${a.amount>=0?'var(--green)':'var(--red)'}">${a.amount>=0?'+':'−'}${money(Math.abs(a.amount))}</b></div>
+        return `<div class="proto-allocation-row"><div class="proto-allocation-top"><div><strong>${esc(label(a))} · ${esc(a.description)}</strong><small>${fmtDate.format(parseDate(a.date))} · ${linked?`Vinculado a ${esc(linked.name)}`:'Sem objetivo vinculado'}${a.origin==='salary'?' · Do salário':a.origin==='previous'?' · Investimento antigo':''}${a.category?` <span class="investment-category-label">${esc(a.category)}</span>`:''}</small></div><b style="color:${a.amount>=0?'var(--green-text)':'var(--red-text)'}">${a.amount>=0?'+':'−'}${money(Math.abs(a.amount))}</b></div>
           ${a.amount>0?`<button type="button" class="button button-secondary proto-allocation-edit" data-action="edit-investment" data-id="${esc(a.id)}">Editar investimento</button>`:''}
           ${!linked?(candidates.length?`<div class="proto-link-box"><select data-allocation-goal="${esc(a.id)}" aria-label="Escolher objetivo para ${esc(a.description)}">${candidates.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select><button type="button" class="button button-secondary" data-action="link-allocation" data-id="${esc(a.id)}">Vincular</button></div>`:`<p class="proto-note">Crie primeiro um objetivo correspondente para vincular este aporte.</p>`):''}
         </div>`;

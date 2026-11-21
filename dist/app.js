@@ -8,7 +8,7 @@ import { iniciarModuloBackup } from './modules/backup.js';
 import { iniciarModuloCsv } from './modules/csv-interface.js';
 import { validarDataISO, validarBackup, normalizarDadosLocais, podeAplicarNoObjetivo } from './modules/validacao.js';
 import { iniciarAtualizador } from './modules/atualizador.js';
-import { iniciarDialogos } from './modules/dialogos.js';
+import { iniciarDialogos,cliqueForaDoDialogo } from './modules/dialogos.js';
 import { iniciarDiagnostico } from './modules/diagnostico.js';
 import { registrar, registrarEvento, configurarDetalhado, modoDetalhado, obterLogs } from './modules/log.js';
 import { criarGestorPreferencias } from './modules/preferencias.js';
@@ -20,8 +20,10 @@ import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
-import { iniciarInvestimentos } from './modules/investimentos.js';
+import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
+import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
+import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (() => {
@@ -58,7 +60,8 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
   const fmtShort = new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' });
   const fmtDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
   const today = new Date();
-  const currentMonth = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0')].join('-');
+  let currentMonth = mesLocalDaData(today);
+  let diaAtual = `${currentMonth}-${String(today.getDate()).padStart(2,'0')}`;
   let storageLocked = false;
   let data = readData();
   let view = 'resumo';
@@ -99,11 +102,22 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
       void dialogos.informar('Gravação protegida','Os dados originais estão protegidos. Restaure um backup JSON válido antes de gravar novamente.');
       return false;
     }
+    if(!allowRecovery&&typeof guardaConcorrencia!=='undefined'&&!guardaConcorrencia.podeGravar()){
+      registrar('aviso','DADOS_CONFLITO_ABAS','dados');
+      void dialogos.informar('Outra aba modificou os dados','Há uma versão mais recente dos dados em outra aba. Para evitar perda, esta gravação foi bloqueada. Feche o formulário e recarregue o aplicativo antes de continuar.');
+      return false;
+    }
     try {
-      localStorage.setItem(KEY, JSON.stringify(next));
+      const serializado=JSON.stringify(next);
+      localStorage.setItem(KEY,serializado);
+      if(typeof guardaConcorrencia!=='undefined')guardaConcorrencia.registrarGravacao(serializado);
       data = next;
       storageLocked = false;
       folderBackup?.schedule();
+      if(typeof navigator!=='undefined'&&!persist.pediuPersistencia){
+        persist.pediuPersistencia=true;
+        void solicitarPersistenciaLocal(navigator);
+      }
       return true;
     } catch (error) {
       registrar('erro','DADOS_GRAVACAO_FALHOU','dados');
@@ -158,6 +172,31 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
   function categorySet(type) { return CATEGORIES[type] || []; }
   function uniqueId() { return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`; }
   function notify(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2700); }
+  const guardaConcorrencia=criarProtecaoConcorrencia({storage:localStorage,chave:KEY,
+    aoAlterar:raw=>{
+      if(storageLocked||[...document.querySelectorAll('dialog[open]')].length)return false;
+      const nova=raw?normalizarDadosLocais(JSON.parse(raw)):{transactions:[],goals:[],allocations:[],completedAportes:[]};
+      data=nova;
+      render();
+      notify('Dados atualizados a partir de outra aba.');
+      return true;
+    },
+    aoConflito:()=>{
+      registrar('aviso','DADOS_CONFLITO_ABAS','dados');
+      notify('Outra aba alterou os dados. Recarregue esta página antes de salvar.');
+    }});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)guardaConcorrencia.sincronizar();});
+  function verificarVirada(){
+    const periodo=calcularViradaPeriodo(currentMonth,month,diaAtual,new Date());
+    if(!periodo.mudou)return;
+    currentMonth=periodo.mesAtual;
+    month=periodo.mesSelecionado;
+    diaAtual=periodo.dia;
+    render();
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)verificarVirada();});
+  window.addEventListener('pageshow',verificarVirada);
+  window.setInterval(verificarVirada,60000);
   function occurrenceDate(t, ym) {
     if (!t.recurring) return t.date.slice(0, 7) === ym ? t.date : null;
     if (t.date.slice(0, 7) > ym) return null;
@@ -257,7 +296,7 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
   // Os módulos recebem apenas dependências explícitas e o estado atual por getters.
   // Nenhum arquivo de tela lê ou sobrescreve diretamente os dados persistidos.
   const common = {
-    CATEGORIES, CATEGORY_ICONS, EXPENSE_COLORS, currentMonth,
+    CATEGORIES, CATEGORY_ICONS, EXPENSE_COLORS, currentMonth,getCurrentMonth:()=>currentMonth,
     getData: () => data, getMonth: () => month, getSearch: () => search,
     getPreferences:()=>preferencias.obter(),salvarPreferencias:valor=>preferencias.salvar(valor),
     aplicarPreferencias:()=>aplicarAparencia(preferencias.obter()),
@@ -321,6 +360,9 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
     }
     else if(button.dataset.action==='delete'){
       const t=data.transactions.find(v=>v.id===id);
+      if(t&&(data.allocations||[]).some(a=>a.origin==='salary'&&a.salaryId===id)){
+        notify('Este salário tem investimentos vinculados. Altere a origem deles antes de excluir.');return;
+      }
       if(t&&await dialogos.confirmar({titulo:'Excluir lançamento',mensagem:`Excluir "${t.description}"${t.recurring?' de todos os meses':''}?`,acao:'Excluir lançamento',perigoso:true})){
         if(persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
       }
@@ -347,7 +389,7 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
     if(event.target.id==='transaction-category'){filterCategory=event.target.value;render();}
   });
   document.querySelectorAll('.close-dialog').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
-  for(const dialog of [transactionDialog,goalDialog,reminderDialog])dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  for(const dialog of [transactionDialog,goalDialog,reminderDialog])dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
   transactionForm.addEventListener('submit',event=>{
     event.preventDefault();
     const f=transactionForm.elements;
@@ -361,6 +403,8 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
     const previous=data.transactions.find(t=>t.id===id);
     const entry={id:id||uniqueId(),type,description,amount,date,category,recurring:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
     const next={...data,transactions:id?data.transactions.map(t=>t.id===id?entry:t):[...data.transactions,entry]};
+    const vinculos=validarVinculosSalariais(next);
+    if(!vinculos.ok){notify(`${vinculos.motivo} Corrija os investimentos antes de alterar o salário.`);return;}
     if(persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
   });
   goalForm.addEventListener('submit',event=>{

@@ -1,4 +1,5 @@
-// Ação rápida isolada: botão compacto no celular e menu de criação no desktop.
+// Ação rápida isolada: mesmo catálogo de cadastros no desktop e no celular.
+import {cliqueForaDoDialogo} from './dialogos.js';
 export const TIPOS_CRIACAO_RAPIDA=Object.freeze(['income','expense','goal','dream','investment']);
 
 export function acaoMovelParaVisao(visao){
@@ -16,14 +17,32 @@ export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestme
   const botaoDesktop=documento.getElementById('desktop-create-trigger');
   const grupoDesktop=documento.getElementById('desktop-create-wrap');
   const menu=documento.getElementById('desktop-create-menu');
+  const dialogoMovel=documento.getElementById('mobile-create-dialog');
 
   function fecharMenu(){
     menu.classList.add('hidden');
     botaoDesktop.setAttribute('aria-expanded','false');
   }
+  function fecharMenuMovel(){
+    if(dialogoMovel.open)dialogoMovel.close();
+    botaoMovel.setAttribute('aria-expanded','false');
+  }
+  function abrirMenuMovel(){
+    if(getView()==='ajustes'||dialogoMovel.open)return false;
+    const preferido=acaoMovelParaVisao(getView()).tipo;
+    dialogoMovel.querySelectorAll('[data-create-kind]').forEach(opcao=>{
+      opcao.classList.toggle('is-context',opcao.dataset.createKind===preferido);
+    });
+    fecharMenu();
+    dialogoMovel.showModal();
+    botaoMovel.setAttribute('aria-expanded','true');
+    dialogoMovel.querySelector(`[data-create-kind="${preferido}"]`)?.focus();
+    return true;
+  }
   function selecionar(tipo){
     if(!TIPOS_CRIACAO_RAPIDA.includes(tipo))return false;
     fecharMenu();
+    fecharMenuMovel();
     if(tipo==='income'||tipo==='expense')openTransaction(tipo);
     else if(tipo==='investment')openInvestment();
     else openGoal(tipo);
@@ -33,14 +52,18 @@ export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestme
     const indisponivel=visao==='ajustes';
     botaoMovel.classList.toggle('hidden',indisponivel);
     grupoDesktop.classList.toggle('hidden',indisponivel);
-    botaoMovel.setAttribute('aria-label',acaoMovelParaVisao(visao).rotulo);
+    botaoMovel.setAttribute('aria-label',`Abrir opções de cadastro; sugestão: ${acaoMovelParaVisao(visao).rotulo.toLowerCase()}`);
     fecharMenu();
+    fecharMenuMovel();
   }
 
-  botaoMovel.addEventListener('click',()=>{
-    if(getView()==='ajustes')return;
-    selecionar(acaoMovelParaVisao(getView()).tipo);
+  botaoMovel.addEventListener('click',abrirMenuMovel);
+  dialogoMovel.addEventListener('click',event=>{
+    if(cliqueForaDoDialogo(event,dialogoMovel)){fecharMenuMovel();return;}
+    const opcao=event.target.closest?.('[data-create-kind]');
+    if(opcao&&dialogoMovel.contains(opcao))selecionar(opcao.dataset.createKind);
   });
+  dialogoMovel.addEventListener('close',()=>botaoMovel.setAttribute('aria-expanded','false'));
   botaoDesktop.addEventListener('click',()=>{
     if(getView()==='ajustes')return;
     if(menu.classList.contains('hidden')){
@@ -60,5 +83,5 @@ export function iniciarAcaoRapida({getView,openTransaction,openGoal,openInvestme
     if(event.key!=='Escape'||menu.classList.contains('hidden'))return;
     fecharMenu();botaoDesktop.focus();
   });
-  return {atualizar,selecionar,fecharMenu};
+  return {atualizar,selecionar,fecharMenu,abrirMenuMovel,fecharMenuMovel};
 }

@@ -83,8 +83,7 @@ export function validarBackup(arquivo, categorias) {
   for (const t of transactions) {
     if (!t || !texto(t.id, 200) || ids.has(t.id) || !texto(t.description, 80) ||
         !['income','expense'].includes(t.type) || !valorValido(t.amount) || t.amount === 0 ||
-        !validarDataISO(t.date) || !categorias[t.type]?.includes(t.category) ||
-        typeof t.createdAt !== 'string' || typeof t.recurring !== 'boolean') {
+        !validarDataISO(t.date) || !texto(t.category,120) || /[<>\r\n]/.test(t.category)) {
       throw new Error('Há lançamentos inválidos ou duplicados no backup.');
     }
     ids.add(t.id);
@@ -104,13 +103,16 @@ export function validarBackup(arquivo, categorias) {
   for (const g of goals) {
     if (!g || !texto(g.id, 200) || goalIds.has(g.id) || !texto(g.name, 80) ||
         !['goal','dream'].includes(g.kind) || !valorValido(g.target) || g.target === 0 ||
-        !valorValido(g.saved) || typeof g.deadline !== 'string' ||
+        !valorValido(g.saved) || (g.deadline!==undefined&&typeof g.deadline !== 'string') ||
         (g.deadline && !validarDataISO(g.deadline))) {
       throw new Error('Há metas inválidas ou duplicadas no backup.');
     }
     goalIds.add(g.id);
   }
   if (completedAportes.some(v => !texto(v, 200))) throw new Error('Há lembretes inválidos no backup.');
-  validarIntegridadeDados({transactions,goals,allocations});
-  return {transactions, goals, allocations, completedAportes};
+  // Mesmo caminho de migração usado na leitura local: nunca perder recorrência,
+  // data original ou categorias antigas só porque o catálogo atual mudou.
+  const normalizado=normalizarDadosLocais({transactions,goals,allocations,completedAportes});
+  return {transactions:normalizado.transactions,goals:normalizado.goals,
+    allocations:normalizado.allocations,completedAportes:normalizado.completedAportes};
 }

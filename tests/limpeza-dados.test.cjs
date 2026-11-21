@@ -3,7 +3,8 @@ const test=require('node:test');
 const fs=require('node:fs');
 const path=require('node:path');
 
-const source=fs.readFileSync(path.join(__dirname,'../dist/modules/limpeza-dados.js'),'utf8');
+const helper=fs.readFileSync(path.join(__dirname,'../dist/modules/dialogos.js'),'utf8').replace(/^export /gm,'');
+const source=helper+'\n'+fs.readFileSync(path.join(__dirname,'../dist/modules/limpeza-dados.js'),'utf8').replace(/^import .*$/gm,'');
 const modulo=import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 function criarTela(){

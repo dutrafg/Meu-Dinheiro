@@ -63,13 +63,14 @@ async function verificar(){
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
 
     await page.locator('#desktop-create-trigger').click();
-    await page.locator('[data-create-kind="investment"]').click();
+    await page.locator('#desktop-create-menu [data-create-kind="investment"]').click();
     const form=page.locator('#investment-form');
     await form.locator('[name="description"]').fill('Aporte do salário fictício');
     await form.locator('[name="amount"]').fill('300');
     await form.locator('[name="date"]').fill('2026-11-19');
     await form.locator('[name="category"]').fill('Nova categoria pessoal');
-    assert.equal(await form.locator('[name="origin"]').inputValue(),'salary');
+    assert.equal(await form.locator('[name="origin"]').inputValue(),'','A origem não pode ser presumida pelo aplicativo');
+    await form.locator('[name="origin"]').selectOption('salary');
     await form.getByRole('button',{name:'Salvar investimento'}).click();
     assert.equal(await page.locator('#investment-dialog').evaluate(el=>el.open),false);
     assert.match(await page.locator('.proto-today-balance-value').innerText(),/1.800,00/);
@@ -85,12 +86,14 @@ async function verificar(){
     await form.locator('[name="amount"]').fill('50');
     await form.locator('[name="date"]').fill('2026-01-05');
     await form.locator('[name="category"]').fill('Nova categoria pessoal');
-    assert.equal(await form.locator('[name="origin"]').inputValue(),'previous');
+    assert.equal(await form.locator('[name="origin"]').inputValue(),'','Investimento antigo exige escolha explícita');
+    await form.locator('[name="origin"]').selectOption('previous');
     await form.getByRole('button',{name:'Salvar investimento'}).click();
     gravado=await page.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
     assert.equal(gravado.goals[1].saved,70);
     assert.equal(gravado.allocations[1].origin,'previous');
 
+    await page.locator('details.proto-history summary').click();
     await page.locator('[data-action="edit-investment"][data-id]').last().click();
     assert.equal(await form.locator('[name="description"]').inputValue(),'Aporte antigo para viagem');
     assert.equal(await form.locator('[name="origin"]').inputValue(),'previous');
@@ -113,9 +116,29 @@ async function verificar(){
     assert.equal(await page.locator('.finance-calendar-day').count(),30);
     assert.equal(await page.locator('#finance-calendar-dialog').isVisible(),true);
     await page.locator('#finance-calendar-dialog .close-dialog').click();
+    for(const [tipo,dialogo] of [['income','transaction-dialog'],['expense','transaction-dialog'],
+      ['goal','goal-dialog'],['dream','goal-dialog'],['investment','investment-dialog']]){
+      await page.locator('#quick-add').click();
+      assert.equal(await page.locator('#mobile-create-dialog').evaluate(el=>el.open),true);
+      assert.equal(await page.locator('#mobile-create-dialog [data-create-kind]').count(),5);
+      await page.locator(`#mobile-create-dialog [data-create-kind="${tipo}"]`).click();
+      assert.equal(await page.locator('#mobile-create-dialog').evaluate(el=>el.open),false);
+      assert.equal(await page.locator(`#${dialogo}`).evaluate(el=>el.open),true,`Cadastro móvel de ${tipo}`);
+      await page.locator(`#${dialogo} .close-dialog`).first().click();
+    }
+    await page.locator('#quick-add').click();
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#quick-add').getAttribute('aria-expanded'),'false');
+    await page.locator('.mobile-nav [data-view="sonho"]').click();
+    await page.locator('details.proto-history summary').click();
+    assert.equal(await page.locator('[data-action="edit-investment"]').count(),1,
+      'Investimentos anteriores continuam editáveis no smartphone');
+    await page.locator('.mobile-nav [data-view="ajustes"]').click();
+    assert.equal(await page.locator('#quick-add').isVisible(),false);
+    assert.match(await page.locator('.settings-tools summary').innerText(),/PDF, CSV, importação e backup/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
-    console.log('E2E desktop + mobile: navegação larga, calendário, criação e edição de investimento, origem salarial, saldo e layout validados.');
+    console.log('E2E desktop + mobile: navegação, calendário, cinco cadastros pelo +, edição de investimentos, saldo e layout validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

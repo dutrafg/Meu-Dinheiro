@@ -1,7 +1,7 @@
 /* Adaptação responsiva do visual e componentes do Finanças-2.html do usuário. */
 :root{
-  --bg:#f5f6f8;--card:#fff;--text:#17181c;--sub:#737983;
-  --green:#19a974;--green-bg:#e3f7ee;--red:#e6493b;--red-bg:#fce8e6;
+  --bg:#f5f6f8;--card:#fff;--text:#17181c;--sub:#5d626b;
+  --green:#19a974;--green-text:#0b754e;--green-bg:#e3f7ee;--red:#e6493b;--red-text:#aa2820;--red-bg:#fce8e6;
   --blue:#2f7cf6;--blue-bg:#e7f0fe;--purple:#9b4df0;--purple-bg:#f3e8fd;
   --amber:#f2a318;--amber-bg:#fdf1dc;--border:#e8e9ed;
   --ink:var(--text);--muted:var(--sub);--white:var(--card);--pale:var(--green-bg);
@@ -51,7 +51,7 @@ main{width:100%;max-width:none;margin:0 auto;padding-bottom:125px}
 .proto-page-meta p{margin:0;width:100%;font-size:.88rem;color:var(--sub)}
 .month-control{padding:2px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:none;gap:2px}
 .month-control button{height:32px;width:32px;color:var(--sub)}
-.month-control button:hover{background:var(--green-bg);color:var(--green)}
+.month-control button:hover{background:var(--green-bg);color:var(--green-text)}
 .month-control button[data-calendar-open]{width:auto;min-width:127px;padding:0 9px;color:var(--text);font-size:.85rem;font-weight:700;text-transform:none;white-space:nowrap}
 .month-control button[data-calendar-open]:hover,.month-control button[data-calendar-open]:focus-visible{background:var(--accent-soft);color:var(--accent-text);outline:2px solid var(--accent-text);outline-offset:0}
 .card{background:var(--card);border:1px solid var(--border);border-radius:17px;padding:20px;margin:0 0 15px;box-shadow:none}

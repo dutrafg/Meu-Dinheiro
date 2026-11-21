@@ -15,10 +15,11 @@ export function calcularSaudeFinanceira({renda,despesas,saldo,reserva,despesasPe
   return {poupanca,folego,situacao};
 }
 
-export function criarModuloSaude({getMonth,currentMonth,shiftMonth,sums,transactionsInMonth,reservePrincipal,money}) {
+export function criarModuloSaude({getMonth,currentMonth,getCurrentMonth,shiftMonth,sums,transactionsInMonth,reservePrincipal,money}) {
   function calcular() {
     const mes=getMonth();
-    if(mes>currentMonth)return {poupanca:null,folego:null,situacao:'sem-dados'};
+    const mesAtual=getCurrentMonth?.()||currentMonth;
+    if(mes>mesAtual)return {poupanca:null,folego:null,situacao:'sem-dados'};
     const hoje=new Date();
     const diaAtual=new Date(Date.UTC(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()));
     const inicio=new Date(`${shiftMonth(mes,-2)}-01T00:00:00Z`);
@@ -28,7 +29,7 @@ export function criarModuloSaude({getMonth,currentMonth,shiftMonth,sums,transact
     let despesasPeriodo=0;
     for(const offset of [-2,-1,0]){
       const ym=shiftMonth(mes,offset);
-      if(ym>currentMonth)continue;
+      if(ym>mesAtual)continue;
       despesasPeriodo+=transactionsInMonth(ym,'expense')
         .filter(t=>t.occurrence<=diaAtual.toISOString().slice(0,10))
         .reduce((total,t)=>total+t.amount,0);

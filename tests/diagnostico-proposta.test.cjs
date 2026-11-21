@@ -197,7 +197,7 @@ test('Diagnóstico trata proposta como categoria separada de erros e avisa sobre
 test('Relatório principal incorpora o checklist sem classificar propostas pendentes como falhas',async()=>{
   const {avaliarRequisitosProposta}=await carregar();
   const codigo=read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
-    read('dist/modules/calendario-financeiro.js').replace(/^export /gm,'')+'\n'+
+    read('dist/modules/calendario-financeiro.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
     read('dist/modules/diagnostico.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const verificar=()=>({itens:[],erros:0,avisos:0});
   const gerar=async(comProposta)=>{
@@ -206,7 +206,7 @@ test('Relatório principal incorpora o checklist sem classificar propostas pende
       verificarPropostaInterface:()=>comProposta?avaliarRequisitosProposta({TEMA_AUTO:true,TEMA_AZUL:false}):null,
       preferenciasPadrao:()=>({tema:'auto',cor:'azul'}),navigator:{userAgent:'Browser teste',serviceWorker:{}},
       window:{},localStorage:{getItem:()=>null}};
-    vm.runInNewContext(`${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^export /gm,'')}\n${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
+    vm.runInNewContext(`${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\n${read('dist/modules/dialogos.js').replace(/^export /gm,'')}\n${read('dist/modules/concorrencia-dados.js').replace(/^export /gm,'')}\n${read('dist/modules/ciclo-periodo.js').replace(/^export /gm,'')}\n${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
     return contexto.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
   };
   const sem=await gerar(false),com=await gerar(true);

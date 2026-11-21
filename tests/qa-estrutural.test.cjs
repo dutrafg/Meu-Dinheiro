@@ -106,6 +106,28 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   assert.match(calendario,/@media\(max-width:700px\)/);
 });
 
+test('Smartphone abre diálogo de cinco ações e mantém CSS e formulários modulares',()=>{
+  const html=read('dist/index.html');
+  const css=read('dist/css/acao-rapida-mobile.css');
+  const logica=read('dist/modules/acao-rapida.js');
+  const formulario=html.match(/<dialog id="mobile-create-dialog"[\s\S]*?<\/dialog>/)?.[0];
+  assert.ok(formulario,'Diálogo de cadastro móvel ausente');
+  assert.match(html,/id="quick-add"[^>]+aria-controls="mobile-create-dialog"[^>]+aria-haspopup="dialog"[^>]+aria-expanded="false"/);
+  assert.match(formulario,/aria-labelledby="mobile-create-title"/);
+  assert.match(formulario,/class="icon-button close-dialog" aria-label="Fechar opções de cadastro"/);
+  const tipos=[...formulario.matchAll(/data-create-kind="([a-z]+)"/g)].map(match=>match[1]);
+  assert.deepEqual(tipos,['income','expense','goal','dream','investment']);
+  assert.match(css,/\.mobile-create-options button\[data-create-kind="investment"\]/);
+  assert.match(css,/min-height:92px/);
+  assert.match(css,/env\(safe-area-inset-bottom\)/);
+  assert.match(css,/var\(--accent-soft\)/);
+  assert.match(logica,/dialogoMovel\.showModal\(\)/);
+  assert.match(logica,/dialogoMovel\.addEventListener\('close'/);
+  assert.match(logica,/dialogoMovel\.querySelectorAll\('\[data-create-kind\]'\)/);
+  assert.match(read('dist/modules/objetivos.js'),/Toque para consultar e editar os aportes/);
+  assert.match(html,/Relatórios PDF, CSV, importação e backup/);
+});
+
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{
   const resumo=read('dist/modules/resumo.js');
   assert.match(resumo,/aria-label="Total \$\{money\(stats\.currentTotal\)\}\. \$\{esc\(stats\.current\.map/);

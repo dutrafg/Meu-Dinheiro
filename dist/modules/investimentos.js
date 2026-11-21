@@ -1,4 +1,5 @@
 import {validarDataISO} from './validacao.js';
+import {cliqueForaDoDialogo} from './dialogos.js';
 
 export const CATEGORIAS_INVESTIMENTO=Object.freeze(['Poupança','CDB','Tesouro Direto','Fundos','Ações','Outros']);
 
@@ -19,10 +20,27 @@ export function encontrarSalarioAnterior(transacoes,dataISO){
     }).filter(Boolean):[t.date];
     for(const data of datas){
       const distancia=limite-Date.parse(`${data}T12:00:00Z`);
-      if(distancia>=0&&distancia<=45*86400000)candidatos.push({id:t.id,date:data,description:t.description||'Salário'});
+      if(distancia>=0&&distancia<=45*86400000)candidatos.push({id:t.id,date:data,description:t.description||'Salário',amount:t.amount});
     }
   }
   return candidatos.sort((a,b)=>b.date.localeCompare(a.date))[0]||null;
+}
+
+export function validarVinculosSalariais(dados){
+  const utilizados=new Map();
+  for(const aporte of dados.allocations||[]){
+    if(aporte.origin!=='salary'||aporte.amount<=0)continue;
+    const fonte=dados.transactions.find(t=>t.id===aporte.salaryId);
+    if(!fonte||fonte.type!=='income')return {ok:false,motivo:'Salário vinculado a investimento ausente.'};
+    const referencia=encontrarSalarioAnterior([fonte],aporte.date);
+    if(!referencia||referencia.date!==aporte.salaryDate)
+      return {ok:false,motivo:'Data ou categoria do salário vinculada a investimento foi alterada.'};
+    const chave=`${aporte.salaryId}@${aporte.salaryDate}`;
+    utilizados.set(chave,(utilizados.get(chave)||0)+Math.round(aporte.amount*100));
+    if(utilizados.get(chave)>Math.round(fonte.amount*100))
+      return {ok:false,motivo:'Os investimentos superam o valor do salário vinculado.'};
+  }
+  return {ok:true,motivo:''};
 }
 
 // Um aporte é registrado no histórico e incorporado uma única vez ao valor guardado.
@@ -39,6 +57,12 @@ export function adicionarInvestimentoVinculado(dados,{goalId,description,amount,
   if(!['salary','previous'].includes(origin))throw Error('Selecione a origem do investimento.');
   const salario=origin==='salary'?encontrarSalarioAnterior(dados.transactions,date):null;
   if(origin==='salary'&&!salario)throw Error('Nenhum salário registrado antes da data. Escolha investimento antigo ou registre o salário.');
+  if(salario){
+    const usados=(dados.allocations||[]).filter(a=>a.origin==='salary'&&a.salaryId===salario.id&&
+      a.salaryDate===salario.date&&a.amount>0).reduce((centavos,a)=>centavos+Math.round(a.amount*100),0);
+    if(usados+Math.round(valor*100)>Math.round(salario.amount*100))
+      throw Error('Este salário não possui valor suficiente para os aportes vinculados.');
+  }
   const total=Math.round((goal.saved+valor+Number.EPSILON)*100)/100;
   if(!Number.isFinite(total)||total>999999999)throw Error('O valor guardado ultrapassaria o limite permitido.');
   if(dados.allocations.length>=20000)throw Error('Limite de investimentos atingido. Faça um backup antes de continuar.');
@@ -71,10 +95,10 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
     const date=form.elements.namedItem('date').value;
     const salario=encontrarSalarioAnterior(getData().transactions,date);
     const origem=form.elements.namedItem('origin');
-    origem.value=salario?'salary':'previous';
+    if(origem.value==='salary'&&!salario)origem.value='';
     const nota=documento.getElementById('investment-origin-note');
-    nota.textContent=salario?`Salário encontrado em ${salario.date.split('-').reverse().join('/')}. Confirme a origem; se o dinheiro já estava guardado, escolha “Investimento antigo”.`:
-      'Nenhum salário localizado nos 45 dias anteriores à data. Se já era dinheiro guardado, mantenha “Investimento antigo”.';
+    nota.textContent=salario?`Salário encontrado em ${salario.date.split('-').reverse().join('/')}. Escolha explicitamente a origem; o salário só será descontado do saldo disponível se você selecionar essa opção.`:
+      'Nenhum salário localizado nos 45 dias anteriores à data. Se o dinheiro já estava guardado, selecione “Investimento antigo”.';
   }
   function abrir(goalId='',investmentId=''){
     const dados=getData();
@@ -91,8 +115,8 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
     form.elements.namedItem('amount').value=existente?.amount??'';
     form.elements.namedItem('date').value=existente?.date||isoDate(new Date());
     form.elements.namedItem('category').value=existente?.category||'';
+    form.elements.namedItem('origin').value=existente?.origin||'';
     atualizarOrigem();
-    if(existente)form.elements.namedItem('origin').value=existente.origin||'previous';
     documento.getElementById('investment-title').textContent=existente?'Editar investimento':'Adicionar investimento';
     documento.getElementById('investment-submit').textContent=existente?'Salvar alterações':'Salvar investimento';
     const categorias=[...new Set([...CATEGORIAS_INVESTIMENTO,...(getData().allocations||[]).map(a=>a.category).filter(Boolean)])];
@@ -118,6 +142,6 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
       }
     }catch(erro){notify(erro.message||'Não foi possível salvar o investimento.');}
   });
-  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
   return {abrir,editar};
 }

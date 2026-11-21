@@ -73,19 +73,21 @@
   }
   function guessCategory(type,description,available) {
     const x=norm(description);let name='Outros';
+    const palavras=String(description||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
     if(type==='income') {if(/salario|pagamentoempreg|folhadepag/.test(x))name='Salário';else if(/freelan|servico|honorario/.test(x))name='Renda extra';}
     else if(/internet|provedorinternet|fibraotica|bandalarga|wifiresidencial/.test(x))name='Internet';
     else if(/telefone|telefonia|recargacelular|contacelular|planomovel/.test(x))name='Telefone';
     else if(/cartaodecredito|faturacartao|faturacredito|pagamentofatura|pgtocartao|pgtfatura/.test(x))name='Cartão de crédito';
     else if(/faculdade|universidad|mensalidadefacul|centrouniversitario/.test(x))name='Faculdade';
     else if(/farmac|drogaria|drogasil|drogaraia/.test(x))name='Farmácia';
-    else if(/curso|cursinho|treinamento|capacitacao|udemy|alura/.test(x))name='Cursos';
-    else if(/supermerc|mercado|aliment|padaria|restaur|ifood|lanch|acougue|hortifrut|feira/.test(x))name='Alimentação';
+    else if(/(?:^| )cursos?(?: |$)|(?:^| )cursinho(?: |$)/.test(palavras)||/treinamento|capacitacao|udemy|alura/.test(x))name='Cursos';
+    else if(/supermerc|aliment|padaria|restaur|ifood|lanch|acougue|hortifrut|feira/.test(x)||
+      (/(?:^| )mercados?(?: |$)/.test(palavras)&&!/(?:^| )mercado pago(?: |$)/.test(palavras)))name='Alimentação';
     else if(/clinica|hospital|medic/.test(x))name='Saúde';
-    else if(/uber|posto|combust|pedagio|transporte|estacionamento/.test(x))name='Transporte';
+    else if(/uber|combust|pedagio|transporte|estacionamento/.test(x)||/(?:^| )posto(?: |$)/.test(palavras))name='Transporte';
     else if(/faculdade|escola|curso|ensino|educac/.test(x))name='Educação';
     else if(/aluguel|condominio|imobiliaria/.test(x))name='Moradia';
-    else if(/energia|saneamento|telefone|internet|assinatura|netflix|fatura|conta/.test(x))name='Contas';
+    else if(/energia|saneamento|telefone|internet|assinatura|netflix|fatura|contadeagua|contadeluz/.test(x))name='Contas';
     else if(/cinema|show|lazer|parque/.test(x))name='Lazer';
     // Extratos com listas antigas podem não ter as categorias específicas.
     // Nesses casos, preservamos a categoria geral mais próxima antes de "Outros".
@@ -112,7 +114,11 @@
       if(amount===null)amount=credit!==null&&credit!==0?Math.abs(credit):debit!==null&&debit!==0?-Math.abs(debit):null;
       if(amount===null||amount===0||Math.abs(amount)>999999999){skipped++;if(issues.length<5)issues.push(`Linha ${i+1}: valor inválido.`);continue;}
       const typeText=norm(field(row,'type'));
-      let type=/(despesa|debito|saida|debit|pagamento)/.test(typeText)?'expense':/(renda|credito|entrada|credit|recebimento)/.test(typeText)?'income':amount<0?'expense':'income';
+      const creditoPositivo=credit!==null&&credit>0&&!(debit!==null&&debit>0);
+      const debitoPositivo=debit!==null&&debit>0&&!(credit!==null&&credit>0);
+      let type=creditoPositivo?'income':debitoPositivo?'expense':
+        /(renda|credito|entrada|credit|recebimento|recebido|recebida|salario)/.test(typeText)?'income':
+        /(despesa|debito|saida|debit|pagamento)/.test(typeText)?'expense':amount<0?'expense':'income';
       const history=field(row,'history'),description=field(row,'description');
       const label=history&&description&&norm(history)!==norm(description)?`${history} · ${description}`:(description||history||'Lançamento bancário');
       // Aplicação ou resgate de investimento é transferência patrimonial, não consumo.
@@ -134,7 +140,7 @@
   function exportCSV(transactions,allocations=[]) {
     const quote=(v,asText=false)=>{
       let s=String(v??'');
-      if(asText&&/^[\s]*[=+@]/.test(s))s="'"+s;
+      if(asText&&/^[\s\u0000-\u001f]*[=+\-@]/.test(s))s="'"+s;
       return `"${s.replace(/"/g,'""')}"`;
     };
     const header=['Data','Tipo','Descrição','Categoria','Valor','Recorrente','ID','ChaveImportacao'];

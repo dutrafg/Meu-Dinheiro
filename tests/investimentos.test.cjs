@@ -5,7 +5,7 @@ const path=require('node:path');
 
 const read=name=>fs.readFileSync(path.join(__dirname,'../dist/modules',name),'utf8');
 const carregar=()=>{
-  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('investimentos.js')
+  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('dialogos.js').replace(/^export /gm,'')+'\n'+read('investimentos.js')
     .replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
   return import(`data:text/javascript;base64,${Buffer.from(`${codigo}\nexport {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior,iniciarInvestimentos,CATEGORIAS_INVESTIMENTO,normalizarDadosLocais,validarBackup};`).toString('base64')}`);
 };
@@ -86,12 +86,13 @@ test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apen
   assert.equal(api.abrir('g'),true);
   assert.match(sugestoes.innerHTML,/Minha categoria/);
   assert.equal(campos.get('date').value,'2026-11-19');
-  assert.equal(campos.get('origin').value,'previous');
+  assert.equal(campos.get('origin').value,'','A origem exige seleção explícita');
   assert.match(nota.textContent,/Nenhum salário/);
   assert.equal(campos.get('goalId').value,'g');
   campos.get('description').value='Aporte teste';
   campos.get('amount').value='25';
   campos.get('category').value='Minha categoria';
+  campos.get('origin').value='previous';
   listeners.submit({preventDefault(){}});
   assert.equal(conteudo.goals[0].saved,45);
   assert.equal(conteudo.allocations.at(-1).category,'Minha categoria');
@@ -110,7 +111,7 @@ test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apen
 test('Salário é localizado pela data efetiva, inclusive recorrência no fim do mês',async()=>{
   const {encontrarSalarioAnterior}=await carregar();
   const salarios=[{id:'fixo',type:'income',category:'Salário base',description:'Salário',date:'2026-01-31',recurring:true}];
-  assert.deepEqual(encontrarSalarioAnterior(salarios,'2026-02-28'),{id:'fixo',date:'2026-02-28',description:'Salário'});
+  assert.deepEqual(encontrarSalarioAnterior(salarios,'2026-02-28'),{id:'fixo',date:'2026-02-28',description:'Salário',amount:undefined});
   assert.equal(encontrarSalarioAnterior(salarios,'2026-02-25')?.date,'2026-01-31');
   assert.equal(encontrarSalarioAnterior(salarios,'2026-01-30'),null);
   assert.equal(encontrarSalarioAnterior(salarios,'2026-03-25')?.date,'2026-02-28');

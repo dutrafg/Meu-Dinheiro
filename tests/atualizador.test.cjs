@@ -54,8 +54,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('Primeira instalação não avisa uma atualização inexistente', async () => {
   const app=scenario({controlled:false});
-  assert.equal(app.elements['app-running-version'].textContent,'v29');
-  assert.equal(app.updater.getStatus().versaoEmExecucao,'v29');
+  assert.equal(app.elements['app-running-version'].textContent,'v31');
+  assert.equal(app.updater.getStatus().versaoEmExecucao,'v31');
   await flush();
   assert.equal(app.serviceWorker.registerCalls,1);
   assert.equal(app.registration.updateCalls,1);
@@ -82,7 +82,7 @@ test('Nova versão avisa sem instalar; apenas o clique solicita ativação e rec
   assert.equal(app.elements['install-update'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-alert'].classList.contains('hidden'),false);
   assert.equal(app.elements['app-update-status'].dataset.state,'ready');
-  assert.equal(app.elements['app-running-version'].textContent,'v29','Uma versão aguardando autorização não muda a versão da página');
+  assert.equal(app.elements['app-running-version'].textContent,'v31','Uma versão aguardando autorização não muda a versão da página');
   assert.equal(app.notifications.length,1);
   assert.equal(messages.length,0);
   app.serviceWorker.emit('controllerchange');
@@ -120,7 +120,7 @@ test('Prévia HTML local e browsers sem Service Worker não tentam registrar', (
     assert.equal(app.elements['check-update'].disabled,true);
     assert.equal(app.serviceWorker.registerCalls,0);
     assert.match(app.elements['app-update-status'].textContent,/aplicativo publicado/);
-    assert.equal(app.elements['app-running-version'].textContent,'v29','A versão precisa aparecer até no HTML de homologação');
+    assert.equal(app.elements['app-running-version'].textContent,'v31','A versão precisa aparecer até no HTML de homologação');
   }
 });
 
@@ -165,7 +165,7 @@ test('Registro do Service Worker falho diferencia segurança e rede sem expor da
     vm.runInNewContext(`${read('dist/modules/atualizador.js').replace(/^export /gm,'')}\nthis.iniciar=iniciarAtualizador;`,context);
     context.iniciar({notify:()=>{},registrar:(...val)=>logs.push(val)});
     await flush();
-    assert.ok(logs.some(v=>v[1]==='PWA_REGISTRO_FALHOU'));
+    assert.equal(logs.filter(v=>v[1].startsWith('PWA_REGISTRO_')).length,1,'A mesma falha não deve gerar registros duplicados');
     assert.ok(logs.some(v=>v[1]=== (nome==='SecurityError'?'PWA_REGISTRO_SEGURANCA':'PWA_REGISTRO_REDE_ARQUIVO')));
     assert.doesNotMatch(JSON.stringify(logs),/URL privada/);
     assert.equal(state.dataset.state,'error');

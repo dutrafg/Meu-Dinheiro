@@ -11,6 +11,9 @@ import {calcularCalendarioFinanceiro,compactarValorCalendario,navegarMesCalendar
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
 import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
+import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './concorrencia-dados.js';
+import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
+import {cliqueForaDoDialogo} from './dialogos.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -28,8 +31,20 @@ export function registrarModulosDoApp(api) {
   registrar('atualizador',()=>typeof atualizador.getStatus==='function'&&/^v\d+$/.test(atualizador.getStatus().versaoEmExecucao));
   registrar('ajustes',()=>typeof ajustes.abrir==='function'&&typeof ajustes.aplicar==='function');
   registrar('acao-rapida',()=>typeof acaoRapida.atualizar==='function'&&typeof acaoRapida.selecionar==='function'&&
+    typeof acaoRapida.abrirMenuMovel==='function'&&typeof acaoRapida.fecharMenuMovel==='function'&&
     acaoMovelParaVisao('despesas').tipo==='expense'&&acaoMovelParaVisao('sonho').tipo==='dream'&&
-    TIPOS_CRIACAO_RAPIDA.length===5&&Boolean(document.getElementById('desktop-create-trigger')));
+    TIPOS_CRIACAO_RAPIDA.length===5&&Boolean(document.getElementById('desktop-create-trigger'))&&
+    Boolean(document.getElementById('mobile-create-dialog'))&&
+    document.getElementById('mobile-create-dialog').querySelectorAll('[data-create-kind]').length===5);
+  registrar('ciclo-periodo',()=>mesLocalDaData(new Date(2027,0,1))==='2027-01'&&
+    calcularViradaPeriodo('2026-12','2026-12','2026-12-31',new Date(2027,0,1)).mesSelecionado==='2027-01');
+  registrar('concorrencia-dados',()=>{
+    let raw='origem';const storage={getItem:()=>raw};const eventos=[];
+    const proteger=criarProtecaoConcorrencia({storage,chave:'teste',janela:{addEventListener:()=>{}},
+      aoAlterar:v=>{eventos.push(v);return true;},aoConflito:()=>eventos.push('conflito')});
+    raw='mudou';return !proteger.podeGravar()&&proteger.sincronizar()&&proteger.podeGravar()&&
+      eventos[0]==='mudou'&&typeof solicitarPersistenciaLocal==='function';
+  });
   registrar('investimentos',()=>{
     const base={goals:[{id:'m',kind:'dream',saved:10}],transactions:[],allocations:[]};
     const next=adicionarInvestimentoVinculado(base,{id:'i',goalId:'m',description:'Exemplo',amount:5,date:'2026-11-19',category:'Poupança'});
@@ -78,7 +93,8 @@ export function registrarModulosDoApp(api) {
   registrar('preferencias',()=>['auto','claro','escuro'].includes(preferencias.obter().tema));
   registrar('regras-financeiras',()=>regras.calcularAporte({type:'income',category:'Salário base',amount:100},{percentual:10,categoriasAporte:['Salário base']})===10);
   registrar('log',()=>Array.isArray(logger.obterLogs()));
-  registrar('dialogos',()=>typeof dialogos.confirmar==='function'&&typeof dialogos.informar==='function');
+  registrar('dialogos',()=>typeof dialogos.confirmar==='function'&&typeof dialogos.informar==='function'&&
+    !cliqueForaDoDialogo({target:'area',clientX:50,clientY:50},{getBoundingClientRect:()=>({left:0,right:100,top:0,bottom:100})}));
   registrar('validacao',()=>validarDataISO('2024-02-29')&&!validarDataISO('2025-02-29'));
   registrar('integridade',()=>verificarIntegridade({transactions:[],goals:[],allocations:[],completedAportes:[]},{income:[],expense:[]}).erros===0);
   registrar('diagnostico',()=>typeof diagnostico.executar==='function');

@@ -1,5 +1,6 @@
 // Calendário de fluxo diário: abre ao clicar no seletor de mês, fora do Resumo.
 // Inspirado no heatmap de 5 níveis do Reserva Simples, incluindo renda e dias mistos.
+import {cliqueForaDoDialogo} from './dialogos.js';
 const DIAS_SEMANA=Object.freeze(['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']);
 const INTENSIDADES=Object.freeze([0,18,26,35,45,56]);
 
@@ -111,7 +112,7 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
     dialog.showModal();
     return true;
   }
-  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
   dialogoCalendario.addEventListener('click',event=>{
     const controle=event.target.closest?.('[data-calendar-month]');
     if(controle){
@@ -121,7 +122,7 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
       catch{return;}
       render();atualizarCalendario();return;
     }
-    if(event.target===dialogoCalendario)dialogoCalendario.close();
+    if(cliqueForaDoDialogo(event,dialogoCalendario))dialogoCalendario.close();
   });
   return {renderCalendario,abrirCalendario,atualizarCalendario,abrirDia,calendarioDoMes};
 }

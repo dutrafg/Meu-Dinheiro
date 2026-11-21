@@ -21,6 +21,6 @@
 .dialog-heading h2{color:var(--text)}
 .tipo-toggle{display:flex;gap:9px;margin:0 0 3px}
 .tipo-toggle button{flex:1;padding:12px 8px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.91rem;font-weight:650}
-.tipo-toggle button.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.tipo-toggle button.on{border-color:var(--green);background:var(--green-bg);color:var(--green-text)}
 .form-dialog::backdrop{background:#0a101b77;backdrop-filter:blur(3px)}
 .toast{background:#20282d}

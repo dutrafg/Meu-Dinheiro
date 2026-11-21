@@ -28,7 +28,7 @@ export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
 
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
-    shortMonth, currentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
+    shortMonth, currentMonth, getCurrentMonth, isoDate, transactionsInMonth, EXPENSE_COLORS,
     renderEntry, progressLine, header, renderSaude=()=>''} = ctx;
 
   function renderChart() {
@@ -42,12 +42,13 @@ export function criarModuloResumo(ctx) {
       <div class="chart-labels">${months.map(ym=>`<span>${esc(shortMonth(ym))}</span>`).join('')}</div>`;
   }
   function renderExpenseCharts() {
-    const months=Array.from({length:7},(_,i)=>shiftMonth(currentMonth,i-6));
+    const mesAtual=getCurrentMonth?.()||currentMonth;
+    const months=Array.from({length:7},(_,i)=>shiftMonth(mesAtual,i-6));
     const todayText=isoDate(new Date());
     const input=months.map(ym=>({
       month:ym,
       entries:transactionsInMonth(ym,'expense')
-        .filter(t=>ym!==currentMonth||t.occurrence<=todayText)
+        .filter(t=>ym!==mesAtual||t.occurrence<=todayText)
         .map(t=>({category:t.category,amount:t.amount}))
     }));
     const stats=window.MeuDinheiroAnalytics.expenseCategoryStats(input);
@@ -64,7 +65,7 @@ export function criarModuloResumo(ctx) {
     const maxAverage=stats.averages[0]?.average||1;
     return `<div class="card proto-expense-charts" role="group" aria-label="Análise de despesas por categoria">
       <section class="proto-expense-chart-panel" aria-label="Gráfico de gastos do mês por categoria">
-        <h3>Gastos por categoria</h3><p class="proto-chart-subtitle">${esc(monthLabel(currentMonth))} · mês em andamento</p>
+        <h3>Gastos por categoria</h3><p class="proto-chart-subtitle">${esc(monthLabel(mesAtual))} · mês em andamento</p>
         ${stats.current.length?`<svg class="proto-expense-donut" viewBox="0 0 120 120" role="img" aria-label="Total ${money(stats.currentTotal)}. ${esc(stats.current.map(t=>`${t.category}: ${money(t.amount)}`).join('; '))}">
           <circle cx="60" cy="60" r="42" fill="none" stroke="var(--border)" stroke-width="15"/>${slices}
           <text x="60" y="54" text-anchor="middle" font-size="8.1" fill="var(--sub)">Total de gastos</text>

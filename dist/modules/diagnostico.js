@@ -6,11 +6,29 @@ import { verificarPropostaInterface } from './diagnostico-proposta.js';
 import { calcularSaldoDisponivelHoje } from './resumo.js';
 import { normalizarDadosLocais, validarBackup, podeAplicarNoObjetivo } from './validacao.js';
 import { apagarDadosLocais, validarFraseLimpeza } from './limpeza-dados.js';
-import { adicionarInvestimentoVinculado, editarInvestimentoVinculado, encontrarSalarioAnterior } from './investimentos.js';
+import { adicionarInvestimentoVinculado, editarInvestimentoVinculado, encontrarSalarioAnterior,validarVinculosSalariais } from './investimentos.js';
 import { calcularCalendarioFinanceiro, compactarValorCalendario, navegarMesCalendario, renderBotaoCalendario } from './calendario-financeiro.js';
+import {cliqueForaDoDialogo} from './dialogos.js';
+import {criarProtecaoConcorrencia} from './concorrencia-dados.js';
+import {calcularViradaPeriodo} from './ciclo-periodo.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
+// Contraste WCAG de texto comum: razão mínima 4,5:1. Sem dependências ou DOM.
+export function calcularContrasteCSS(primeira,segunda){
+  const canais=cor=>{
+    const hex=String(cor||'').trim().toLowerCase();
+    if(!/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/.test(hex))return null;
+    const completa=hex.length===4?`#${[1,2,3].map(i=>hex[i]+hex[i]).join('')}`:hex;
+    return [1,3,5].map(i=>parseInt(completa.slice(i,i+2),16)/255)
+      .map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+  };
+  const a=canais(primeira),b=canais(segunda);
+  if(!a||!b)return null;
+  const luz=c=>c[0]*.2126+c[1]*.7152+c[2]*.0722;
+  const x=luz(a),y=luz(b);
+  return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+}
 export function calcularDuracaoDiagnostico(totalVerificacoes) {
   return Math.min(25000,5000 + Math.max(0,Math.trunc(totalVerificacoes)-9)*500);
 }
@@ -117,6 +135,22 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   const rejeitaBackup=entrada=>{try{validarBackup(entrada,CATEGORIES);return false;}catch{return true;}};
   conferir('BACKUP_VINCULO_TIPO',rejeitaBackup({...backupAmostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
     'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
+  const legado={...backupAmostra,transactions:[{...amostra.transactions[0],category:'Categoria histórica'}]};
+  const legadoRestaurado=validarBackup(legado,CATEGORIES);
+  conferir('BACKUP_ROUNDTRIP_LEGADO',legadoRestaurado.transactions[0].category==='Categoria histórica'&&
+    legadoRestaurado.transactions[0].recurring===false&&Boolean(legadoRestaurado.transactions[0].createdAt)&&
+    rejeitaBackup({...backupAmostra,transactions:[{...backupAmostra.transactions[0],date:'2026-02-30'}]}),
+    'Restauração preserva categorias antigas e migra campos opcionais',
+    'Restauração não preservou categoria ou migração do backup antigo','backup');
+  const rejeitouCategoriaInsegura=rejeitaBackup({...backupAmostra,transactions:[{...backupAmostra.transactions[0],category:'<script>'}]});
+  conferir('BACKUP_CATEGORIA_SEGURA',rejeitouCategoriaInsegura,
+    'Backup bloqueia marcação HTML na categoria',
+    'Backup aceitou categoria de risco','backup');
+  const limiteTeste=Array.from({length:10000},(_,i)=>({...backupAmostra.transactions[0],id:`teste-${i}`}));
+  let volumeOk=false;
+  try{volumeOk=validarBackup({...backupAmostra,transactions:limiteTeste},CATEGORIES).transactions.length===10000;}catch{/* Detectado no relatório. */}
+  conferir('BACKUP_VOLUME_SINTETICO',volumeOk,'Dez mil registros fictícios validados sem alterar dados locais',
+    'Falha na validação de dados sintéticos em volume','backup');
   conferir('RESGATE_LIMITE',podeAplicarNoObjetivo(10,-5)&&podeAplicarNoObjetivo(10,-10)&&!podeAplicarNoObjetivo(10,-20),
     'Limite de resgate de objetivo calculável','Limite de resgate de objetivo inconsistente','objetivos');
   const aporte=adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'diag-g',description:'Aporte sintético',amount:12.34,date:'2026-11-19',category:'CDB'});
@@ -129,6 +163,14 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   const aporteSalario=adicionarInvestimentoVinculado(amostra,{id:'diag-s',goalId:'diag-g',description:'Do salário',amount:3,date:'2026-11-19',category:'Poupança',origin:'salary'});
   conferir('INVESTIMENTO_ORIGEM_SALARIO',salarioAmostra?.id==='diag-t'&&aporteSalario.allocations[0].salaryId==='diag-t',
     'Aporte do salário vinculado ao rendimento com data compatível','Origem do salário não corresponde à data registrada','investimentos');
+  let impediuExcesso=false;
+  try{adicionarInvestimentoVinculado(aporteSalario,{id:'diag-excesso',goalId:'diag-g',description:'Excedente fictício',amount:8,date:'2026-11-19',category:'CDB',origin:'salary'});}catch{impediuExcesso=true;}
+  conferir('INVESTIMENTO_LIMITE_SALARIO',impediuExcesso&&validarVinculosSalariais(aporteSalario).ok,
+    'Investimento acima do valor do salário é bloqueado','Aportes ultrapassaram a renda salarial','investimentos');
+  conferir('INVESTIMENTO_ORFAO_SALARIO',!validarVinculosSalariais({...aporteSalario,transactions:[]}).ok&&
+    !validarVinculosSalariais({...aporteSalario,transactions:[{...amostra.transactions[0],amount:2}]}).ok,
+    'Exclusão e redução de salário vinculado são identificadas',
+    'Alteração de salário não é validada contra os aportes','investimentos');
   conferir('INVESTIMENTO_SALDO_DISPONIVEL',calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporteSalario.allocations)===7&&
     calcularSaldoDisponivelHoje(amostra.transactions,'2026-11-19',aporte.allocations)===10,
     'Somente aporte do salário reduz dinheiro disponível','Investimento antigo e salário não foram separados no saldo','resumo');
@@ -177,6 +219,41 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     'Calendário navega entre meses e respeita ano bissexto','Navegação mensal ou fevereiro incorretos','calendario-financeiro');
   conferir('CALENDARIO_MES_SEM_MOVIMENTO',calcularCalendarioFinanceiro('2026-11',[]).days.every(d=>d.level===0&&d.tone==='empty'),
     'Mês sem lançamentos não recebe cores falsas','Mês vazio contém movimentações fictícias','calendario-financeiro');
+  const virada=calcularViradaPeriodo('2026-12','2026-12','2026-12-31',new Date(2027,0,1));
+  const mesHistorico=calcularViradaPeriodo('2026-12','2026-10','2026-12-31',new Date(2027,0,1));
+  conferir('PERIODO_VIRADA_AUTOMATICA',virada.mudou&&virada.mesAtual==='2027-01'&&virada.mesSelecionado==='2027-01'&&
+    mesHistorico.mesSelecionado==='2026-10',
+    'Virada do mês atualiza a tela sem tirar o usuário do mês histórico',
+    'Virada de mês não respeita navegação histórica','ciclo-periodo');
+  const dialogoTeste={getBoundingClientRect:()=>({left:20,right:320,top:100,bottom:600})};
+  conferir('DIALOGO_BORDA_SEGURA',!cliqueForaDoDialogo({target:dialogoTeste,clientX:30,clientY:120},dialogoTeste)&&
+    cliqueForaDoDialogo({target:dialogoTeste,clientX:5,clientY:80},dialogoTeste),
+    'Toque no padding não fecha formulário; toque fora fecha',
+    'Diálogo confunde toque interno com fundo','dialogos');
+  let snapshot='primeiro',recebido='',avisoConflito=0;
+  const protecao=criarProtecaoConcorrencia({storage:{getItem:()=>snapshot},chave:'teste',
+    janela:{addEventListener:()=>{}},aoAlterar:valor=>{recebido=valor;return true;},aoConflito:()=>{avisoConflito++;}});
+  snapshot='segunda';const bloqueou=!protecao.podeGravar();
+  conferir('DADOS_ABAS_CONFLITO',bloqueou&&protecao.sincronizar()&&protecao.podeGravar()&&recebido==='segunda'&&avisoConflito===0,
+    'Alterações externas são detectadas antes de sobrescrever dados',
+    'Edição simultânea pode sobrescrever informações recentes','concorrencia-dados');
+  if(typeof window!=='undefined'&&typeof window.MeuDinheiroCSV?.importCSV==='function'&&
+    typeof window.MeuDinheiroCSV?.exportCSV==='function'){
+    try{
+      const resultados=window.MeuDinheiroCSV.importCSV('Data;Tipo;Descrição;Valor\n19/11/2026;Pagamento recebido;Salário;100,00\n19/11/2026;Despesa;Imposto;10,00\n19/11/2026;Despesa;Concurso;20,00',
+        {income:['Salário','Outros'],expense:['Outros','Transporte','Cursos']}).items;
+      conferir('CSV_TIPO_RECEBIMENTO',resultados[0]?.type==='income'&&resultados[0]?.amount===100,
+        'Recebimentos não são confundidos com pagamentos efetuados',
+        'Classificação de crédito no CSV incorreta','csv-interface');
+      conferir('CSV_CATEGORIAS_FALSOS_POSITIVOS',resultados[1]?.category==='Outros'&&resultados[2]?.category==='Outros',
+        'Imposto e concurso não são classificados por substrings incorretas',
+        'CSV classificou categoria por palavra parcial','csv-interface');
+      const exportado=window.MeuDinheiroCSV.exportCSV([{id:'1',type:'expense',description:'-2+3',category:'Outros',amount:1,date:'2026-11-19',recurring:false}]);
+      conferir('CSV_FORMULA_PROTEGIDA',exportado.includes("\"'-2+3\""),
+        'Exportação neutraliza fórmulas iniciadas por hífen',
+        'CSV ainda permite fórmula iniciada com hífen','csv-interface');
+    }catch{conferir('CSV_CENARIOS_SINTETICOS',false,'','Teste de regressão CSV falhou','csv-interface');}
+  }
   let rejeitouMeta=false;try{adicionarInvestimentoVinculado(amostra,{id:'diag-i',goalId:'inexistente',description:'Aporte',amount:5,date:'2026-11-19',category:'CDB'});}catch{rejeitouMeta=true;}
   conferir('INVESTIMENTO_META_EXISTENTE',rejeitouMeta,'Aporte exige objetivo existente','Aporte aceito sem objetivo','investimentos');
   for(const [nome,carregado] of Object.entries(bibliotecas))conferir(`LIB_${nome.toUpperCase()}`,carregado,`Biblioteca ${nome} carregada`,`Biblioteca ${nome} indisponível`,'bibliotecas');
@@ -241,6 +318,19 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
         'Fundo da tela corresponde ao tema','Fundo visível não corresponde ao tema configurado','ajustes');
       conferir('APARENCIA_ESQUEMA',String(estilo.colorScheme||'').split(' ').includes(escuro?'dark':'light'),
         'Esquema claro/escuro corresponde à seleção','Esquema de cores nativo não corresponde ao tema','ajustes');
+      for(const [codigo,texto,fundo] of [
+        ['CONTRASTE_TEXTO_SECUNDARIO','--sub','--bg'],
+        ['CONTRASTE_RECEITAS_CARD','--green-text','--card'],
+        ['CONTRASTE_RECEITAS_FUNDO','--green-text','--green-bg'],
+        ['CONTRASTE_DESPESAS_CARD','--red-text','--card'],
+        ['CONTRASTE_DESPESAS_FUNDO','--red-text','--red-bg'],
+        ['CONTRASTE_NAVEGACAO','--accent-text','--card']]){
+        const relacao=calcularContrasteCSS(estilo.getPropertyValue(texto),estilo.getPropertyValue(fundo));
+        conferir(codigo,relacao!==null&&relacao>=4.5,
+          `${codigo.replaceAll('_',' ').toLowerCase()}: texto legível com contraste AA`,
+          `${codigo.replaceAll('_',' ').toLowerCase()}: contraste inferior a 4,5:1 ou cor ausente`,
+          'acessibilidade');
+      }
       const botao=document.querySelector('.fab, .button-primary, .btn-primary');
       if(botao){
         const fundoBotao=normalizarCor(window.getComputedStyle(botao).backgroundColor);
@@ -256,8 +346,8 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   if(typeof document!=='undefined'){
     const quickAdd=document.getElementById('quick-add');
     if(document.getElementById('header-label')?.textContent==='Resumo')
-      conferir('UI_ADICIONAR_RESUMO',Boolean(quickAdd?.getAttribute('aria-label')?.includes('renda ou despesa')),
-        'Ação rápida do resumo identifica renda e despesa','Ação rápida do resumo não identifica as duas opções','interface','aviso');
+      conferir('UI_ADICIONAR_RESUMO',Boolean(quickAdd?.getAttribute('aria-label')?.includes('opções de cadastro')),
+        'Ação rápida do resumo oferece todas as opções de cadastro','Ação rápida do resumo não informa as opções de cadastro','interface','aviso');
     const saldoTitulo=document.querySelector?.('.proto-today-balance h3');
     if(saldoTitulo)conferir('UI_SALDO_PERIODO',String(saldoTitulo.textContent||'').includes('acumulado'),
       'Período acumulado do saldo indicado','Período do saldo de hoje não está claro','interface','aviso');
@@ -269,7 +359,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     }
     for(const [codigo,ids] of Object.entries({
       NAVEGACAO:['desktop-toolbar','desktop-nav','mobile-nav','main-content'],LANCAMENTOS:['transaction-dialog','transaction-form','quick-add'],
-      ACAO_RAPIDA:['desktop-create-wrap','desktop-create-trigger','desktop-create-menu','quick-add'],
+      ACAO_RAPIDA:['desktop-create-wrap','desktop-create-trigger','desktop-create-menu','quick-add','mobile-create-dialog','mobile-create-title'],
       OBJETIVOS:['goal-dialog','goal-form'],INVESTIMENTOS:['investment-dialog','investment-form','investment-category-suggestions','investment-origin-note','investment-submit'],
       CALENDARIO:['finance-calendar-dialog','finance-calendar-content','calendar-day-dialog','calendar-day-title','calendar-day-content'],LEMBRETES:['reminder-dialog','reminder-list'],NOTIFICACOES:['notifications-clear','notifications-restore'],
       BACKUP:['export-data','import-data','folder-backup-status'],CSV:['export-csv','import-csv','csv-preview-dialog'],
@@ -306,6 +396,47 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       botaoDesktop.getAttribute('aria-controls')===menuDesktop.id&&menuDesktop.querySelectorAll('[data-create-kind]').length===5,
       'Menu desktop oferece criação direta de cinco registros, inclusive investimentos',
       'Ações ou acessibilidade do menu desktop incompletas','acao-rapida');
+    const menuMovel=document.getElementById('mobile-create-dialog');
+    if(quickAdd?.getAttribute&&menuMovel?.querySelectorAll){
+      const tiposEsperados=['income','expense','goal','dream','investment'];
+      const tiposDesktop=[...(menuDesktop?.querySelectorAll?.('[data-create-kind]')||[])].map(item=>item.dataset.createKind);
+      const opcoesMovel=[...menuMovel.querySelectorAll('[data-create-kind]')];
+      const tiposMovel=opcoesMovel.map(item=>item.dataset.createKind);
+      conferir('ACAO_RAPIDA_MOBILE_DIALOGO',menuMovel.tagName?.toLowerCase()==='dialog'&&
+        menuMovel.getAttribute('aria-labelledby')==='mobile-create-title'&&
+        quickAdd.getAttribute('aria-controls')===menuMovel.id&&quickAdd.getAttribute('aria-haspopup')==='dialog'&&
+        ['true','false'].includes(quickAdd.getAttribute('aria-expanded')),
+        'Painel móvel identificado, com acionador acessível','Painel de criação móvel ou seus atributos acessíveis ausentes','acao-rapida');
+      conferir('ACAO_RAPIDA_PARIDADE',tiposDesktop.join('|')===tiposEsperados.join('|')&&
+        tiposMovel.join('|')===tiposEsperados.join('|')&&new Set(tiposMovel).size===5,
+        'Desktop e smartphone oferecem os mesmos cinco tipos de cadastro',
+        'Desktop e smartphone oferecem opções diferentes, duplicadas ou incompletas','acao-rapida');
+      conferir('ACAO_RAPIDA_MOBILE_ATALHOS',opcoesMovel.every(opcao=>
+        opcao.tagName?.toLowerCase()==='button'&&opcao.getAttribute('type')==='button'&&
+        Boolean(opcao.textContent?.trim())),
+        'Cinco opções móveis possuem rótulo e toque independente',
+        'Alguma opção móvel não é botão identificado','acao-rapida');
+      if(typeof window!=='undefined'&&window.innerWidth<880&&
+        typeof window.getComputedStyle==='function'&&typeof quickAdd.getBoundingClientRect==='function'&&
+        !quickAdd.classList?.contains('hidden')){
+        const area=quickAdd.getBoundingClientRect();
+        conferir('ACAO_RAPIDA_TOQUE_MOBILE',area.width>=44&&area.height>=44,
+          'Botão de criação móvel tem área de toque adequada',
+          'Botão de criação móvel menor que 44 × 44 pixels','interface','aviso');
+      }
+    }
+    const barraMovel=document.getElementById('mobile-nav');
+    if(barraMovel?.querySelectorAll){
+      const botoes=[...barraMovel.querySelectorAll('.nav-button')];
+      conferir('NAVEGACAO_MOBILE_SEIS_ABAS',botoes.length===6,
+        'As seis áreas estão na navegação do smartphone',
+        'A navegação móvel não apresenta todas as áreas','interface');
+    }
+    const relatorios=document.querySelector?.('.settings-tools summary');
+    if(relatorios)conferir('AJUSTES_RELATORIOS_DESCOBERTA',
+      /pdf/i.test(relatorios.textContent||'')&&/backup/i.test(relatorios.textContent||''),
+      'Relatórios PDF e backups identificados no título dos Ajustes',
+      'Ferramentas de PDF e backup estão pouco identificadas','interface','aviso');
     const barraDesktop=document.getElementById('desktop-toolbar');
     if(barraDesktop&&typeof window!=='undefined'&&window.innerWidth>=880&&typeof window.getComputedStyle==='function'){
       const estilo=window.getComputedStyle(barraDesktop);
@@ -445,7 +576,7 @@ export function iniciarDiagnostico(ctx) {
       const {integridade}=relatorio;
       const itens=integridade.itens;
       const duracao=calcularDuracaoDiagnostico(itens.length);
-      resumo.textContent=`${itens.length} verificações executadas · exibindo resultados em até ${Math.ceil(duracao/1000)}s.`;
+      resumo.textContent=`${itens.length} verificações executadas · organizando o relatório do sistema.`;
       const tempoRestante=duracao;
       const inicio=performance.now();
       await new Promise(resolve=>{
@@ -507,6 +638,6 @@ export function iniciarDiagnostico(ctx) {
   });
   dialogo.addEventListener('close',()=>{rodada++;executarBotao.disabled=false;exportarBotao.disabled=!ultimoRelatorio;});
   dialogo.querySelectorAll('.close-dialog').forEach(button=>button.addEventListener('click',()=>dialogo.close()));
-  dialogo.addEventListener('click',event=>{if(event.target===dialogo)dialogo.close();});
+  dialogo.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialogo))dialogo.close();});
   return {executar};
 }

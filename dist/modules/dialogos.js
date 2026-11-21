@@ -1,4 +1,10 @@
 // Confirmações acessíveis e consistentes, com cancelamento como resultado seguro.
+export function cliqueForaDoDialogo(event,dialogo){
+  if(event.target!==dialogo||typeof dialogo.getBoundingClientRect!=='function')return false;
+  const area=dialogo.getBoundingClientRect();
+  return Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)&&
+    (event.clientX<area.left||event.clientX>area.right||event.clientY<area.top||event.clientY>area.bottom);
+}
 export function iniciarDialogos() {
   const dialogo = document.getElementById('confirmation-dialog');
   const titulo = document.getElementById('confirmation-title');
@@ -18,7 +24,7 @@ export function iniciarDialogos() {
   aceitar.addEventListener('click',()=>encerrar(true));
   dialogo.addEventListener('cancel',event=>{event.preventDefault();encerrar(false);});
   dialogo.addEventListener('close',()=>encerrar(false));
-  dialogo.addEventListener('click',event=>{if(event.target===dialogo)encerrar(false);});
+  dialogo.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialogo))encerrar(false);});
 
   function confirmar({titulo:rotulo='Confirmar ação',mensagem:texto='',acao='Confirmar',perigoso=false,informativo=false}) {
     if (pendente) return Promise.resolve(false);

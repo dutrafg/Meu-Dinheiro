@@ -4,7 +4,7 @@
 .csv-preview-dialog th,.csv-preview-dialog td{padding:9px;border-bottom:1px solid var(--border);text-align:left}
 .csv-preview-dialog th{background:var(--bg);color:var(--sub)}
 .csv-preview-dialog td:last-child{text-align:right;white-space:nowrap}
-.csv-preview-dialog .csv-warning{font-size:.79rem;color:var(--red);line-height:1.5}
+.csv-preview-dialog .csv-warning{font-size:.79rem;color:var(--red-text);line-height:1.5}
 .csv-preview-dialog .csv-summary{margin:10px 0 14px}
 .csv-preview-dialog .csv-scroll{margin:13px 0}
 .csv-investment-list{max-height:280px;overflow:auto;overscroll-behavior:contain}
@@ -30,12 +30,12 @@
 .proto-saving-heading small{font-size:.78rem;color:var(--sub);white-space:nowrap}
 .proto-saving-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:10px 0;color:var(--text);font-size:.92rem}
 .proto-saving-row small{display:block;color:var(--sub);font-size:.77rem;margin-top:4px}
-.proto-saving-row strong{color:var(--green);white-space:nowrap}
+.proto-saving-row strong{color:var(--green-text);white-space:nowrap}
 .proto-saving-total{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:15px;font-weight:730}
-.proto-saving-total strong{color:var(--green);font-size:1.23rem}
+.proto-saving-total strong{color:var(--green-text);font-size:1.23rem}
 .proto-saving-card .proto-note{margin:13px 0 3px}
 .proto-cdi-estimate{padding:12px;margin:16px 0 0;border-radius:11px;background:var(--green-bg);color:var(--text);font-size:.81rem;line-height:1.5}
-.proto-cdi-estimate strong{color:var(--green)}
+.proto-cdi-estimate strong{color:var(--green-text)}
 .proto-cdi-estimate small{display:block;color:var(--sub);margin-top:5px}
 .proto-reminder-list{max-height:50dvh;overflow-y:auto}
 .reminder-actions{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0}
@@ -44,7 +44,7 @@
 .proto-reminder-item strong{display:block;font-size:.92rem;overflow-wrap:anywhere}
 .proto-reminder-item small{display:block;margin:5px 0;color:var(--sub);font-size:.77rem}
 .proto-reminder-item p{margin:0;font-size:.84rem;color:var(--text);line-height:1.55}
-.proto-reminder-item p b{color:var(--green)}
+.proto-reminder-item p b{color:var(--green-text)}
 .proto-reminder-item .button{flex:none;min-height:37px;padding:8px 12px;font-size:.8rem}
 .recurring-warning{margin:0;padding:11px 12px;border:1px solid var(--amber);border-radius:10px;background:var(--amber-bg);color:var(--text)}
 .confirmation-dialog{width:min(94vw,430px)}
@@ -74,12 +74,12 @@
 .diagnostics-group-items{margin-top:9px;padding-top:5px;border-top:1px solid var(--border)}
 .diagnostics-check{margin:9px 0;font-size:.78rem;line-height:1.45;overflow-wrap:anywhere}
 .diagnostics-pendente{color:var(--blue)}
-.diagnostics-erro{color:var(--red)}
+.diagnostics-erro{color:var(--red-text)}
 .diagnostics-aviso{color:var(--sub)}
 .diagnostics-nao_avaliado{color:var(--sub)}
-.diagnostics-ok{color:var(--green)}
+.diagnostics-ok{color:var(--green-text)}
 .diagnostics-aviso{color:var(--amber)}
-.diagnostics-erro{color:var(--red)}
+.diagnostics-erro{color:var(--red-text)}
 .diagnostics-toggle{display:flex!important;flex-direction:row!important;align-items:center;gap:9px;margin-top:16px;font-size:.85rem!important}
 .diagnostics-toggle input{width:18px!important;height:18px!important;flex:none;accent-color:var(--green)}
 .diagnostics-dialog .field-hint{margin:3px 0 12px}

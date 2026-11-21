@@ -6,9 +6,9 @@ const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const semImports = file=>(file==='dist/modules/diagnostico.js'?
-  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^export /gm,'')}\n`:'')+
+  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\n${read('dist/modules/dialogos.js').replace(/^export /gm,'')}\n${read('dist/modules/concorrencia-dados.js').replace(/^export /gm,'')}\n${read('dist/modules/ciclo-periodo.js').replace(/^export /gm,'')}\n`:'')+
   (file==='dist/modules/diagnostico.js'?read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
-    read('dist/modules/calendario-financeiro.js').replace(/^export /gm,'')+'\n':'')+
+    read('dist/modules/calendario-financeiro.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n':'')+
   read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({
   transactions:[{id:'id-1',description:'Despesa CPF 123.456.789-00',type:'expense',amount:741.59,date:'2026-11-05',category:'Alimentação',recurring:false,createdAt:'2026-11-05T12:00:00.000Z'}],
@@ -85,6 +85,7 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const report=await context.criar({getData:dados,CATEGORIES,getFolderState:()=>({state:'saved',folder:'/Usuários/Ana/Finanças',lastSavedAt:new Date('2026-11-18T16:00:00Z')}),
     getUpdateStatus:()=>({ultimaVerificacao:1763510400000}),obterLogs:()=>[{t:'2026-11-18T00:00:00.000Z',nivel:'erro',codigo:'PWA_VERIFICACAO_FALHOU',modulo:'pwa'}]});
+  assert.ok(report.integridade.itens.length>=65,`Inventário insuficiente: ${report.integridade.itens.length} testes`);
   assert.equal(report.integridade.erros,0);
   for(const codigo of ['LIMPEZA_CHAVE_EXCLUSIVA','LIMPEZA_ORDEM_BACKUP','LIMPEZA_FALHA_SEGURA','LIMPEZA_FRASE_EXATA'])
     assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
@@ -92,6 +93,10 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
     'CALENDARIO_SELETOR_MES','CALENDARIO_NAVEGACAO_MENSAL','CALENDARIO_MES_SEM_MOVIMENTO',
     'INVESTIMENTO_EDICAO_DELTA','INVESTIMENTO_EDICAO_ORIGEM',
     'INVESTIMENTO_EDICAO_OBJETIVO','INVESTIMENTO_EDICAO_SALDO_NEGATIVO'])
+    assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
+  for(const codigo of ['BACKUP_ROUNDTRIP_LEGADO','BACKUP_CATEGORIA_SEGURA','BACKUP_VOLUME_SINTETICO',
+    'INVESTIMENTO_LIMITE_SALARIO','INVESTIMENTO_ORFAO_SALARIO','PERIODO_VIRADA_AUTOMATICA',
+    'DIALOGO_BORDA_SEGURA','DADOS_ABAS_CONFLITO'])
     assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
   assert.equal(report.dados.lancamentos,1);
   assert.equal(report.dados.metas,1);
@@ -101,6 +106,47 @@ test('Relatório inclui apenas contagens e estado técnico, sem valores ou nomes
   assert.ok(report.dados.tamanhoDadosBytes>0);
   const json=JSON.stringify(report);
   for(const forbidden of ['741.59','123.456.789-00','Despesa CPF','Viagem particular','/Usuários/Ana/Finanças'])assert.ok(!json.includes(forbidden),forbidden);
+});
+
+test('Diagnóstico realmente detecta contraste insuficiente das cores aplicadas',async()=>{
+  const raiz={dataset:{theme:'claro',accent:'azul'}},corpo={};
+  const cores={'--bg':'#f5f6f8','--card':'#fff','--sub':'#5d626b',
+    '--green-text':'#0b754e','--green-bg':'#e3f7ee','--red-text':'#aa2820',
+    '--red-bg':'#fce8e6','--accent':'#2563eb','--accent-text':'#2563eb','--accent-hover':'#1d4ed8'};
+  const context={Date,Intl,Blob,TEMAS:['auto','claro','escuro'],CORES:{azul:'#2563eb'},
+    verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Ambiente de teste'}),
+    navigator:{userAgent:'Teste'},document:{documentElement:raiz,body:corpo,getElementById:()=>null,querySelector:()=>null},
+    window:{matchMedia:()=>({matches:false}),getComputedStyle:elemento=>elemento===raiz?
+      {getPropertyValue:chave=>cores[chave]||'',colorScheme:'light'}:{backgroundColor:'rgb(245, 246, 248)'}},
+    localStorage:{getItem:()=>null}};
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
+    CATEGORIES:{income:['Salário'],expense:['Outros']},getPreferences:()=>({tema:'claro',cor:'azul',percentual:10,
+      categoriasAporte:['Salário'],reservaGoalId:''})});
+  const extrair=(relatorio,codigo)=>relatorio.integridade.itens.find(item=>item.codigo===codigo)?.estado;
+  const correto=await gerar();
+  for(const codigo of ['CONTRASTE_TEXTO_SECUNDARIO','CONTRASTE_RECEITAS_CARD','CONTRASTE_RECEITAS_FUNDO',
+    'CONTRASTE_DESPESAS_CARD','CONTRASTE_DESPESAS_FUNDO','CONTRASTE_NAVEGACAO'])
+    assert.equal(extrair(correto,codigo),'ok',codigo);
+  cores['--green-text']='#b0b0b0';
+  cores['--red-text']='#ffbaba';
+  const incorreto=await gerar();
+  for(const codigo of ['CONTRASTE_RECEITAS_CARD','CONTRASTE_RECEITAS_FUNDO',
+    'CONTRASTE_DESPESAS_CARD','CONTRASTE_DESPESAS_FUNDO'])
+    assert.equal(extrair(incorreto,codigo),'erro',codigo);
+});
+
+test('Diagnóstico testa regressões reais de importação CSV e fórmulas exportadas',async()=>{
+  const csv=require('../dist/csv.js');
+  const context={Date,Intl,Blob,verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Ambiente de teste'}),
+    navigator:{userAgent:'Teste'},window:{MeuDinheiroCSV:csv},localStorage:{getItem:()=>null}};
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const report=await context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),
+    CATEGORIES:{income:['Salário','Outros'],expense:['Outros','Transporte','Cursos']}});
+  for(const codigo of ['CSV_TIPO_RECEBIMENTO','CSV_CATEGORIAS_FALSOS_POSITIVOS','CSV_FORMULA_PROTEGIDA'])
+    assert.equal(report.integridade.itens.find(item=>item.codigo===codigo)?.estado,'ok',codigo);
 });
 
 test('Diagnóstico não falha se armazenamento, Cache API e Service Worker não estiverem disponíveis',async()=>{
@@ -133,6 +179,55 @@ test('Diagnóstico verifica que o calendário permanece recolhido e tem componen
   modal.open=true;
   const aberto=await gerar();
   assert.equal(aberto.integridade.itens.find(item=>item.codigo==='UI_CALENDARIO_FECHADO').estado,'erro');
+});
+
+test('Diagnóstico inspeciona paridade móvel, acessibilidade do diálogo e descoberta de relatórios',async()=>{
+  const tipos=['income','expense','goal','dream','investment'];
+  const criarOpcao=tipo=>({dataset:{createKind:tipo},tagName:'BUTTON',textContent:`Novo ${tipo}`,
+    getAttribute:chave=>chave==='type'?'button':null});
+  const itensDesktop=tipos.map(criarOpcao);
+  const itensMovel=tipos.map(criarOpcao);
+  const menuDesktop={id:'desktop-create-menu',querySelectorAll:()=>itensDesktop};
+  const menuMovel={id:'mobile-create-dialog',tagName:'DIALOG',querySelectorAll:()=>itensMovel,
+    getAttribute:chave=>chave==='aria-labelledby'?'mobile-create-title':null};
+  const atributosFab={'aria-label':'Abrir opções de cadastro','aria-controls':'mobile-create-dialog',
+    'aria-haspopup':'dialog','aria-expanded':'false'};
+  let oculto=false;
+  const fab={getAttribute:chave=>atributosFab[chave],classList:{contains:nome=>nome==='hidden'&&oculto},
+    getBoundingClientRect:()=>({width:oculto?0:54,height:oculto?0:54})};
+  const elementos={'quick-add':fab,'desktop-create-trigger':{
+    getAttribute:chave=>chave==='aria-controls'?'desktop-create-menu':null},
+    'desktop-create-menu':menuDesktop,'mobile-create-dialog':menuMovel,
+    'mobile-nav':{querySelectorAll:()=>Array.from({length:6},()=>({}))}};
+  const context={Date,Intl,Blob,verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
+    auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Teste local'}),
+    navigator:{userAgent:'Teste',serviceWorker:{}},window:{innerWidth:390,getComputedStyle:()=>({})},
+    document:{getElementById:id=>elementos[id]||{},
+      querySelector:selector=>selector==='.settings-tools summary'?{textContent:'Relatórios PDF, CSV, importação e backup'}:null},
+    localStorage:{getItem:()=>null}};
+  vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
+  const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
+  const extrair=(relatorio,codigo)=>relatorio.integridade.itens.find(item=>item.codigo===codigo)?.estado;
+  const correto=await gerar();
+  for(const codigo of ['ACAO_RAPIDA_MENU','ACAO_RAPIDA_MOBILE_DIALOGO','ACAO_RAPIDA_PARIDADE',
+    'ACAO_RAPIDA_MOBILE_ATALHOS','ACAO_RAPIDA_TOQUE_MOBILE','NAVEGACAO_MOBILE_SEIS_ABAS','AJUSTES_RELATORIOS_DESCOBERTA'])
+    assert.equal(extrair(correto,codigo),'ok',codigo);
+  oculto=true;
+  const ajustes=await gerar();
+  assert.equal(extrair(ajustes,'ACAO_RAPIDA_TOQUE_MOBILE'),undefined,
+    'O + intencionalmente oculto em Ajustes não deve provocar falso alerta de tamanho');
+  oculto=false;
+  itensMovel[4].dataset.createKind='income';
+  const duplicado=await gerar();
+  assert.equal(extrair(duplicado,'ACAO_RAPIDA_PARIDADE'),'erro','Ações duplicadas devem falhar');
+  itensMovel[4].dataset.createKind='investment';
+  atributosFab['aria-controls']='dialog-inexistente';
+  const rotuloInvalido=await gerar();
+  assert.equal(extrair(rotuloInvalido,'ACAO_RAPIDA_MOBILE_DIALOGO'),'erro','Associação ARIA incorreta deve falhar');
+  atributosFab['aria-controls']='mobile-create-dialog';
+  itensMovel[2].textContent='';
+  const semRotulo=await gerar();
+  assert.equal(extrair(semRotulo,'ACAO_RAPIDA_MOBILE_ATALHOS'),'erro','Botão sem rótulo deve falhar');
 });
 
 test('Diagnóstico compara tema e cor salvos com os estilos realmente visíveis',async()=>{
