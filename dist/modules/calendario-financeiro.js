@@ -69,6 +69,7 @@ export function renderBotaoCalendario(ym,monthLabel,esc){
 }
 
 export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transactionsInMonth,monthLabel,money,esc,fmtDate,parseDate,dialog,dialogoCalendario,documento=document}){
+  let agenda=false;
   function calendarioDoMes(){return calcularCalendarioFinanceiro(getMonth(),transactionsInMonth(getMonth()));}
   function renderCalendario(){
     const calendario=calendarioDoMes();
@@ -88,9 +89,11 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
           <button type="button" data-calendar-month="-1" aria-label="Mês anterior">‹</button>
           <strong aria-live="polite">${esc(monthLabel(calendario.month))}</strong>
           <button type="button" data-calendar-month="1" aria-label="Próximo mês">›</button>
+          <button type="button" data-calendar-today aria-label="Ir para o mês atual">Hoje</button>
+          <button type="button" data-calendar-mode aria-pressed="${agenda}" aria-label="Alternar entre calendário e agenda">${agenda?'Grade':'Agenda'}</button>
         </div>
         <div class="finance-calendar-legend" aria-label="Intensidade de 1 a 5: verde renda, vermelho despesas, degradê ambos"><span><i class="legend-income"></i> Renda</span><span><i class="legend-mixed"></i> Misto</span><span><i class="legend-expense"></i> Despesas</span></div></div>
-      <div class="finance-calendar-grid" aria-label="Dias de ${esc(monthLabel(calendario.month))}">
+      <div class="finance-calendar-grid${agenda ? " is-agenda" : ""}" aria-label="Dias de ${esc(monthLabel(calendario.month))}">
         ${DIAS_SEMANA.map(dia=>`<span class="finance-calendar-weekday" aria-hidden="true">${dia}</span>`).join('')}
         ${Array.from({length:calendario.offset},()=>'<span class="finance-calendar-outside" aria-hidden="true"></span>').join('')}
         ${calendario.days.map(diaHTML).join('')}
@@ -114,6 +117,11 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
   }
   dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
   dialogoCalendario.addEventListener('click',event=>{
+    if(event.target.closest?.('[data-calendar-today]')){
+      const hoje=new Date(),ym=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+      setMonth(ym);render();atualizarCalendario();return;
+    }
+    if(event.target.closest?.('[data-calendar-mode]')){agenda=!agenda;atualizarCalendario();return;}
     const controle=event.target.closest?.('[data-calendar-month]');
     if(controle){
       const passos=Number(controle.dataset.calendarMonth);
