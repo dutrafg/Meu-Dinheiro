@@ -29,3 +29,7 @@ O armazenamento oficial do PWA continua na chave legada "meu-dinheiro-essencial:
 - Não eliminar dados existentes durante atualizações do Service Worker.
 - Nenhuma comparação de estados deve escrever ou apagar dados do usuário.
 - A remoção de dados depende de confirmação explícita e preserva backups externos.
+
+## P0.2 — Divergência entre cópias
+
+A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se forem diferentes, o espelho preexistente NÃO é sobrescrito silenciosamente. O diagnóstico marca a divergência; uma resolução automática de conflitos não está autorizada até que exista uma recuperação explícita e transacional.

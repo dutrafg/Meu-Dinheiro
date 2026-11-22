@@ -16,3 +16,9 @@
 - Desacoplamento adicional das regras financeiras de dist/app.js.
 - Execução end-to-end em browsers reais e homologação no smartphone.
 - Próximas prioridades P1–P4 do roadmap.
+
+## P0.2 — Proteção contra conflito na abertura
+
+- A inicialização preserva uma cópia IndexedDB divergente.
+- Divergências produzem código de diagnóstico; testes comprovam a preservação.
+- Versão v41 de homologação, main inalterada.

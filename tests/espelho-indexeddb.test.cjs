@@ -86,3 +86,28 @@ test('Falha de exclusão é identificada sem registrar conteúdo financeiro',asy
   assert.equal(espelho.obterEstado().falhas,2);
   assert.equal(JSON.stringify(espelho.obterEstado()).includes('saldo privado'),false);
 });
+
+
+test('Inicialização preserva cópia divergente sem substituí-la',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const anterior=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await anterior.gravar('versao-indexeddb'),true);
+  const inicial=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await inicial.iniciar('versao-local-antiga'),false);
+  assert.equal(inicial.obterEstado().estado,'conflito');
+  assert.equal(await inicial.gravar('nova-gravacao-local'),false);
+  assert.equal(fake.registros.get('principal').conteudo,'versao-indexeddb');
+  assert.equal((await inicial.conferir('versao-local-antiga')).estado,'divergente');
+});
+
+test('Inicialização idempotente preserva registro já sincronizado',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const primeiro=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await primeiro.iniciar('arquivo-legado'),true);
+  const data=fake.registros.get('principal').atualizadoEm;
+  assert.equal(await primeiro.iniciar('arquivo-legado'),true);
+  assert.equal(fake.registros.get('principal').atualizadoEm,data);
+  assert.equal((await primeiro.conferir('arquivo-legado')).estado,'sincronizado');
+});

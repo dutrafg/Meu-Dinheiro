@@ -66,6 +66,39 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     return tarefa;
   }
 
+  // Evita sobrescrever um snapshot divergente durante a primeira sincronização.
+  function iniciar(conteudoLegado) {
+    if(!habilitado)return Promise.resolve(true);
+    if(typeof conteudoLegado!=='string'||conteudoLegado.length===0)return Promise.resolve(false);
+    estado='pendente';
+    const tarefa=fila.catch(()=>false).then(async()=>{
+      const db=await abrir();
+      const existente=await new Promise((resolve,reject)=>{
+        try {
+          const pedido=db.transaction(COLECAO_ESPELHO,'readonly')
+            .objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
+          pedido.onsuccess=()=>resolve(pedido.result?.conteudo??null);
+          pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
+        } catch(error){reject(error);}
+      });
+      if(existente!==null&&existente!==conteudoLegado){
+        estado='conflito';
+        return false;
+      }
+      if(existente===null)await alterar('gravar',conteudoLegado);
+      estado='sincronizado';
+      ultimaSincronizacao=new Date().toISOString();
+      return true;
+    }).catch(()=>{
+      estado='erro';
+      falhas++;
+      try{aoFalhar('IDB_INICIALIZACAO_FALHOU');}catch{/* Telemetria opcional. */}
+      return false;
+    });
+    fila=tarefa;
+    return tarefa;
+  }
+
   async function conferir(conteudoLegado) {
     await fila;
     if(!habilitado)return {estado:'indisponivel'};
@@ -87,7 +120,9 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
   }
 
   return Object.freeze({
-    gravar:conteudo=>typeof conteudo==='string'&&conteudo.length>0?executar('gravar',conteudo):Promise.resolve(false),
+    iniciar,
+    gravar:conteudo=>estado==='conflito'?Promise.resolve(false):
+      typeof conteudo==='string'&&conteudo.length>0?executar('gravar',conteudo):Promise.resolve(false),
     apagar:()=>executar('apagar',null),
     conferir,
     obterEstado:()=>({habilitado,estado,falhas,ultimaSincronizacao})

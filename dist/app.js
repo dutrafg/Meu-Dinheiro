@@ -70,7 +70,9 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const espelho=criarEspelhoIndexedDB({api:typeof indexedDB==='undefined'?null:indexedDB,
     aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
   if(!storageLocked){
-    try{const legado=localStorage.getItem(KEY);if(legado!==null)void espelho.gravar(legado);}
+    try{const legado=localStorage.getItem(KEY);if(legado!==null)void espelho.iniciar(legado).then(ok=>{
+      if(!ok)registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+    });}
     catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
   }
   let view = 'resumo';
