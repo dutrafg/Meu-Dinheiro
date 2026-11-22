@@ -149,7 +149,10 @@ async function verificar(){
       'Investimentos anteriores continuam editáveis no smartphone');
     await page.locator('.mobile-nav [data-view="ajustes"]').click();
     assert.equal(await page.locator('#quick-add').isVisible(),false);
-    assert.match(await page.locator('.settings-tools summary').innerText(),/PDF, CSV, importação e backup/);
+    assert.match(await page.locator('#reports-tools-title').innerText(),/Exportar, importar e compartilhar/);
+    for(const id of ['export-pdf','export-csv','import-csv','export-data','import-data'])
+      assert.equal(await page.locator('#'+id).count(),1,'Ferramenta disponível nos Ajustes: '+id);
+    assert.match(await page.locator('.settings-tools summary').innerText(),/Atualizações e diagnóstico/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
     console.log('E2E desktop + mobile: navegação, calendário, cinco cadastros pelo +, edição de investimentos, saldo e layout validados.');

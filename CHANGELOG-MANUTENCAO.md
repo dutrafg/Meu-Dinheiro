@@ -60,3 +60,7 @@
 ## P2.5 — Sincronização do teste de fechamento móvel
 
 - O teste aguarda o evento nativo `close` do diálogo após Esc antes de validar `aria-expanded`, evitando uma corrida entre o browser e o teste.
+
+## P2.6 — Teste alinhado à estrutura atual de Ajustes
+
+- O teste de smartphone confere a seção de exportação/importação, os cinco comandos e o painel de atualizações/diagnóstico pelos rótulos reais.
