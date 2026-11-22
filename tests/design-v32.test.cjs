@@ -54,7 +54,8 @@ test('Prévia é isolada da publicação e mantém ações principais do HTML v3
   assert.match(markup, /id="open-diagnostics"/);
   assert.match(markup, /id="export-pdf"/);
   assert.match(overlay, /data-action=\\"edit\\"|data-action="edit"/);
-  assert.match(markup, /data-open-calendar-settings/);
+  assert.match(read('dist/modules/resumo.js'), /data-calendar-open/);
+  assert.doesNotMatch(markup, /data-open-calendar-settings/);
   assert.match(overlay, /data-design-open="settings"/);
   assert.match(overlay, /data-v32-view/);
   assert.doesNotMatch(overlay, /localStorage\.setItem|localStorage\.removeItem|indexedDB\.deleteDatabase/);
