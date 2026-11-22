@@ -34,3 +34,9 @@
 
 - Novo workflow independente executa Chromium headless e simula fluxo desktop/mobile com dados fictícios.
 - Dependência Playwright fixada para reprodutibilidade, sem alterar a distribuição estática.
+
+## P2.2 — Correção encontrada pelo teste em navegador
+
+- Removida capitalização automática do mês no calendário; preserva o padrão em português, como dezembro de 2026.
+- Teste de interface real detectou divergência entre texto renderizado e esperado.
+- Versão de homologação v43 sincronizada com o cache PWA.
