@@ -28,12 +28,16 @@ test('Menu Mais não duplica calendário, sonhos, relatórios ou diagnóstico',(
   assert.doesNotMatch(menu[0],/data-design-open="calendar"|data-design-open="diagnostics"/);
 });
 
-test('Todas as ferramentas permanecem na tela Ajustes e calendário tem evento nativo',()=>{
+test('Relatórios têm tela própria e o calendário fica acessível pelo Resumo',()=>{
   const html=read('dist/index.html');
   const app=read('dist/app.js');
-  for(const id of ['export-pdf','export-csv','import-csv','export-data','import-data','check-update','open-diagnostics','delete-all-data'])assert.ok(html.includes(`id="${id}"`),id);
-  assert.match(html,/data-open-calendar-settings/);
-  assert.match(app,/changeView\('resumo'\);calendarioFinanceiro\.abrirCalendario\(\)/);
+  const reports=html.slice(html.indexOf('<section id="reports-page"'),html.indexOf('<section id="settings-page"'));
+  const settings=html.slice(html.indexOf('<section id="settings-page"'),html.indexOf('</main>'));
+  for(const id of ['export-pdf','export-csv','import-csv','export-data','import-data'])assert.ok(reports.includes(`id="${id}"`),id);
+  for(const id of ['check-update','open-diagnostics','delete-all-data'])assert.ok(settings.includes(`id="${id}"`),id);
+  assert.doesNotMatch(settings,/id="export-pdf"|id="export-csv"|id="import-csv"|id="export-data"|id="import-data"/);
+  assert.doesNotMatch(html,/data-open-calendar-settings/);
+  assert.match(app,/data-view=\"relatorios\"|\['relatorios', 'Relatórios'/);
   assert.match(html,/details class="settings-section settings-danger-zone"/);
 });
 
