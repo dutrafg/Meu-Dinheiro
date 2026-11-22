@@ -1,0 +1,14 @@
+{
+  "name": "meu-dinheiro",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Ferramentas de teste do Meu Dinheiro (PWA estatico)",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:browser": "node scripts/verificar-interface.cjs",
+    "build:preview": "node scripts/gerar-html-teste.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}

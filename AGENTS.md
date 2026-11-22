@@ -14,3 +14,5 @@ Leia ARQUITETURA.md, DATABASE.md e os testes relacionados antes de modificar um 
 10. Na ausência de execução real dos testes, declare a limitação; nunca descreva testes não executados como aprovados.
 11. Use DATABASE.md para acompanhar a migração para IndexedDB. O espelho P0.1 NÃO é fonte primária.
 12. Conserve um único botão para exportar o diagnóstico JSON.
+
+13. Para PRs, conferir também o workflow browser-qa.yml e investigar os erros de navegação/layout antes de publicar na main.

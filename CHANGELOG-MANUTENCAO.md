@@ -29,3 +29,8 @@
 - Soma de receitas/despesas em centavos inteiros, com teste de 10 mil lançamentos.
 - Testes de regressão do motor e atualização do catálogo diagnóstico.
 - Prévia de homologação passa para v42 na branch, sem alterar main.
+
+## P2.1 — Teste real de navegador no CI
+
+- Novo workflow independente executa Chromium headless e simula fluxo desktop/mobile com dados fictícios.
+- Dependência Playwright fixada para reprodutibilidade, sem alterar a distribuição estática.

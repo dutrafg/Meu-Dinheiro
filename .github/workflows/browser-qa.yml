@@ -1,0 +1,27 @@
+name: QA real do Meu Dinheiro (Chromium)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  navegador:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências de teste
+        run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+      - name: Instalar Chromium e bibliotecas do sistema
+        run: npx playwright install --with-deps chromium
+      - name: Validar interface desktop e smartphone com dados fictícios
+        run: npm run test:browser

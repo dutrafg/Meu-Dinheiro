@@ -118,3 +118,7 @@ O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão
 ## P1.1 — Motor financeiro único
 
 As regras puras para ocorrências de recorrências, listagem por mês, totais monetários e reserva principal passam a residir em dist/modules/motor-financeiro.js. O app.js oferece somente adaptadores finos para as telas; os testes do motor não dependem do DOM ou banco de dados.
+
+## P2.1 — Homologação no navegador
+
+Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e executa scripts/verificar-interface.cjs em um servidor efêmero com lançamentos fictícios. Nenhum dado real é carregado, e a distribuição PWA não inclui a dependência de teste.
