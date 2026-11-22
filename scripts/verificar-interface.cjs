@@ -111,6 +111,7 @@ async function verificar(){
     assert.equal(await form.locator('[name="origin"]').inputValue(),'','A origem não pode ser presumida pelo aplicativo');
     await form.locator('[name="origin"]').selectOption('salary');
     await form.getByRole('button',{name:'Salvar investimento'}).click();
+    await page.waitForFunction(()=>!document.getElementById('investment-dialog').open);
     assert.equal(await page.locator('#investment-dialog').evaluate(el=>el.open),false);
     assert.match(await page.locator('.proto-today-balance-value').innerText(),/1.800,00/);
     let gravado=await page.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
@@ -131,6 +132,7 @@ async function verificar(){
     assert.equal(await form.locator('[name="origin"]').inputValue(),'','Investimento antigo exige escolha explícita');
     await form.locator('[name="origin"]').selectOption('previous');
     await form.getByRole('button',{name:'Salvar investimento'}).click();
+    await page.waitForFunction(()=>!document.getElementById('investment-dialog').open);
     gravado=await page.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
     assert.equal(gravado.goals[1].saved,70);
     assert.equal(gravado.allocations[1].origin,'previous');
@@ -142,6 +144,7 @@ async function verificar(){
     await form.locator('[name="description"]').fill('Aporte antigo corrigido');
     await form.locator('[name="amount"]').fill('90');
     await form.getByRole('button',{name:'Salvar alterações'}).click();
+    await page.waitForFunction(()=>!document.getElementById('investment-dialog').open);
     gravado=await page.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
     assert.equal(gravado.goals[1].saved,110,'A edição aplica somente a diferença de 40 reais');
     assert.equal(gravado.allocations.length,2,'A edição não duplica investimentos');

@@ -78,7 +78,14 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const repositorio=criarRepositorioFinanceiro({espelho,storage:localStorage,chave:KEY,
     validar:raw=>normalizarDadosLocais(JSON.parse(raw)),
     aoAvisar:codigo=>registrar('aviso',codigo,'dados')});
-  const inicioPersistencia=repositorio.iniciar();
+  const inicioPersistencia=repositorio.iniciar().then(estado=>{
+    // A fonte financeira precisa estar carregada antes de qualquer backup de pasta.
+    if(estado.modo==='primario'&&estado.dados){data=estado.dados;storageLocked=false;}
+    else if(estado.modo==='conflito'||estado.modo==='bloqueado'){
+      storageLocked=true;registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+    }
+    return estado;
+  });
   let view = 'resumo';
   let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
   let month = currentMonth;
@@ -317,6 +324,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     sums, savingPlan, transactionsInMonth, reserveYieldEstimate,
     transactionDialog, transactionForm, goalDialog, goalForm,
     persist, render, renderNav, notify, uniqueId,
+    aguardarPersistencia:inicioPersistencia,
     confirmar:dialogos.confirmar,registrar,registrarEvento
   };
   const moduloLancamentos=criarModuloLancamentos(common);
@@ -447,6 +455,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       storageLocked=false;
       repositorio.sincronizadoAposRecuperacao(raw);
       guardaConcorrencia.registrarGravacao(raw);
+      backup.retomarAposRecuperacao();
       folderBackup?.schedule();
       render();
     }});
@@ -464,6 +473,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
         data={transactions:[],goals:[],allocations:[],completedAportes:[]};
         storageLocked=false;
         repositorio.sincronizadoAposExclusao();
+        backup.retomarAposRecuperacao();
         search='';filterCategory='';
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
@@ -483,14 +493,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
     moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho,repositorio});
-  const estadoInicial=await inicioPersistencia;
-  if(estadoInicial.modo==='primario'&&estadoInicial.dados){
-    data=estadoInicial.dados;
-    storageLocked=false;
-  }else if(estadoInicial.modo==='conflito'||estadoInicial.modo==='bloqueado'){
-    storageLocked=true;
-    registrar('aviso','IDB_CONFLITO_INICIAL','dados');
-  }
+  await inicioPersistencia;
   renderNav();render();
   if(storageLocked)notify('Dados protegidos: confira Recuperação de cópias em Ajustes.');
   if(typeof MutationObserver==='function')

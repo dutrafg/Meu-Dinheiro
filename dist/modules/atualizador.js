@@ -1,6 +1,6 @@
 // Verifica novas versões do PWA e só ativa uma versão em espera após consentimento.
 // Este número identifica o código da página aberta, não o Service Worker em espera.
-export const VERSAO_EM_EXECUCAO = 'v50';
+export const VERSAO_EM_EXECUCAO = 'v51';
 export function iniciarAtualizador({notify,registrar=()=>{}}) {
   const checkButton = document.getElementById('check-update');
   const installButton = document.getElementById('install-update');

@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** P0.1–P0.4 implementadas na branch `refactor/roadmap-manutencao-p0-20261122`; **v50 em homologação da P0.5**. `main` não alterada.
+**Situação:** P0.1–P0.4 implementadas na branch `refactor/roadmap-manutencao-p0-20261122`; **v51 em homologação da P0.5**. `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |

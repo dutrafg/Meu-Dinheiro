@@ -105,3 +105,9 @@
 - Corrigida corrida entre dois diálogos de confirmação sucessivos encontrada no Chromium durante P0.3c2.
 - Diagnóstico indica fonte primária e estado do espelho legado sem registrar conteúdo financeiro; testes de 1.000 e 10.000 registros e de falhas de persistência.
 - **Homologação manual em PWA instalado e backup real ainda necessária antes de declarar P0 finalizada ou publicar na main.**
+
+## P0.5 — Correção de inicialização e QA assíncrono (v51)
+
+- Backup automático em pasta aguarda o carregamento do snapshot primário e fica suspenso durante divergências, evitando escrever estado vazio provisório.
+- Após recuperar ou excluir dados, o backup em pasta pode ser reinicializado com o estado correto.
+- QA do Chromium aguarda o fechamento dos formulários depois do commit assíncrono antes de comparar valores, eliminando leituras prematuras.

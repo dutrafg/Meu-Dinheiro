@@ -6,6 +6,7 @@ export function iniciarModuloBackup(ctx) {
   const folderReconnectButton=document.getElementById('folder-backup-reconnect');
   const folderStatus=document.getElementById('folder-backup-status');
   const folderAlert=document.getElementById('folder-backup-alert');
+  let dadosConfirmados=!ctx.aguardarPersistencia;
   let ultimoAlerta='';
   // API mantida para os módulos que fechavam o menu antigo; a aba Ajustes o substitui.
   function hideBackupMenu() {}
@@ -30,7 +31,21 @@ export function iniciarModuloBackup(ctx) {
       } else if(['saved','ready'].includes(code)) ultimoAlerta='';
     }
   });
-  void folderBackup.initialize();
+  // Nunca inicializar o backup de pasta com estado provisório enquanto
+  // IndexedDB ainda está carregando os dados financeiros primários.
+  if(ctx.aguardarPersistencia)
+    void Promise.resolve(ctx.aguardarPersistencia).then(estado=>{
+      if(['primario','legado'].includes(estado?.modo)){
+        dadosConfirmados=true;return folderBackup.initialize();
+      }
+      folderStatus.dataset.state='conflict';
+      folderStatus.textContent='Backup de pasta pausado: resolva o conflito do armazenamento primeiro.';
+      folderAlert.classList.remove('hidden');
+      folderConnectButton.disabled=true;
+      folderReconnectButton.disabled=true;
+      return false;
+    });
+  else void folderBackup.initialize();
   folderConnectButton.addEventListener('click',async()=>{
     registrarEvento('CONECTAR_PASTA','backup');
     hideBackupMenu();
@@ -45,6 +60,7 @@ export function iniciarModuloBackup(ctx) {
     notify(result?'Backup na pasta atualizado.':'Não foi possível salvar na pasta. Confira as permissões.');
   });
   document.getElementById('export-data').addEventListener('click',()=>{
+    if(!dadosConfirmados){notify('Aguarde a fonte primária ou use Recuperação de cópias em Ajustes.');return;}
     const data=getData();
     const contents=JSON.stringify({app:'meu-dinheiro-essencial',version:1,exportedAt:new Date().toISOString(),...data,preferences:getPreferences()},null,2);
     const url=URL.createObjectURL(new Blob([contents],{type:'application/json'}));
@@ -64,6 +80,7 @@ export function iniciarModuloBackup(ctx) {
       if(!await confirmar({titulo:'Confirmar substituição financeira',mensagem:'Este arquivo substituirá os dados do banco primário. Guarde uma cópia do estado atual antes de prosseguir. Tem certeza?',acao:'Confirmar restauração',perigoso:true}))return;
       registrarEvento('RESTAURAR_BACKUP','backup');
       if(await persist(incoming,{allowRecovery:true})){
+        if(!dadosConfirmados){retomarAposRecuperacao();folderBackup.schedule();}
         let preferenciaOk=true;
         if(arquivo.preferences!==undefined)preferenciaOk=salvarPreferencias(normalizarPreferencias(arquivo.preferences,CATEGORIES.income));
         if(arquivo.preferences!==undefined&&preferenciaOk)aplicarPreferencias();
@@ -72,5 +89,10 @@ export function iniciarModuloBackup(ctx) {
       }
     }catch{registrar('erro','BACKUP_IMPORTACAO_INVALIDA','backup');notify('Backup JSON inválido ou incompatível. Nenhum dado foi substituído.');}
   });
-  return {folderBackup, hideBackupMenu};
+  const retomarAposRecuperacao=()=>{
+    dadosConfirmados=true;
+    folderConnectButton.disabled=false;folderReconnectButton.disabled=false;
+    void folderBackup.initialize();
+  };
+  return {folderBackup, hideBackupMenu,retomarAposRecuperacao};
 }
