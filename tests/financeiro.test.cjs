@@ -18,7 +18,8 @@ function model(data) {
   };
   vm.createContext(sandbox);
   const rules=fs.readFileSync(path.join(__dirname,'..','dist','modules','regras-financeiras.js'),'utf8').replace(/^export /gm,'');
-  vm.runInContext(`${rules}\n${section}\nthis.api={occurrenceDate,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
+  const engine=fs.readFileSync(path.join(__dirname,'..','dist','modules','motor-financeiro.js'),'utf8').replace(/^export /gm,'');
+  vm.runInContext(`${rules}\n${engine}\n${section}\nthis.api={occurrenceDate,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
   sandbox.api.setPreferences=prefs=>{sandbox.preferencias.obter=()=>prefs;};
   return sandbox.api;
 }

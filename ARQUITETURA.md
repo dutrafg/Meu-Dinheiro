@@ -114,3 +114,7 @@ O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão
 `tests/auditoria-codigo.test.cjs` verifica detecção de CSS/funções sem uso, preservação de classes dinâmicas, leitura dos módulos e catálogo e mantém a revisão estática ativa na integração contínua.
 `tests/estabilidade-v31.test.cjs` exercita colisão entre abas, armazenamento persistente opcional, mudança de dia/mês, restauração legada, limite salarial, CSV e contraste de temas. `scripts/verificar-interface.cjs` também confere a escolha explícita da origem em ambiente de navegador, quando disponível.
 `tests/diagnostico-proposta.test.cjs` valida os requisitos da proposta e sua integração sem falsear erros; `tests/navegacao.test.cjs` simula as seis abas, o descarte de prévias e os alertas de atualização/backup.
+
+## P1.1 — Motor financeiro único
+
+As regras puras para ocorrências de recorrências, listagem por mês, totais monetários e reserva principal passam a residir em dist/modules/motor-financeiro.js. O app.js oferece somente adaptadores finos para as telas; os testes do motor não dependem do DOM ou banco de dados.

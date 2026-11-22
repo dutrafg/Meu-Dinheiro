@@ -24,6 +24,7 @@ import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investi
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
 import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
+import {ocorrenciaNoMes,transacoesNoMes,totaisDoMes,principalReserva} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
@@ -210,34 +211,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)verificarVirada();});
   window.addEventListener('pageshow',verificarVirada);
   window.setInterval(verificarVirada,60000);
-  function occurrenceDate(t, ym) {
-    if (!t.recurring) return t.date.slice(0, 7) === ym ? t.date : null;
-    if (t.date.slice(0, 7) > ym) return null;
-    const day = Number(t.date.slice(8, 10));
-    const [y,m] = ym.split('-').map(Number);
-    const lastDay = new Date(Date.UTC(y,m,0)).getUTCDate();
-    return `${ym}-${String(Math.min(day,lastDay)).padStart(2,'0')}`;
-  }
-  function transactionsInMonth(ym, type) {
-    return data.transactions.filter(t => (!type || t.type === type) && occurrenceDate(t,ym))
-      .map(t => ({ ...t, occurrence: occurrenceDate(t,ym) }))
-      .sort((a,b) => b.occurrence.localeCompare(a.occurrence) || b.createdAt.localeCompare(a.createdAt));
-  }
-  function sums(ym) {
-    const list = transactionsInMonth(ym);
-    const income = n2(list.filter(t=>t.type==='income').reduce((sum,t)=>sum+t.amount,0));
-    const expense = n2(list.filter(t=>t.type==='expense').reduce((sum,t)=>sum+t.amount,0));
-    return { income, expense, balance:n2(income-expense), count:list.length };
-  }
+  function occurrenceDate(t, ym) { return ocorrenciaNoMes(t,ym); }
+  function transactionsInMonth(ym,type) { return transacoesNoMes(data.transactions,ym,type); }
+  function sums(ym) { return totaisDoMes(data.transactions,ym); }
   function savingPlan(ym) {
     return calcularPlanoAporte(transactionsInMonth(ym,'income'),preferencias.obter());
   }
-  function reservePrincipal() {
-    const goalId=preferencias.obter().reservaGoalId;
-    const fromGoals=data.goals.filter(g=>g.kind==='goal'&&(goalId?g.id===goalId:/reserva|emerg[eê]ncia/i.test(g.name))).reduce((sum,g)=>sum+g.saved,0);
-    const unlinked=(data.allocations||[]).filter(a=>a.kind==='reserve'&&!data.goals.some(g=>g.id===a.goalId)).reduce((sum,a)=>sum+a.amount,0);
-    return Math.max(0,n2(fromGoals+unlinked));
-  }
+  function reservePrincipal() { return principalReserva(data,preferencias.obter().reservaGoalId); }
   function reserveYieldEstimate() {
     const quote=validCdiQuote(),principal=reservePrincipal();
     if(!quote||!principal)return '';

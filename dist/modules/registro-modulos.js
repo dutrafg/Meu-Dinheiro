@@ -13,6 +13,7 @@ import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './concorrencia-dados.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
+import {ocorrenciaNoMes,totaisDoMes,principalReserva} from './motor-financeiro.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
 import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
 
@@ -102,6 +103,10 @@ export function registrarModulosDoApp(api) {
       'Objetivo de teste','Aplicação de teste','140'].every(valor=>exemplo.includes(valor));
   });
   registrar('preferencias',()=>['auto','claro','escuro'].includes(preferencias.obter().tema));
+  registrar('motor-financeiro',()=>ocorrenciaNoMes({date:'2024-01-31',recurring:true},'2024-02')==='2024-02-29'&&
+    totaisDoMes([{type:'income',amount:120.01,date:'2026-11-01',recurring:false},
+      {type:'expense',amount:30,date:'2026-11-02',recurring:false}],'2026-11').balance===90.01&&
+    principalReserva({goals:[{id:'m',name:'Reserva',kind:'goal',saved:10}],allocations:[]})===10);
   registrar('regras-financeiras',()=>regras.calcularAporte({type:'income',category:'Salário base',amount:100},{percentual:10,categoriasAporte:['Salário base']})===10);
   registrar('log',()=>Array.isArray(logger.obterLogs()));
   registrar('dialogos',()=>typeof dialogos.confirmar==='function'&&typeof dialogos.informar==='function'&&

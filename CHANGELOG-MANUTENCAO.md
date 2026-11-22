@@ -22,3 +22,10 @@
 - A inicialização preserva uma cópia IndexedDB divergente.
 - Divergências produzem código de diagnóstico; testes comprovam a preservação.
 - Versão v41 de homologação, main inalterada.
+
+## P1.1 — Cálculos modularizados
+
+- Movimentações mensais, recorrências e reserva principal centralizadas num motor puro.
+- Soma de receitas/despesas em centavos inteiros, com teste de 10 mil lançamentos.
+- Testes de regressão do motor e atualização do catálogo diagnóstico.
+- Prévia de homologação passa para v42 na branch, sem alterar main.
