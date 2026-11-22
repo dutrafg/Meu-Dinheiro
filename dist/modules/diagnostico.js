@@ -536,6 +536,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     dados:resumo,
     persistenciaIndexedDB:estadoEspelho?{habilitado:estadoEspelho.habilitado,
       estado:verificacaoEspelho?.estado||estadoEspelho.estado,
+      exclusaoProtegida:Boolean(estadoEspelho.exclusaoProtegida),
       falhas:estadoEspelho.falhas,ultimaSincronizacao:estadoEspelho.ultimaSincronizacao}:null,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},

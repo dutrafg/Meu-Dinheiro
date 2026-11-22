@@ -74,10 +74,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const espelho=criarEspelhoIndexedDB({api:typeof indexedDB==='undefined'?null:indexedDB,
     aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
   if(!storageLocked){
-    try{const legado=localStorage.getItem(KEY);if(legado!==null)void espelho.iniciar(legado).then(ok=>{
-      if(!ok&&espelho.obterEstado().estado==='conflito')registrar('aviso','IDB_CONFLITO_INICIAL','dados');
-    });}
-    catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
+    try{
+      const legado=localStorage.getItem(KEY);
+      const inicializacao=legado!==null?espelho.iniciar(legado):espelho.iniciarVazio();
+      void inicializacao.then(ok=>{
+        if(!ok&&espelho.obterEstado().estado==='conflito')registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+      });
+    }catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
   }
   let view = 'resumo';
   let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
@@ -435,7 +438,10 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
     apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
       pausarBackup:()=>folderBackup?.pause(),
-      antesRemocao:async()=>{if(!await espelho.apagar())throw new Error('Espelho indisponível');},
+      antesRemocao:async()=>{
+        if(!guardaConcorrencia.podeGravar())throw new Error('Outra aba alterou os dados');
+        if(!await espelho.apagar())throw new Error('Espelho indisponível');
+      },
       aposLimpeza:()=>{
         data={transactions:[],goals:[],allocations:[],completedAportes:[]};
         storageLocked=false;

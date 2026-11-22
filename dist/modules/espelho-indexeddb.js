@@ -34,45 +34,77 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     return abertura;
   }
 
-  // Todas as decisões de comparar e escrever acontecem na MESMA transação.
-  // Duas abas nunca podem passar por uma leitura antiga e gravar em seguida.
-  let ultimaCopia=null;
+  // Identifica uma cópia existente sem presumir seu formato ou sobrescrevê-la.
+  function classificar(registro){
+    if(registro==null)return {tipo:'vazio'};
+    if(typeof registro!=='object'||(registro.versao!==undefined&&registro.versao!==1))
+      return {tipo:'invalido'};
+    if(registro.apagado===true){
+      if(typeof registro.marcador!=='string'||registro.marcador.length<8||
+        registro.marcador.length>120||registro.conteudo!==undefined)return {tipo:'invalido'};
+      return {tipo:'apagado',marcador:registro.marcador};
+    }
+    if(typeof registro.conteudo==='string')return {tipo:'dados',conteudo:registro.conteudo};
+    return {tipo:'invalido'};
+  }
+
+  function coincide(atual,esperado){
+    if(atual.tipo!==esperado.tipo)return false;
+    if(atual.tipo==='dados')return atual.conteudo===esperado.conteudo;
+    if(atual.tipo==='apagado')return atual.marcador===esperado.marcador;
+    return atual.tipo==='vazio';
+  }
+
+  function novoMarcador(){
+    try{if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')return crypto.randomUUID();}
+    catch{/* ID do marcador não é segredo; aceita gerador alternativo. */}
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  // A leitura, comparação e alteração ocorrem na MESMA transação readwrite.
+  // O marcador de exclusão não contém histórico financeiro e impede ressuscitar dados.
+  let esperado={tipo:'vazio'};
   let bloqueado=false;
 
-  async function transacionar(tipo,conteudo,esperado) {
+  async function transacionar(tipo,conteudo,referencia){
     const db=await abrir();
     return new Promise((resolve,reject)=>{
-      let resultado='conflito'; // Fechar sem confirmação nunca significa sucesso.
+      let resultado={estado:'conflito'};
       try{
         const transacao=db.transaction(COLECAO_ESPELHO,'readwrite');
         const loja=transacao.objectStore(COLECAO_ESPELHO);
         transacao.oncomplete=()=>resolve(resultado);
         transacao.onerror=()=>reject(transacao.error||new Error('IDB_TRANSACTION'));
         transacao.onabort=()=>reject(transacao.error||new Error('IDB_ABORT'));
-        if(tipo==='apagar'){
-          loja.delete(REGISTRO_ESPELHO);
-          resultado='ok';
-          return;
-        }
         const pedido=loja.get(REGISTRO_ESPELHO);
         pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
         pedido.onsuccess=()=>{
           try{
             const registro=pedido.result||null;
-            if(registro&&(typeof registro.conteudo!=='string'||
-              (registro.versao!==undefined&&registro.versao!==1))){
-              resultado='conflito';return;
-            }
-            const atual=registro?.conteudo??null;
+            const atual=classificar(registro);
+            if(atual.tipo==='invalido')return;
             if(tipo==='iniciar'){
-              if(atual!==null&&atual!==conteudo){resultado='conflito';return;}
-              if(!registro)loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
-              else if(registro.versao===undefined)loja.put({...registro,versao:1},REGISTRO_ESPELHO);
-            }else{
-              if(atual!==esperado){resultado='conflito';return;}
-              if(atual!==conteudo)loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+              if(atual.tipo==='dados'&&atual.conteudo===conteudo){
+                if(registro.versao===undefined)loja.put({...registro,versao:1},REGISTRO_ESPELHO);
+              }else if(atual.tipo==='vazio'){
+                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+              }else return;
+              resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
+            }else if(tipo==='iniciarVazio'){
+              if(!['vazio','apagado'].includes(atual.tipo))return;
+              resultado={estado:'ok',esperado:atual};
+            }else if(tipo==='gravar'){
+              if(!coincide(atual,referencia))return;
+              if(atual.tipo!=='dados'||atual.conteudo!==conteudo)
+                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+              resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
+            }else if(tipo==='apagar'){
+              // Confirmado pelo usuário no controlador; não apagar nova versão de outra aba.
+              if(!coincide(atual,referencia)&&atual.tipo!=='apagado')return;
+              const marcador=novoMarcador();
+              loja.put({versao:1,apagado:true,marcador,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+              resultado={estado:'ok',esperado:{tipo:'apagado',marcador}};
             }
-            resultado='ok';
           }catch(error){
             try{transacao.abort();}catch{/* A transação já pode ter terminado. */}
             reject(error);
@@ -82,32 +114,31 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     });
   }
 
-  // A verificação do bloqueio fica DENTRO da fila. Uma gravação agendada
-  // antes de concluir iniciar() não pode ignorar um conflito descoberto depois.
-  function enfileirar(tipo,conteudo) {
+  // A verificação de bloqueio acontece DENTRO da fila, após inicialização pendente.
+  function enfileirar(tipo,conteudo){
     if(!habilitado)return Promise.resolve(true);
     const tarefa=fila.catch(()=>false).then(async()=>{
       if(bloqueado&&tipo!=='apagar')return false;
       estado='pendente';
       try{
-        const resultado=await transacionar(tipo,conteudo,ultimaCopia);
-        if(resultado!=='ok'){
+        const resultado=await transacionar(tipo,conteudo,esperado);
+        if(resultado.estado!=='ok'){
           bloqueado=true;
           estado='conflito';
           try{aoFalhar('IDB_CONFLITO_TRANSACIONAL');}catch{/* Telemetria opcional. */}
           return false;
         }
-        ultimaCopia=tipo==='apagar'?null:conteudo;
-        if(tipo==='apagar')bloqueado=false; // Exclusão exige confirmação dupla no controlador.
+        esperado=resultado.esperado;
+        if(tipo==='apagar')bloqueado=false; // Limpeza exige dupla confirmação.
         estado='sincronizado';
         ultimaSincronizacao=new Date().toISOString();
         return true;
       }catch{
         estado='erro';
         falhas++;
-        if(tipo==='iniciar')bloqueado=true; // Falha ao ler a origem: nunca sobrescrever depois.
+        if(tipo==='iniciar'||tipo==='iniciarVazio')bloqueado=true;
         const codigo=tipo==='apagar'?'IDB_EXCLUSAO_FALHOU':
-          tipo==='iniciar'?'IDB_INICIALIZACAO_FALHOU':'IDB_GRAVACAO_FALHOU';
+          tipo==='iniciar'||tipo==='iniciarVazio'?'IDB_INICIALIZACAO_FALHOU':'IDB_GRAVACAO_FALHOU';
         try{aoFalhar(codigo);}catch{/* Telemetria opcional. */}
         return false;
       }
@@ -116,38 +147,42 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     return tarefa;
   }
 
-  function iniciar(conteudoLegado) {
+  function iniciar(conteudoLegado){
     if(!habilitado)return Promise.resolve(true);
     if(typeof conteudoLegado!=='string'||conteudoLegado.length===0)return Promise.resolve(false);
     return enfileirar('iniciar',conteudoLegado);
   }
+  function iniciarVazio(){return enfileirar('iniciarVazio',null);}
 
-  async function conferir(conteudoLegado) {
+  async function conferir(conteudoLegado){
     await fila;
     if(!habilitado)return {estado:'indisponivel'};
     try{
       const db=await abrir();
-      const conteudo=await new Promise((resolve,reject)=>{
-        let pedido;
+      const registro=await new Promise((resolve,reject)=>{
         try{
-          pedido=db.transaction(COLECAO_ESPELHO,'readonly').objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
-          pedido.onsuccess=()=>resolve(pedido.result?.conteudo??null);
+          const pedido=db.transaction(COLECAO_ESPELHO,'readonly')
+            .objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
+          pedido.onsuccess=()=>resolve(pedido.result??null);
           pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
         }catch(error){reject(error);}
       });
-      if(conteudoLegado===null)return {estado:conteudo===null?'vazio':'residuo'};
-      return {estado:conteudo===conteudoLegado?'sincronizado':'divergente'};
+      const atual=classificar(registro);
+      if(atual.tipo==='invalido')return {estado:'erro'};
+      if(conteudoLegado===null)return {estado:['vazio','apagado'].includes(atual.tipo)?'vazio':'residuo'};
+      return {estado:atual.tipo==='dados'&&atual.conteudo===conteudoLegado?'sincronizado':'divergente'};
     }catch{
       return {estado:'erro'};
     }
   }
 
   return Object.freeze({
-    iniciar,
+    iniciar,iniciarVazio,
     gravar:conteudo=>typeof conteudo==='string'&&conteudo.length>0?
       enfileirar('gravar',conteudo):Promise.resolve(false),
     apagar:()=>enfileirar('apagar',null),
     conferir,
-    obterEstado:()=>({habilitado,estado,falhas,ultimaSincronizacao})
+    obterEstado:()=>({habilitado,estado,falhas,ultimaSincronizacao,
+      exclusaoProtegida:esperado.tipo==='apagado'})
   });
 }

@@ -47,7 +47,7 @@ export function registrarModulosDoApp(api) {
     document.getElementById('mobile-create-dialog').querySelectorAll('[data-create-kind]').length===5);
   registrar('ciclo-periodo',()=>mesLocalDaData(new Date(2027,0,1))==='2027-01'&&
     calcularViradaPeriodo('2026-12','2026-12','2026-12-31',new Date(2027,0,1)).mesSelecionado==='2027-01');
-  registrar('espelho-indexeddb',()=>typeof espelho?.iniciar==='function'&&typeof espelho?.gravar==='function'&&
+  registrar('espelho-indexeddb',()=>typeof espelho?.iniciar==='function'&&typeof espelho?.iniciarVazio==='function'&&typeof espelho?.gravar==='function'&&
     typeof espelho?.apagar==='function'&&typeof espelho?.conferir==='function'&&
     typeof espelho?.obterEstado==='function');
   registrar('concorrencia-dados',()=>{

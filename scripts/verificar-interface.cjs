@@ -41,7 +41,7 @@ async function verificar(){
     await page.goto(`http://127.0.0.1:${servidor.address().port}/`);
     await page.locator('#desktop-create-trigger').waitFor();
     // Compara conteúdo real no IndexedDB sem expô-lo no log de testes.
-    const aguardarEspelho=()=>page.waitForFunction(async()=>{
+    const aguardarEspelho=(pagina=page)=>pagina.waitForFunction(async()=>{
       const pedido=indexedDB.open('meu-dinheiro-financeiro',1);
       const db=await new Promise((resolve,reject)=>{
         pedido.onsuccess=()=>resolve(pedido.result);
@@ -58,6 +58,22 @@ async function verificar(){
       }finally{db.close();}
     },null,{timeout:8000});
     await aguardarEspelho();
+    const lerEstadoEspelho=pagina=>pagina.evaluate(async()=>{
+      const abertura=indexedDB.open('meu-dinheiro-financeiro',1);
+      const db=await new Promise((resolve,reject)=>{
+        abertura.onsuccess=()=>resolve(abertura.result);
+        abertura.onerror=()=>reject(abertura.error);
+      });
+      try{
+        const consulta=db.transaction('snapshots','readonly').objectStore('snapshots').get('principal');
+        const registro=await new Promise((resolve,reject)=>{
+          consulta.onsuccess=()=>resolve(consulta.result);
+          consulta.onerror=()=>reject(consulta.error);
+        });
+        return {apagado:registro?.apagado===true,semConteudo:registro?.conteudo===undefined,
+          marcadorPresente:typeof registro?.marcador==='string',versao:registro?.versao??null};
+      }finally{db.close();}
+    });
     const logInicial=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('meu-dinheiro-essencial:diagnostico-sessao')||'[]'));
     assert.ok(logInicial.some(e=>e.nivel==='evento'&&e.codigo==='SESSAO_INICIADA'&&e.modulo==='sistema'),
       'O aplicativo inicia com telemetria técnica da sessão ativada');
@@ -174,7 +190,43 @@ async function verificar(){
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     await aguardarEspelho(); // Mesmo após criar e editar lançamentos, as duas cópias coincidem.
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
-    console.log('E2E desktop + mobile: navegação, calendário, cinco cadastros pelo +, edição de investimentos, saldo e layout validados.');
+    // Contexto separado: a exclusão ocorre apenas sobre dados fictícios.
+    const contextoLimpeza=await browser.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});
+    const paginaLimpeza=await contextoLimpeza.newPage();
+    await paginaLimpeza.goto(`http://127.0.0.1:${servidor.address().port}/`);
+    await paginaLimpeza.locator('#desktop-create-trigger').waitFor();
+    await paginaLimpeza.evaluate(d=>localStorage.setItem('meu-dinheiro-essencial:v1',JSON.stringify(d)),dados);
+    await paginaLimpeza.reload();
+    await paginaLimpeza.locator('#desktop-create-trigger').waitFor();
+    await aguardarEspelho(paginaLimpeza);
+    await paginaLimpeza.locator('.desktop-nav [data-view="ajustes"]').click();
+    await paginaLimpeza.locator('#settings-danger-title').click();
+    await paginaLimpeza.locator('#delete-all-data').click();
+    await paginaLimpeza.locator('#confirmation-accept').click();
+    await paginaLimpeza.locator('#delete-data-phrase').fill('APAGAR');
+    await paginaLimpeza.locator('#delete-data-confirm').click();
+    await paginaLimpeza.waitForFunction(()=>localStorage.getItem('meu-dinheiro-essencial:v1')===null);
+    const marcador=await lerEstadoEspelho(paginaLimpeza);
+    assert.deepEqual(marcador,{apagado:true,semConteudo:true,marcadorPresente:true,versao:1},
+      'Exclusão cria tombstone sem conteúdo financeiro no IndexedDB');
+    await paginaLimpeza.reload();
+    await paginaLimpeza.locator('#desktop-create-trigger').waitFor();
+    assert.equal(await paginaLimpeza.evaluate(()=>localStorage.getItem('meu-dinheiro-essencial:v1')),null,
+      'Reabrir o aplicativo não ressuscita dados excluídos');
+    assert.equal((await lerEstadoEspelho(paginaLimpeza)).apagado,true,'Tombstone persiste após recarregar');
+    await paginaLimpeza.locator('#desktop-create-trigger').click();
+    await paginaLimpeza.locator('#desktop-create-menu [data-create-kind="income"]').click();
+    const novoLancamento=paginaLimpeza.locator('#transaction-form');
+    await novoLancamento.locator('[name="description"]').fill('Cadastro após exclusão fictícia');
+    await novoLancamento.locator('[name="amount"]').fill('80');
+    await novoLancamento.locator('[name="date"]').fill('2026-11-19');
+    await novoLancamento.locator('[name="category"]').selectOption({index:1});
+    await novoLancamento.locator('button[type="submit"]').click();
+    await aguardarEspelho(paginaLimpeza);
+    assert.equal((await lerEstadoEspelho(paginaLimpeza)).apagado,false,
+      'Novo cadastro legítimo substitui o marcador somente após inicialização segura');
+    await contextoLimpeza.close();
+    console.log('E2E desktop + mobile + exclusão com tombstone + novo cadastro: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

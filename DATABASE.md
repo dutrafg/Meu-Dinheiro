@@ -41,3 +41,13 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Cada gravação compara a cópia existente com a última cópia confirmada pela instância. Se outra aba tiver alterado ou apagado o registro, a gravação antiga é bloqueada com `IDB_CONFLITO_TRANSACIONAL`.
 - Uma gravação enfileirada antes do fim da inicialização reavalia o bloqueio ao executar. Falha de leitura inicial mantém o espelho bloqueado até nova inicialização ou exclusão explícita.
 - **Não há escolha automática entre cópias.** A resolução assistida de conflitos, o marcador de exclusão (*tombstone*) e a troca de fonte primária permanecem para as próximas etapas. O `localStorage` continua oficial.
+
+## P0.3b — Marcador de exclusão entre abas (v47)
+
+- Após as duas confirmações, a remoção do espelho grava uma **tombstone transacional** (versão, identificador de exclusão e horário, sem dados financeiros), aguardando `transaction.oncomplete`. A chave legada só é removida depois.
+- Inicializar sem `localStorage` consulta a tombstone pelo novo `iniciarVazio()`. Outra aba que ainda possui a versão anterior não pode gravar seus dados sobre o marcador.
+- Uma página reaberta após a exclusão pode cadastrar novos dados: a transação substitui o marcador somente se seu identificador ainda coincidir. Uma aba antiga não pode sobrescrever esses novos lançamentos nem apagá-los.
+- Se o navegador fechar entre a escrita da tombstone e a remoção da chave legada, o aplicativo **não restaura nem apaga automaticamente** a origem. Nova exclusão explícita pode concluir a limpeza.
+- Antes de apagar a chave local, o processo compara novamente o conteúdo com o valor lido antes da pausa do backup. Alterações de outra aba interrompem a exclusão.
+- O diagnóstico JSON expõe apenas o booleano técnico `exclusaoProtegida`; não inclui conteúdo nem identificador do marcador.
+- **Ainda pendente na P0.3:** recuperação assistida quando houver duas cópias divergentes, com exportação prévia e decisão do usuário. A tombstone não conclui a migração para IndexedDB primário.

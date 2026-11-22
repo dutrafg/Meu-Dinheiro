@@ -7,9 +7,13 @@ export const validarFraseLimpeza=valor=>valor===FRASE_LIMPEZA;
 export async function apagarDadosLocais({storage,chave,pausarBackup,antesRemocao,aposLimpeza}){
   if(!storage||typeof storage.removeItem!=='function'||!chave)return false;
   try{
-    // Um backup agendado não pode gravar a coleção vazia sobre o arquivo externo.
+    // A exclusão não pode engolir edições feitas em outra aba durante o processo.
+    const ler=typeof storage.getItem==='function'?()=>storage.getItem(chave):null;
+    const original=ler?.();
     await pausarBackup?.();
+    if(ler&&ler()!==original)return false;
     await antesRemocao?.();
+    if(ler&&ler()!==original)return false;
     storage.removeItem(chave);
   }catch{return false;}
   aposLimpeza?.();

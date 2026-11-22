@@ -71,3 +71,11 @@
 - Marcador de esquema do snapshot e trava de versão conhecida impedem sobrescrita por abas ou clientes defasados.
 - Eliminada a corrida entre inicialização e gravação enfileirada; falhas iniciais não são confundidas com conflito confirmado.
 - Cinco cenários novos de teste cobrem duas abas, conflito tardio, versão futura e falha de leitura; Chromium verifica a integridade do espelho no começo e após operações.
+
+## P0.3b — Proteção da exclusão entre abas (v47)
+
+- Tombstone persistente e transacional no IndexedDB após a dupla confirmação, sem conteúdo financeiro.
+- Inicialização segura mesmo quando localStorage está vazio; cadastro novo permitido após exclusão confirmada.
+- Bloqueio de gravações e exclusões obsoletas de abas antigas; revisão da origem antes de excluir.
+- Diagnóstico inclui apenas sinalização técnica da proteção; testes abrangem falha e retomada da exclusão.
+- Fluxo de exclusão e criação posterior coberto também no teste real de Chromium.

@@ -90,7 +90,10 @@ test('Exclusão aguarda gravações anteriores e não ressuscita registros',asyn
   const apagando=espelho.apagar();
   assert.equal(await gravando,true);
   assert.equal(await apagando,true);
-  assert.equal(fake.registros.has('principal'),false);
+  const marcador=fake.registros.get('principal');
+  assert.equal(marcador.apagado,true);
+  assert.equal(marcador.conteudo,undefined);
+  assert.equal(typeof marcador.marcador,'string');
   assert.equal((await espelho.conferir(null)).estado,'vazio');
 });
 
@@ -98,6 +101,7 @@ test('Navegador sem IndexedDB mantém o caminho legado disponível',async()=>{
   const {criarEspelhoIndexedDB}=await apiModulo;
   const espelho=criarEspelhoIndexedDB({api:null});
   assert.equal(espelho.obterEstado().habilitado,false);
+  assert.equal(await espelho.iniciarVazio(),true);
   assert.equal(await espelho.gravar('dados'),true);
   assert.equal(await espelho.apagar(),true);
   assert.equal((await espelho.conferir('dados')).estado,'indisponivel');
@@ -201,4 +205,87 @@ test('Falha na transação de inicialização não autoriza gravação posterior
   assert.equal(await espelho.gravar('outro-legado'),false);
   assert.equal(fake.registros.has('principal'),false);
   assert.deepEqual(codigos,['IDB_INICIALIZACAO_FALHOU']);
+});
+
+test('Uma aba antiga não pode ressuscitar dados após exclusão confirmada',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const antiga=criarEspelhoIndexedDB({api:fake.api});
+  const outra=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await antiga.iniciar('registro-antigo'),true);
+  assert.equal(await outra.iniciar('registro-antigo'),true);
+  assert.equal(await antiga.apagar(),true);
+  assert.equal(antiga.obterEstado().exclusaoProtegida,true);
+  assert.equal(await outra.gravar('registro-antigo-editado'),false);
+  assert.equal(outra.obterEstado().estado,'conflito');
+  const registro=fake.registros.get('principal');
+  assert.equal(registro.apagado,true);
+  assert.equal(registro.conteudo,undefined);
+  assert.equal((await outra.conferir(null)).estado,'vazio');
+});
+
+test('Após reabrir vazio com tombstone, novo cadastro é autorizado, mas aba antiga não sobrescreve',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const primeira=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await primeira.iniciar('registro-que-sera-apagado'),true);
+  assert.equal(await primeira.apagar(),true);
+  const nova=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await nova.iniciarVazio(),true);
+  assert.equal(nova.obterEstado().exclusaoProtegida,true);
+  assert.equal(await nova.gravar('dados-criados-apos-limpeza'),true);
+  assert.equal(nova.obterEstado().exclusaoProtegida,false);
+  assert.equal(await primeira.gravar('alteracao-de-aba-antiga'),false);
+  assert.equal(fake.registros.get('principal').conteudo,'dados-criados-apos-limpeza');
+});
+
+test('Exclusão interrompida com localStorage preservado pode ser repetida com dupla confirmação',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const anterior=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await anterior.iniciar('legado-ainda-presente'),true);
+  assert.equal(await anterior.apagar(),true);
+  const reiniciada=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await reiniciada.iniciar('legado-ainda-presente'),false);
+  assert.equal(await reiniciada.gravar('edicao-arriscada'),false);
+  assert.equal(await reiniciada.apagar(),true);
+  assert.equal(fake.registros.get('principal').apagado,true);
+  assert.equal((await reiniciada.conferir(null)).estado,'vazio');
+});
+
+test('Ausência de dados legados não restaura cópia antiga existente no IndexedDB',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const velha=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await velha.iniciar('registro-residual'),true);
+  const vazia=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await vazia.iniciarVazio(),false);
+  assert.equal(await vazia.gravar('novo-registro'),false);
+  assert.equal(fake.registros.get('principal').conteudo,'registro-residual');
+  assert.equal((await vazia.conferir(null)).estado,'residuo');
+});
+
+test('Aba com estado antigo não apaga cadastros criados após a exclusão',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const antiga=criarEspelhoIndexedDB({api:fake.api});
+  const concorrente=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await antiga.iniciar('antes'),true);
+  assert.equal(await concorrente.iniciar('antes'),true);
+  assert.equal(await antiga.apagar(),true);
+  const nova=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await nova.iniciarVazio(),true);
+  assert.equal(await nova.gravar('cadastro-novo'),true);
+  assert.equal(await concorrente.apagar(),false);
+  assert.equal(fake.registros.get('principal').conteudo,'cadastro-novo');
+});
+
+test('Uma exclusão não regride o formato de um banco futuro desconhecido',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const atual=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await atual.iniciar('financeiro'),true);
+  fake.registros.set('principal',{conteudo:'futuro',versao:7});
+  assert.equal(await atual.apagar(),false);
+  assert.equal(fake.registros.get('principal').versao,7);
 });
