@@ -61,8 +61,9 @@ export function iniciarModuloBackup(ctx) {
       const categoriasAntigas=incoming.transactions.filter(t=>!CATEGORIES[t.type].includes(t.category)).length;
       if(arquivo.preferences!==undefined && JSON.stringify(arquivo.preferences).length>8192)throw Error('Preferências excessivas');
       if(!await confirmar({titulo:'Restaurar backup completo',mensagem:`Este backup contém ${incoming.transactions.length} lançamentos e ${incoming.goals.length} objetivos.${categoriasAntigas?` ${categoriasAntigas} lançamento(s) com categorias antigas serão preservados sem alteração.`:''} Deseja substituir todos os dados atuais?`,acao:'Restaurar dados',perigoso:true}))return;
+      if(!await confirmar({titulo:'Confirmar substituição financeira',mensagem:'Este arquivo substituirá os dados do banco primário. Guarde uma cópia do estado atual antes de prosseguir. Tem certeza?',acao:'Confirmar restauração',perigoso:true}))return;
       registrarEvento('RESTAURAR_BACKUP','backup');
-      if(persist(incoming,{allowRecovery:true})){
+      if(await persist(incoming,{allowRecovery:true})){
         let preferenciaOk=true;
         if(arquivo.preferences!==undefined)preferenciaOk=salvarPreferencias(normalizarPreferencias(arquivo.preferences,CATEGORIES.income));
         if(arquivo.preferences!==undefined&&preferenciaOk)aplicarPreferencias();

@@ -23,7 +23,9 @@ export function iniciarDialogos() {
   cancelar.addEventListener('click',()=>encerrar(false));
   aceitar.addEventListener('click',()=>encerrar(true));
   dialogo.addEventListener('cancel',event=>{event.preventDefault();encerrar(false);});
-  dialogo.addEventListener('close',()=>encerrar(false));
+  // O evento close é assíncrono. Se uma segunda confirmação já abriu, o
+  // close da anterior nunca pode cancelar silenciosamente o novo diálogo.
+  dialogo.addEventListener('close',()=>{if(!dialogo.open&&pendente)encerrar(false);});
   dialogo.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialogo))encerrar(false);});
 
   function confirmar({titulo:rotulo='Confirmar ação',mensagem:texto='',acao='Confirmar',perigoso=false,informativo=false}) {

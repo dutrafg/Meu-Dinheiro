@@ -25,12 +25,13 @@ import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './module
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
 import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
 import {iniciarRecuperacaoConflitos} from './modules/recuperacao-conflitos.js';
+import {criarRepositorioFinanceiro} from './modules/repositorio-financeiro.js';
 import {ocorrenciaNoMes,transacoesNoMes,totaisDoMes,principalReserva} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
-(() => {
+(async() => {
   'use strict';
   // Ativado em cada inicialização: somente códigos técnicos, retidos na sessão.
   configurarDetalhado(true);
@@ -74,15 +75,10 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   let data = readData();
   const espelho=criarEspelhoIndexedDB({api:typeof indexedDB==='undefined'?null:indexedDB,
     aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
-  if(!storageLocked){
-    try{
-      const legado=localStorage.getItem(KEY);
-      const inicializacao=legado!==null?espelho.iniciar(legado):espelho.iniciarVazio();
-      void inicializacao.then(ok=>{
-        if(!ok&&espelho.obterEstado().estado==='conflito')registrar('aviso','IDB_CONFLITO_INICIAL','dados');
-      });
-    }catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
-  }
+  const repositorio=criarRepositorioFinanceiro({espelho,storage:localStorage,chave:KEY,
+    validar:raw=>normalizarDadosLocais(JSON.parse(raw)),
+    aoAvisar:codigo=>registrar('aviso',codigo,'dados')});
+  const inicioPersistencia=repositorio.iniciar();
   let view = 'resumo';
   let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
   let month = currentMonth;
@@ -116,25 +112,33 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       return { transactions: [], goals: [], allocations: [], completedAportes: [] };
     }
   }
-  function persist(next, {allowRecovery = false} = {}) {
+  let gravando=false;
+  async function persist(next, {allowRecovery = false} = {}) {
     if (storageLocked && !allowRecovery) {
       registrar('aviso','DADOS_GRAVACAO_BLOQUEADA','dados');
       void dialogos.informar('Gravação protegida','Os dados originais estão protegidos. Restaure um backup JSON válido antes de gravar novamente.');
       return false;
     }
+    if(gravando){notify('Aguarde a gravação anterior terminar.');return false;}
     if(!allowRecovery&&typeof guardaConcorrencia!=='undefined'&&!guardaConcorrencia.podeGravar()){
       registrar('aviso','DADOS_CONFLITO_ABAS','dados');
       void dialogos.informar('Outra aba modificou os dados','Há uma versão mais recente dos dados em outra aba. Para evitar perda, esta gravação foi bloqueada. Feche o formulário e recarregue o aplicativo antes de continuar.');
       return false;
     }
+    gravando=true;
     try {
       const serializado=JSON.stringify(next);
-      localStorage.setItem(KEY,serializado);
-      void espelho.gravar(serializado);
+      const resultado=await (allowRecovery?repositorio.restaurarBackup(serializado):repositorio.gravar(serializado));
+      if(!resultado.ok){
+        registrar('aviso','IDB_COMMIT_BLOQUEADO','dados');
+        void dialogos.informar('Gravação protegida','O banco de dados não confirmou a gravação. Nenhum lançamento novo foi aplicado. Confira a recuperação em Ajustes.');
+        return false;
+      }
       if(typeof guardaConcorrencia!=='undefined')guardaConcorrencia.registrarGravacao(serializado);
       data = next;
-      storageLocked = false;
+      storageLocked = resultado.modo==='espelho-pendente';
       folderBackup?.schedule();
+      if(storageLocked)void dialogos.informar('Cópia local pendente','O IndexedDB confirmou a gravação, mas o espelho local falhou. Exporte um backup JSON antes de recarregar a página.');
       if(typeof navigator!=='undefined'&&!persist.pediuPersistencia){
         persist.pediuPersistencia=true;
         void solicitarPersistenciaLocal(navigator);
@@ -145,6 +149,8 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       console.error('Falha ao salvar:', error);
       void dialogos.informar('Falha ao salvar','Não foi possível salvar. Verifique o espaço disponível e as permissões do navegador.');
       return false;
+    } finally {
+      gravando=false;
     }
   }
   function icon(name) { return `<svg aria-hidden="true"><use href="#i-${name}"></use></svg>`; }
@@ -355,7 +361,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     else if(button.dataset.action==='mark-aporte'){
       if(!notificacoes.pendentes().some(a=>a.key===id))return;
       const completedAportes=[...(data.completedAportes||[]),id];
-      if(persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
+      if(await persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
     }
     else if(button.dataset.action==='link-allocation'){
       const allocation=(data.allocations||[]).find(a=>a.id===id);
@@ -365,7 +371,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       if(!podeAplicarNoObjetivo(goal.saved,allocation.amount)){notify('O resgate excede o valor guardado nesse objetivo.');return;}
       const goals=data.goals.map(g=>g.id===goalId?{...g,saved:n2(g.saved+allocation.amount)}:g);
       const allocations=data.allocations.map(a=>a.id===id?{...a,goalId}:a);
-      if(persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
+      if(await persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
     }
     else if(button.dataset.action==='delete'){
       const t=data.transactions.find(v=>v.id===id);
@@ -373,13 +379,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
         notify('Este salário tem investimentos vinculados. Altere a origem deles antes de excluir.');return;
       }
       if(t&&await dialogos.confirmar({titulo:'Excluir lançamento',mensagem:`Excluir "${t.description}"${t.recurring?' de todos os meses':''}?`,acao:'Excluir lançamento',perigoso:true})){
-        if(persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
+        if(await persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
       }
     } else if(button.dataset.action==='delete-goal'){
       const g=data.goals.find(v=>v.id===id);
       if(g&&await dialogos.confirmar({titulo:'Excluir meta',mensagem:`Excluir "${g.name}"? O valor registrado como guardado também será removido desta meta.`,acao:'Excluir meta',perigoso:true})){
         const allocations=(data.allocations||[]).map(a=>a.goalId===id?{...a,goalId:''}:a);
-        if(persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
+        if(await persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
       }
     }
   });
@@ -399,7 +405,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   });
   document.querySelectorAll('.close-dialog').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
   for(const dialog of [transactionDialog,goalDialog,reminderDialog])dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
-  transactionForm.addEventListener('submit',event=>{
+  transactionForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const f=transactionForm.elements;
     const type=f.namedItem('type').value;
@@ -414,9 +420,9 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const next={...data,transactions:id?data.transactions.map(t=>t.id===id?entry:t):[...data.transactions,entry]};
     const vinculos=validarVinculosSalariais(next);
     if(!vinculos.ok){notify(`${vinculos.motivo} Corrija os investimentos antes de alterar o salário.`);return;}
-    if(persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
+    if(await persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
   });
-  goalForm.addEventListener('submit',event=>{
+  goalForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const f=goalForm.elements;
     const name=f.namedItem('name').value.trim();
@@ -428,7 +434,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const id=f.namedItem('id').value;
     const entry={id:id||uniqueId(),kind,name,target,saved,deadline};
     const next={...data,goals:id?data.goals.map(g=>g.id===id?entry:g):[...data.goals,entry]};
-    if(persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();objectiveKind=kind;render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
+    if(await persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();objectiveKind=kind;render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
   });
   const backup = iniciarModuloBackup(common);
   folderBackup = backup.folderBackup;
@@ -439,6 +445,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     aoRecuperar:raw=>{
       data=normalizarDadosLocais(JSON.parse(raw));
       storageLocked=false;
+      repositorio.sincronizadoAposRecuperacao(raw);
       guardaConcorrencia.registrarGravacao(raw);
       folderBackup?.schedule();
       render();
@@ -456,6 +463,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       aposLimpeza:()=>{
         data={transactions:[],goals:[],allocations:[],completedAportes:[]};
         storageLocked=false;
+        repositorio.sincronizadoAposExclusao();
         search='';filterCategory='';
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
@@ -469,13 +477,22 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
-    getPersistenciaState:()=>espelho.obterEstado(),
+    getPersistenciaState:()=>({...espelho.obterEstado(),...repositorio.obterEstado()}),
     getPersistenciaCheck:()=>espelho.conferir(localStorage.getItem(KEY)),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
     moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
-    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho});
+    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho,repositorio});
+  const estadoInicial=await inicioPersistencia;
+  if(estadoInicial.modo==='primario'&&estadoInicial.dados){
+    data=estadoInicial.dados;
+    storageLocked=false;
+  }else if(estadoInicial.modo==='conflito'||estadoInicial.modo==='bloqueado'){
+    storageLocked=true;
+    registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+  }
   renderNav();render();
+  if(storageLocked)notify('Dados protegidos: confira Recuperação de cópias em Ajustes.');
   if(typeof MutationObserver==='function')
     new MutationObserver(sincronizarAlertasNav).observe(document.querySelector('.nav-alert-sources'),{attributes:true,attributeFilter:['class'],subtree:true});
   refreshCdiSilently();

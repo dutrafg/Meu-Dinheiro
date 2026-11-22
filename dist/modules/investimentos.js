@@ -127,7 +127,7 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
   }
   const editar=id=>abrir('',id);
   form.elements.namedItem('date').addEventListener('change',atualizarOrigem);
-  form.addEventListener('submit',event=>{
+  form.addEventListener('submit',async event=>{
     event.preventDefault();
     const f=form.elements;
     try{
@@ -136,7 +136,7 @@ export function iniciarInvestimentos({getData,persist,render,notify,registrarEve
         amount:Number(f.namedItem('amount').value),date:f.namedItem('date').value,category:f.namedItem('category').value,
         origin:f.namedItem('origin').value};
       const next=id?editarInvestimentoVinculado(getData(),campos):adicionarInvestimentoVinculado(getData(),campos);
-      if(persist(next)){
+      if(await persist(next)){
         registrarEvento(id?'EDITAR_INVESTIMENTO':'CRIAR_INVESTIMENTO','dados');dialog.close();render();
         notify(id?'Investimento atualizado sem duplicar o aporte.':'Investimento adicionado ao objetivo.');
       }

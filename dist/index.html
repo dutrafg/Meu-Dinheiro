@@ -53,7 +53,7 @@
         <span class="nav-alert-sources" aria-hidden="true"><span id="folder-backup-alert" class="folder-backup-alert hidden"></span><span id="app-update-alert" class="app-update-alert hidden"></span></span>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
-      <input type="file" id="csv-import-file" accept="text/csv,.csv,text/plain" hidden />
+      <input type="file" id="csv-import-file" accept="text/csv,.csv,.ofx,text/plain,application/x-ofx" hidden />
     </header>
     <div class="desktop-toolbar" id="desktop-toolbar">
       <nav class="desktop-nav" aria-label="Áreas do aplicativo" id="desktop-nav"></nav>
@@ -73,7 +73,7 @@
         <div class="settings-heading"><div><span class="eyebrow">ARQUIVOS E ANÁLISES</span><h2 id="reports-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-folder"/></svg> Relatórios</h2></div><p>Gere relatórios, importe extratos e gerencie cópias dos seus dados.</p></div>
         <section class="settings-section settings-tools reports-tools" aria-labelledby="reports-tools-title"><h3 id="reports-tools-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Exportar, importar e compartilhar</h3>
           <div class="settings-report-options"><label for="pdf-report-type">Conteúdo do relatório PDF</label><select id="pdf-report-type" name="tipoRelatorio"><option value="resumo" selected>Resumo completo do mês (inclui metas e aplicações)</option><option value="renda">Somente receitas do mês</option><option value="despesas">Somente despesas do mês</option><option value="metas">Metas e reserva</option><option value="sonho">Meus sonhos</option></select><p class="field-hint">O PDF usa a opção escolhida acima, independentemente da última área visitada. As movimentações consideram o mês selecionado no aplicativo.</p></div>
-          <div class="settings-tool-buttons"><button type="button" id="export-pdf">Gerar PDF financeiro</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
+          <div class="settings-tool-buttons"><button type="button" id="export-pdf">Gerar PDF financeiro</button><button type="button" id="export-csv">Exportar CSV</button><button type="button" id="import-csv">Importar CSV ou OFX do banco</button><button type="button" id="export-data">Backup completo (JSON)</button><button type="button" id="import-data">Restaurar backup (JSON)</button><button type="button" id="folder-backup-connect">Escolher pasta de dados</button><button type="button" id="folder-backup-reconnect" class="hidden">Reautorizar / salvar agora</button></div>
           <p id="folder-backup-status" class="folder-backup-status" role="status" aria-live="polite">Verificando backup automático…</p>
           <p class="folder-backup-warning">Backup JSON sem criptografia: proteja a pasta.</p>
                 </section>

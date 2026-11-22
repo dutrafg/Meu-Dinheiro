@@ -128,7 +128,8 @@ test('Exclusão protegida usa tombstone e inicialização vazia em todo PWA', ()
   const app=read('dist/app.js');
   const espelho=read('dist/modules/espelho-indexeddb.js');
   const diagnostico=read('dist/modules/diagnostico.js');
-  assert.match(app,/espelho\.iniciarVazio\(\)/);
+  assert.match(read('dist/modules/repositorio-financeiro.js'),/espelho\.iniciarVazio\(\)/);
+  assert.match(app,/repositorio\.gravar\(serializado\)/);
   assert.match(app,/guardaConcorrencia\.podeGravar\(\)/);
   assert.match(espelho,/apagado:true,marcador/);
   assert.match(diagnostico,/exclusaoProtegida:Boolean\(estadoEspelho\.exclusaoProtegida\)/);
@@ -173,7 +174,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v49/);
+  assert.match(source, /meu-dinheiro-essencial-v50/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

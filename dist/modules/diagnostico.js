@@ -95,9 +95,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   const adicionar=(codigo,estado,descricao,modulo='ambiente')=>integridade.itens.push({codigo,estado,descricao,modulo});
   const conferir=(codigo,ok,correto,problema,modulo='ambiente',estadoRuim='erro')=>adicionar(codigo,ok?'ok':estadoRuim,ok?correto:problema,modulo);
   if(estadoEspelho?.habilitado){
-    const consistente=['sincronizado','vazio'].includes(verificacaoEspelho?.estado);
+    const consistente=['sincronizado','vazio'].includes(verificacaoEspelho?.estado)||
+      (estadoEspelho.primario&&verificacaoEspelho?.estado==='residuo');
     conferir('ESPELHO_INDEXEDDB',consistente,'Cópia financeira IndexedDB sincronizada',
       'Verifique a sincronização do armazenamento IndexedDB','dados','aviso');
+    conferir('FONTE_PRIMARIA_INDEXEDDB',estadoEspelho.primario===true&&!estadoEspelho.espelhoPendente,
+      'IndexedDB é a fonte principal e confirma as gravações antes do espelho legado',
+      'Banco primário indisponível, não inicializado ou com cópia local pendente','dados','aviso');
   }
   // Cenário sintético: passado, recorrência mensal e transação futura, sem expor saldos.
   const saldoExemplo=calcularSaldoDisponivelHoje([
@@ -537,6 +541,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     persistenciaIndexedDB:estadoEspelho?{habilitado:estadoEspelho.habilitado,
       estado:verificacaoEspelho?.estado||estadoEspelho.estado,
       exclusaoProtegida:Boolean(estadoEspelho.exclusaoProtegida),
+      primario:Boolean(estadoEspelho.primario),modo:estadoEspelho.modo||'legado',
       falhas:estadoEspelho.falhas,ultimaSincronizacao:estadoEspelho.ultimaSincronizacao}:null,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},

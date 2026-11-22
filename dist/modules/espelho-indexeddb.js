@@ -44,7 +44,8 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
         registro.marcador.length>120||registro.conteudo!==undefined)return {tipo:'invalido'};
       return {tipo:'apagado',marcador:registro.marcador};
     }
-    if(typeof registro.conteudo==='string')return {tipo:'dados',conteudo:registro.conteudo};
+    if(typeof registro.conteudo==='string')return {tipo:'dados',conteudo:registro.conteudo,
+      primario:registro.primario===true};
     return {tipo:'invalido'};
   }
 
@@ -85,25 +86,29 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
             if(atual.tipo==='invalido')return;
             if(tipo==='iniciar'){
               if(atual.tipo==='dados'&&atual.conteudo===conteudo){
-                if(registro.versao===undefined)loja.put({...registro,versao:1},REGISTRO_ESPELHO);
+                if(registro.versao===undefined||registro.primario!==true)
+                  loja.put({...registro,versao:1,primario:true},REGISTRO_ESPELHO);
               }else if(atual.tipo==='vazio'){
-                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+                loja.put({conteudo,versao:1,primario:true,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
               }else return;
               resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
             }else if(tipo==='iniciarVazio'){
               if(!['vazio','apagado'].includes(atual.tipo))return;
               resultado={estado:'ok',esperado:atual};
+            }else if(tipo==='iniciarPrimario'){
+              if(atual.tipo!=='dados'||!atual.primario)return;
+              resultado={estado:'ok',esperado:atual};
             }else if(tipo==='gravar'){
               if(!coincide(atual,referencia))return;
               if(atual.tipo!=='dados'||atual.conteudo!==conteudo)
-                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+                loja.put({conteudo,versao:1,primario:true,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
               resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
             }else if(tipo==='recuperar'){
               // Só substituir uma cópia válida que ainda é idêntica à inspecionada.
               // Nunca resolver automaticamente nem remover uma tombstone.
               if(atual.tipo!=='dados'||referencia.tipo!=='dados'||!coincide(atual,referencia))return;
               if(atual.conteudo!==conteudo)
-                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+                loja.put({conteudo,versao:1,primario:true,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
               resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
             }else if(tipo==='apagar'){
               // Confirmado pelo usuário no controlador; não apagar nova versão de outra aba.
@@ -160,6 +165,7 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     return enfileirar('iniciar',conteudoLegado);
   }
   function iniciarVazio(){return enfileirar('iniciarVazio',null);}
+  function iniciarPrimarioSemLegado(){return enfileirar('iniciarPrimario',null);}
 
   // A confirmação e a exportação das duas origens são exigidas pelo controlador.
   // O commit IndexedDB ocorre primeiro; falha posterior do espelho legado é
@@ -213,7 +219,7 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
   }
 
   // Exposição restrita à recuperação iniciada pelo usuário; nunca usada pelo Diagnóstico.
-  async function obterCopiaParaRecuperacao(){
+  async function obterCopiaParaRecuperacao({comPrimaria=false}={}){
     await fila;
     if(!habilitado)return {estado:'indisponivel'};
     try{
@@ -227,7 +233,8 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
         pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
       });
       const copia=classificar(registro);
-      if(copia.tipo==='dados')return {estado:'dados',conteudo:copia.conteudo};
+      if(copia.tipo==='dados')return {estado:'dados',conteudo:copia.conteudo,
+        ...(comPrimaria?{primaria:copia.primario}:{})};
       if(copia.tipo==='apagado')return {estado:'apagado'};
       if(copia.tipo==='vazio')return {estado:'vazio'};
       return {estado:'invalido'};
@@ -235,7 +242,7 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
   }
 
   return Object.freeze({
-    iniciar,iniciarVazio,obterCopiaParaRecuperacao,recuperarComEscolha,
+    iniciar,iniciarVazio,iniciarPrimarioSemLegado,obterCopiaParaRecuperacao,recuperarComEscolha,
     gravar:conteudo=>typeof conteudo==='string'&&conteudo.length>0?
       enfileirar('gravar',conteudo):Promise.resolve(false),
     apagar:()=>enfileirar('apagar',null),

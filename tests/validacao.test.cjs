@@ -91,17 +91,20 @@ test('Falha na leitura bloqueia substituição automática e permite restauraç�
     dialogos:{informar:(_,message)=>{warnings.push(message);return Promise.resolve(true);}},
     registrar:()=>{},console:{error:()=>{}},folderBackup:null,
     espelho:{gravar:()=>Promise.resolve(true)},
+    repositorio:{gravar:async serializado=>{entries.set('meu-dinheiro-essencial:v1',serializado);return {ok:true,modo:'primario'};},
+      restaurarBackup:async serializado=>{entries.set('meu-dinheiro-essencial:v1',serializado);return {ok:true,modo:'primario'};}},
+    gravando:false,notify:()=>{},
   };
   vm.createContext(sandbox);
   vm.runInContext(`${code}\nthis.readData=readData;this.persist=persist;`,sandbox);
   sandbox.data=sandbox.readData();
   const corrupt=entries.get(sandbox.KEY);
   assert.equal(sandbox.storageLocked,true);
-  assert.equal(sandbox.persist({transactions:[tx()],goals:[goal()]}),false);
+  assert.equal(await sandbox.persist({transactions:[tx()],goals:[goal()]}),false);
   assert.equal(entries.get(sandbox.KEY),corrupt);
   assert.ok(warnings.some(message=>message.includes('bloqueada')));
   const recovered={transactions:[tx()],goals:[goal()],allocations:[],completedAportes:[]};
-  assert.equal(sandbox.persist(recovered,{allowRecovery:true}),true);
+  assert.equal(await sandbox.persist(recovered,{allowRecovery:true}),true);
   assert.equal(sandbox.storageLocked,false);
   assert.deepEqual(JSON.parse(entries.get(sandbox.KEY)).transactions,[tx()]);
 });

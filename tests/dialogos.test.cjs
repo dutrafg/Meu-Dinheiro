@@ -57,3 +57,18 @@ test('Aviso informativo não mostra botão de cancelar',async()=>{
   els['confirmation-accept'].emit('click');
   assert.equal(await result,true);
 });
+
+test('Close atrasado do primeiro diálogo não cancela a segunda confirmação',async()=>{
+  const {dialogs,els}=factory();
+  const modal=els['confirmation-dialog'];
+  modal.close=()=>{modal.open=false;}; // Navegador emite close na próxima tarefa.
+  const primeira=dialogs.confirmar({mensagem:'Guardar as duas cópias?'});
+  els['confirmation-accept'].emit('click');
+  assert.equal(await primeira,true);
+  const segunda=dialogs.confirmar({mensagem:'Recuperar origem escolhida?'});
+  assert.equal(modal.open,true);
+  modal.emit('close'); // Evento atrasado da confirmação anterior.
+  assert.equal(modal.open,true);
+  els['confirmation-accept'].emit('click');
+  assert.equal(await segunda,true);
+});

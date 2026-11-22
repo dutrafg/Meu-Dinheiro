@@ -1,26 +1,26 @@
 # Persistência — Meu Dinheiro
 
-## Estado da migração (P0 — etapa 1)
+## Estado da migração (P0 — versão v50, em homologação)
 
-O armazenamento oficial do PWA continua na chave legada "meu-dinheiro-essencial:v1" do localStorage. O código desta branch cria **um espelho assíncrono** em IndexedDB ("meu-dinheiro-financeiro" / "snapshots" / "principal").
+Em navegadores com IndexedDB disponível, o armazenamento financeiro **primário é IndexedDB** ("meu-dinheiro-financeiro" / "snapshots" / "principal") após migração idempotente e validação. A chave legada "meu-dinheiro-essencial:v1" do localStorage permanece como **espelho de compatibilidade**.
 
-**Ainda não é uma migração concluída para IndexedDB como fonte primária.** Não remover a chave legada nem anunciar que a migração está finalizada.
+**O código da P0.5 está em homologação.** Não remover a chave legada nem anunciar P0 encerrada sem testes manuais em PWA instalado, recuperação e backups reais.
 
 ### Protocolo desta etapa
 
-1. Na inicialização, ler e validar os dados legados existentes. Apenas um conjunto válido pode ser espelhado; nunca corrigir dados silenciosamente.
-2. Ao salvar, gravar no localStorage pelo caminho legado e enfileirar a cópia idêntica no IndexedDB, preservando a ordem de gravação.
-3. Uma falha do espelho não invalida a gravação legada já confirmada; é registrada como aviso técnico sem expor valores.
+1. Na inicialização, validar dados existentes. Migração somente quando as duas cópias coincidirem ou o IndexedDB ainda estiver vazio; nunca resolver conflitos silenciosamente.
+2. Ao salvar, validar e aguardar **transaction.oncomplete no IndexedDB** antes de atualizar memória, tela e localStorage compatível. Falha no commit impede anunciar sucesso.
+3. Se a escrita no espelho legado falhar depois do commit primário, manter o registro no IndexedDB, bloquear nova escrita e solicitar backup; nunca pedir para repetir lançamento já confirmado.
 4. A exclusão com dupla confirmação primeiro pausa o backup externo, aguarda/apaga o espelho e só depois remove a chave legada. Se o espelho falhar, não confirmar a exclusão.
 5. O diagnóstico compara as cópias apenas quando o usuário executa o diagnóstico completo. O JSON registra somente estados, nunca registros financeiros.
-6. Não restaurar automaticamente uma cópia do IndexedDB quando localStorage estiver vazio: isso poderia ressuscitar dados que foram apagados em uma versão anterior.
+6. Quando localStorage estiver vazio, reabrir IndexedDB como fonte primária **somente se o snapshot possuir marcador `primario:true`**; snapshots legados órfãos continuam bloqueados e tombstones nunca são restauradas automaticamente.
 
 ### Etapas para converter IndexedDB em fonte primária
 
 - P0.2: introduzir um repositório assíncrono com transações de leitura/escrita e revisão de todos os pontos de gravação; não confirmar sucesso de uma operação até ocorrer transaction.oncomplete.
 - P0.3: migração idempotente com marcadores de versão, testes de queda entre gravações, resolução explícita de conflitos e tombstone de exclusão entre abas; a origem legada fica como backup de compatibilidade.
 - P0.4: converter backup/restauração, importação CSV/OFX, limpeza, diagnóstico e HTML standalone para usar o repositório; testar com 1.000 e 10.000 registros.
-- P0.5: retirar escrita financeira em localStorage **somente após** validação no PWA real, testes de recuperação e homologação com backup exportado.
+- P0.5: IndexedDB como fonte de verdade com escrita local secundária de compatibilidade; a remoção futura do legado somente após homologação em PWA real com backup exportado.
 
 ### Invariantes obrigatórias
 
@@ -60,7 +60,22 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - A interface exibe **somente estados e quantidades de registros**. Não mostra nem envia valores, descrições, nomes ou dados financeiros. Os arquivos JSON de recuperação, baixados sob comando do usuário, **contêm** os dados financeiros e devem ser guardados com cuidado.
 - Os dois downloads são independentes e têm nomes diferentes. Cada origem é validada antes da exportação, gerando JSON v1 importável. Se qualquer cópia mudar entre inspeção e download, o arquivo não é gerado e uma nova inspeção é exigida.
 - **Nenhuma leitura, inspeção ou exportação substitui, apaga ou migra dados.** O aplicativo conserva localStorage como fonte primária e mantém o bloqueio de divergências.
-- **P0.3c2 ainda pendente:** decisão explícita, restauração transacional e testes de retomada, sem ressuscitar tombstones por acidente.
+- **P0.3c2 implementada na v49:** decisão explícita, restauração transacional e testes de retomada, sem ressuscitar tombstones por acidente.
+
+## P0.4 — Importação e fluxos assíncronos (v50)
+
+- Backup JSON e importações CSV/OFX aguardam persistência confirmada antes de atualizar a interface; operações de arquivo mantêm validação e confirmação explícita.
+- OFX SGML/XML é convertido localmente para a mesma revisão de importação CSV, incluindo a classificação de aplicações, sem upload de extratos.
+- Exclusão financeira mantém tombstone transacional antes de remover o espelho local. Diagnóstico sanitizado informa quando IndexedDB é primário e quando o espelho local está pendente.
+- Testes sintéticos de 1.000 e 10.000 registros conferem persistência e integridade, sem dados reais.
+
+## P0.5 — IndexedDB primário, aguardando homologação no dispositivo (v50)
+
+- `repositorio-financeiro.js` controla a ordem: validação → commit IndexedDB → espelho local → atualização da UI e backup de pasta. A fonte primária é o snapshot indexado quando disponível.
+- Cada snapshot migrado recebe `primario:true`. Na ausência da chave local, apenas snapshots com esse marcador podem reabrir o app; cópias legadas órfãs não são escolhidas automaticamente.
+- Escritas não prosseguem em divergências e mudanças concorrentes; o assistente P0.3c2 requer duas exportações e duas confirmações.
+- Navegadores sem IndexedDB mantêm modo legado com aviso explícito. Falha ao espelhar localmente após um commit indexado preserva o lançamento e bloqueia novas escritas até recuperação.
+- **Pendente para declarar P0 concluída:** teste manual de instalação/offline no dispositivo do usuário, restauração de backup real e retorno de um diagnóstico JSON sanitizado. Não publicar na `main` sem autorização.
 
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 

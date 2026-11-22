@@ -360,3 +360,21 @@ test('Tombstone e falha no espelho legado não são escondidas pela recuperaçã
   assert.equal(await aposExclusao.recuperarComEscolha({...args,gravarLocal:raw=>{local=raw;}}),false);
   assert.equal(fake.registros.get('principal').apagado,true);
 });
+
+test('IndexedDB primário reabre sem localStorage, mas cópia legada órfã não é ressuscitada',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  fake.registros.set('principal',{conteudo:'antigo-sem-marcador',versao:1});
+  const antigo=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await antigo.iniciarPrimarioSemLegado(),false);
+  assert.equal(fake.registros.get('principal').conteudo,'antigo-sem-marcador');
+  const moderno=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await moderno.iniciar('antigo-sem-marcador'),true);
+  assert.equal(fake.registros.get('principal').primario,true);
+  const reaberto=criarEspelhoIndexedDB({api:fake.api});
+  assert.deepEqual(await reaberto.obterCopiaParaRecuperacao({comPrimaria:true}),
+    {estado:'dados',conteudo:'antigo-sem-marcador',primaria:true});
+  assert.equal(await reaberto.iniciarPrimarioSemLegado(),true);
+  assert.equal(await reaberto.gravar('novo-sem-chave-local'),true);
+  assert.equal(fake.registros.get('principal').conteudo,'novo-sem-chave-local');
+});

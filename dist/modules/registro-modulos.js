@@ -16,11 +16,12 @@ import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
 import {ocorrenciaNoMes,totaisDoMes,principalReserva} from './motor-financeiro.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
 import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
+import {converterOfxParaCsv,identificarOfx} from './ofx.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho} = api;
+    atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho,repositorio} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
@@ -37,6 +38,10 @@ export function registrarModulosDoApp(api) {
   registrar('objetivos',()=>typeof moduloObjetivos.renderGoals==='function'&&typeof moduloObjetivos.openGoal==='function');
   registrar('backup',()=>typeof moduloBackup.folderBackup?.getState==='function');
   registrar('csv-interface',()=>typeof moduloCsv==='function');
+  registrar('ofx',()=>{
+    const exemplo='<OFX><STMTTRN><DTPOSTED>20261120<TRNAMT>-12.50<NAME>Teste</STMTTRN></OFX>';
+    return identificarOfx(exemplo)&&converterOfxParaCsv(exemplo).includes('12.50');
+  });
   registrar('atualizador',()=>typeof atualizador.getStatus==='function'&&/^v\d+$/.test(atualizador.getStatus().versaoEmExecucao));
   registrar('ajustes',()=>typeof ajustes.abrir==='function'&&typeof ajustes.aplicar==='function');
   registrar('acao-rapida',()=>typeof acaoRapida.atualizar==='function'&&typeof acaoRapida.selecionar==='function'&&
@@ -57,6 +62,8 @@ export function registrarModulosDoApp(api) {
     Boolean(document.getElementById('recovery-download-local'))&&
     Boolean(document.getElementById('recovery-download-indexeddb'))&&
     Boolean(document.getElementById('recovery-choice'))&&Boolean(document.getElementById('recovery-apply')));
+  registrar('repositorio-financeiro',()=>typeof repositorio?.iniciar==='function'&&
+    typeof repositorio?.gravar==='function'&&typeof repositorio?.obterEstado==='function');
   registrar('concorrencia-dados',()=>{
     let raw='origem';const storage={getItem:()=>raw};const eventos=[];
     const proteger=criarProtecaoConcorrencia({storage,chave:'teste',janela:{addEventListener:()=>{}},

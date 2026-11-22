@@ -38,6 +38,8 @@ dist/
     backup.js              # Backup completo JSON e cópias na pasta
     espelho-indexeddb.js   # Espelho transacional e leitura de recuperação somente leitura
     recuperacao-conflitos.js # Inspeção manual e duas exportações sem substituir origens
+    repositorio-financeiro.js # Fonte financeira primária assíncrona IndexedDB
+    ofx.js                  # Conversão local de extrato OFX para importação revisada
     csv-interface.js       # Visualização, classificação e importação CSV
     validacao.js           # Datas, integridade e restauração segura
     atualizador.js         # Detecção de versões e confirmação do usuário
@@ -63,7 +65,7 @@ dist/
 1. `index.html` importa `app.js` como módulo JavaScript nativo (`type="module"`).
 2. `app.js` carrega os utilitários existentes e inicia os módulos com dependências explícitas (funções e getters).
 3. Cada tela devolve HTML, mas **não grava dados por conta própria**.
-4. Os controladores alteram os registros por `persist(next)`, que atualiza `localStorage` e agenda o backup automático em pasta, quando habilitado.
+4. Os controladores alteram os registros por `await persist(next)`: o repositório aguarda a confirmação do IndexedDB primário, espelha no `localStorage` compatível e só então atualiza a UI e agenda o backup em pasta.
 5. `render()` atualiza somente `#view-content`, preservando os formulários fixos em `#settings-page` para que controladores de backup, CSV e atualização não percam referências/eventos. Ajustes é a sexta view e fica oculta quando outra área está ativa.
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
@@ -85,7 +87,8 @@ dist/
 - Para modificar somente a interface, altere o arquivo da área em `dist/modules/` e/ou `dist/css/` correspondente.
 - Ao criar, renomear ou remover qualquer script/CSS/ícone, atualize `ASSETS` em `dist/sw.js` e incremente a versão de `CACHE`.
 - **Versão visível e sincronizada:** `VERSAO_EM_EXECUCAO` em `dist/modules/atualizador.js` representa o código atualmente aberto e deve ser atualizado junto com `CACHE` em `dist/sw.js` a cada publicação. O teste `tests/atualizador.test.cjs` impede a publicação caso os números não coincidam. O Diagnóstico confere se a versão aparece corretamente em Ajustes.
-- **Recuperação segura (P0.3c1):** `recuperacao-conflitos.js` só lê as duas origens quando o usuário solicita inspeção, exibe contagens sem registros financeiros e gera arquivos JSON independentes após revalidar que ambas não mudaram. Não seleciona vencedora, não escreve, não contorna tombstones. A escolha e troca transacional de fonte serão etapa separada.
+- **Recuperação segura (P0.3c1):** `recuperacao-conflitos.js` só lê as duas origens quando o usuário solicita inspeção, exibe contagens sem registros financeiros e gera arquivos JSON independentes após revalidar que ambas não mudaram. Essa fase de inspeção não escreve e não contorna tombstones; a seleção só é liberada depois dos dois backups.
+- **P0.3c2/P0.4/P0.5:** recuperação agora exige as duas exportações, escolha e dupla confirmação. `repositorio-financeiro.js` confirma o commit indexado antes da gravação do espelho local. Operações CSV, OFX, backup, investimentos e formulários devem aguardar a Promise de `persist`. Um snapshot sem marcação primária nunca é restaurado automaticamente se a chave local sumir.
 - **Exclusão local protegida:** `modules/limpeza-dados.js` orquestra confirmação visual, frase `APAGAR` e exclusão somente da chave financeira; `folder-backup.js` pausa antes de apagar, aguarda gravações ativas e protege backups externos. `tests/limpeza-dados.test.cjs` e `tests/folder-backup.test.cjs` cobrem cancelamento, erros e recuperação.
 - **Relatório PDF explícito:** `modules/relatorio-pdf.js` consulta `#pdf-report-type` em Ajustes e não depende de uma aba visitada anteriormente; o modelo puro `modules/relatorio-pdf-conteudo.js` inclui movimentações do mês e, no resumo completo, aplicações e objetivos. O Diagnóstico confirma a presença e a validade do seletor; testes verificam os dados de exemplo.
 - **Largura responsiva:** `css/estrutura.css` libera a largura de desktop, `css/responsivo.css` organiza tablet/smartphone e `css/ajustes.css` mantém a página de configurações fluida. O CSS de impressão não herda as dimensões da interface.

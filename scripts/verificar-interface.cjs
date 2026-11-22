@@ -284,6 +284,33 @@ async function verificar(){
         idb:Boolean(registro?.conteudo?.includes('Origem local fictícia'))};
     });
     assert.deepEqual(intactas,{local:true,idb:true},'A escolha confirmou uma única origem após ambos os downloads');
+    // Após a migração, IndexedDB continua primário mesmo sem a chave espelho.
+    await paginaConflito.evaluate(()=>localStorage.removeItem('meu-dinheiro-essencial:v1'));
+    await paginaConflito.reload();
+    await paginaConflito.locator('#desktop-create-trigger').waitFor();
+    await paginaConflito.locator('#desktop-create-trigger').click();
+    await paginaConflito.locator('#desktop-create-menu [data-create-kind="income"]').click();
+    const cadastroPrimario=paginaConflito.locator('#transaction-dialog');
+    await cadastroPrimario.locator('[name="description"]').fill('Renda após reabrir IndexedDB');
+    await cadastroPrimario.locator('[name="amount"]').fill('15');
+    await cadastroPrimario.locator('[name="date"]').fill('2026-11-20');
+    await cadastroPrimario.locator('[name="category"]').selectOption({index:1});
+    await cadastroPrimario.locator('button[type="submit"]').click();
+    await aguardarEspelho(paginaConflito);
+    const persistiu=await paginaConflito.evaluate(async()=>{
+      const local=localStorage.getItem('meu-dinheiro-essencial:v1');
+      const db=await new Promise(resolve=>{
+        const req=indexedDB.open('meu-dinheiro-financeiro',1);
+        req.onsuccess=()=>resolve(req.result);
+      });
+      const tx=db.transaction('snapshots','readonly');
+      const req=tx.objectStore('snapshots').get('principal');
+      const registro=await new Promise(resolve=>{req.onsuccess=()=>resolve(req.result);});
+      db.close();
+      return {idb:registro.primario===true&&registro.conteudo.includes('Renda após reabrir IndexedDB'),
+        local:Boolean(local?.includes('Renda após reabrir IndexedDB'))};
+    });
+    assert.deepEqual(persistiu,{idb:true,local:true},'IDB primário mantém dados e recompõe espelho local');
     await contextoConflito.close();
     console.log('E2E desktop, smartphone, tombstone e recuperação assistida: validados.');
   }finally{

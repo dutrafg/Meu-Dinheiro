@@ -95,3 +95,13 @@
 - A tela de Ajustes passou a oferecer seleção da origem após os dois arquivos JSON e duas confirmações.
 - Recuperação de conflitos só altera o IndexedDB após comparar o snapshot na transação e depois sincroniza localStorage; falhas impedem anunciar conclusão.
 - Proteção contra abas concorrentes, tombstone e dados inválidos; testes de cancelamento, substituição e falha de escrita, inclusive no Chromium.
+
+## P0.4 e P0.5 — Repositório primário e importação OFX (v50, em homologação)
+
+- Repositório financeiro assíncrono passa a exigir o commit IndexedDB antes de aceitar lançamentos, investimentos, metas, CSV ou backup JSON. localStorage torna-se compatibilidade secundária.
+- Novo parser OFX local acoplado à conferência prévia do CSV, com FITID para detecção de duplicatas e classificação manual das aplicações.
+- Recuperação de JSON passa a exigir dupla confirmação; conflitos de origem permanecem bloqueados sem escolha explícita.
+- Snapshot primário marcado de modo persistente; reabertura sem chave local é permitida somente com marcador válido. Tombstone e versões futuras continuam protegidas.
+- Corrigida corrida entre dois diálogos de confirmação sucessivos encontrada no Chromium durante P0.3c2.
+- Diagnóstico indica fonte primária e estado do espelho legado sem registrar conteúdo financeiro; testes de 1.000 e 10.000 registros e de falhas de persistência.
+- **Homologação manual em PWA instalado e backup real ainda necessária antes de declarar P0 finalizada ou publicar na main.**
