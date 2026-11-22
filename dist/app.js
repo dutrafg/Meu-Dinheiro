@@ -40,7 +40,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   aplicarAparencia(preferencias.obter());
   const NAV = [
     ['resumo', 'Resumo', 'chart-pie'], ['renda', 'Renda', 'wallet'], ['despesas', 'Despesas', 'receipt'],
-    ['metas', 'Objetivos', 'target'], ['ajustes', 'Ajustes', 'settings']
+    ['metas', 'Objetivos', 'target'], ['relatorios', 'Relatórios', 'folder'], ['ajustes', 'Ajustes', 'settings']
   ];
   // Ícones e categorias adaptados do protótipo Finanças-2.html.
   const CATEGORY_ICONS = {
@@ -76,6 +76,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   let cdiQuote = readCdiCache();
   const viewContent = document.getElementById('view-content');
   const settingsPage = document.getElementById('settings-page');
+  const reportsPage = document.getElementById('reports-page');
   const transactionDialog = document.getElementById('transaction-dialog');
   const transactionForm = document.getElementById('transaction-form');
   const goalDialog = document.getElementById('goal-dialog');
@@ -292,8 +293,9 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     document.getElementById('header-balance').textContent=money(sums(month).balance);
     acaoRapida.atualizar(view);
     settingsPage.classList.toggle('hidden',view!=='ajustes');
-    viewContent.classList.toggle('hidden',view==='ajustes');
-    if(view==='ajustes')return;
+    reportsPage.classList.toggle('hidden',view!=='relatorios');
+    viewContent.classList.toggle('hidden',view==='ajustes'||view==='relatorios');
+    if(view==='ajustes'||view==='relatorios')return;
     if (view === 'resumo') viewContent.innerHTML = renderSummary();
     else if (view === 'renda' || view === 'despesas') viewContent.innerHTML = renderTransactions(view==='renda'?'income':'expense');
     else viewContent.innerHTML = renderGoals(objectiveKind);
@@ -329,9 +331,6 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
-    if(event.target.closest('[data-open-calendar-settings]')){
-      changeView('resumo');calendarioFinanceiro.abrirCalendario();return;
-    }
     const objectiveTab=event.target.closest('[data-objective-tab]');
     if(objectiveTab){
       const kind=objectiveTab.dataset.objectiveTab;
