@@ -23,6 +23,7 @@ import { iniciarAcaoRapida } from './modules/acao-rapida.js';
 import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
+import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
@@ -66,6 +67,12 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   let diaAtual = `${currentMonth}-${String(today.getDate()).padStart(2,'0')}`;
   let storageLocked = false;
   let data = readData();
+  const espelho=criarEspelhoIndexedDB({api:typeof indexedDB==='undefined'?null:indexedDB,
+    aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
+  if(!storageLocked){
+    try{const legado=localStorage.getItem(KEY);if(legado!==null)void espelho.gravar(legado);}
+    catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
+  }
   let view = 'resumo';
   let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
   let month = currentMonth;
@@ -113,6 +120,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     try {
       const serializado=JSON.stringify(next);
       localStorage.setItem(KEY,serializado);
+      void espelho.gravar(serializado);
       if(typeof guardaConcorrencia!=='undefined')guardaConcorrencia.registrarGravacao(serializado);
       data = next;
       storageLocked = false;
@@ -442,6 +450,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
     apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
       pausarBackup:()=>folderBackup?.pause(),
+      antesRemocao:async()=>{if(!await espelho.apagar())throw new Error('Espelho indisponível');},
       aposLimpeza:()=>{
         data={transactions:[],goals:[],allocations:[],completedAportes:[]};
         storageLocked=false;
@@ -458,10 +467,12 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
+    getPersistenciaState:()=>espelho.obterEstado(),
+    getPersistenciaCheck:()=>espelho.conferir(localStorage.getItem(KEY)),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
     moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
-    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
+    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho});
   renderNav();render();
   if(typeof MutationObserver==='function')
     new MutationObserver(sincronizarAlertasNav).observe(document.querySelector('.nav-alert-sources'),{attributes:true,attributeFilter:['class'],subtree:true});

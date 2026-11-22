@@ -118,3 +118,15 @@ test('Falha do armazenamento mantém segunda etapa aberta para nova tentativa',a
   assert.equal(tela.pegar('delete-data-confirm').disabled,false);
   assert.match(avisos[0],/Não foi possível apagar/);
 });
+
+
+test('Falha ao apagar espelho IndexedDB mantém os dados legados intactos',async()=>{
+  const {apagarDadosLocais}=await modulo;
+  let removidos=0;
+  const storage={removeItem:()=>{removidos++;}};
+  const resultado=await apagarDadosLocais({storage,chave:'dados',
+    pausarBackup:async()=>{},
+    antesRemocao:async()=>{throw Error('IndexedDB temporariamente bloqueado');}});
+  assert.equal(resultado,false);
+  assert.equal(removidos,0);
+});

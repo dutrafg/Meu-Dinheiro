@@ -35,7 +35,8 @@ export function calcularDuracaoDiagnostico(totalVerificacoes) {
 
 // Nenhum lançamento, nome, descrição, valor, caminho de pasta ou objeto de erro sai no JSON.
 export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderState=()=>null,getUpdateStatus=()=>null,
-  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,obterLogs=()=>[]}) {
+  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,
+  getPersistenciaState=()=>null,getPersistenciaCheck=async()=>null,obterLogs=()=>[]}) {
   const dados = getData();
   const integridade = verificarIntegridade(dados,CATEGORIES);
   const transactions = Array.isArray(dados?.transactions) ? dados.transactions : [];
@@ -82,6 +83,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     ultimoLancamento:dates.at(-1)||null,
     gravacaoBloqueada:Boolean(getStorageLocked())
   };
+  const estadoEspelho=getPersistenciaState();
+  let verificacaoEspelho=null;
+  try{verificacaoEspelho=await getPersistenciaCheck();}
+  catch{verificacaoEspelho={estado:'erro'};}
   const bibliotecas = {
     csv:typeof window.MeuDinheiroCSV?.importCSV==='function',
     graficos:typeof window.MeuDinheiroAnalytics?.expenseCategoryStats==='function',
@@ -89,6 +94,11 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   };
   const adicionar=(codigo,estado,descricao,modulo='ambiente')=>integridade.itens.push({codigo,estado,descricao,modulo});
   const conferir=(codigo,ok,correto,problema,modulo='ambiente',estadoRuim='erro')=>adicionar(codigo,ok?'ok':estadoRuim,ok?correto:problema,modulo);
+  if(estadoEspelho?.habilitado){
+    const consistente=['sincronizado','vazio'].includes(verificacaoEspelho?.estado);
+    conferir('ESPELHO_INDEXEDDB',consistente,'Cópia financeira IndexedDB sincronizada',
+      'Verifique a sincronização do armazenamento IndexedDB','dados','aviso');
+  }
   // Cenário sintético: passado, recorrência mensal e transação futura, sem expor saldos.
   const saldoExemplo=calcularSaldoDisponivelHoje([
     {type:'income',date:'2026-02-10',amount:100,recurring:true},
@@ -524,6 +534,9 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       armazenamentoEstimado:usoEstimado
     },
     dados:resumo,
+    persistenciaIndexedDB:estadoEspelho?{habilitado:estadoEspelho.habilitado,
+      estado:verificacaoEspelho?.estado||estadoEspelho.estado,
+      falhas:estadoEspelho.falhas,ultimaSincronizacao:estadoEspelho.ultimaSincronizacao}:null,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},

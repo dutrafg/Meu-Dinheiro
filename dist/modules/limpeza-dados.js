@@ -4,11 +4,12 @@ import {cliqueForaDoDialogo} from './dialogos.js';
 export const FRASE_LIMPEZA='APAGAR';
 export const validarFraseLimpeza=valor=>valor===FRASE_LIMPEZA;
 
-export async function apagarDadosLocais({storage,chave,pausarBackup,aposLimpeza}){
+export async function apagarDadosLocais({storage,chave,pausarBackup,antesRemocao,aposLimpeza}){
   if(!storage||typeof storage.removeItem!=='function'||!chave)return false;
   try{
     // Um backup agendado não pode gravar a coleção vazia sobre o arquivo externo.
     await pausarBackup?.();
+    await antesRemocao?.();
     storage.removeItem(chave);
   }catch{return false;}
   aposLimpeza?.();

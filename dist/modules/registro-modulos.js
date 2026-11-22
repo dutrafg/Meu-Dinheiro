@@ -19,7 +19,7 @@ import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './cate
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico} = api;
+    atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
@@ -46,6 +46,9 @@ export function registrarModulosDoApp(api) {
     document.getElementById('mobile-create-dialog').querySelectorAll('[data-create-kind]').length===5);
   registrar('ciclo-periodo',()=>mesLocalDaData(new Date(2027,0,1))==='2027-01'&&
     calcularViradaPeriodo('2026-12','2026-12','2026-12-31',new Date(2027,0,1)).mesSelecionado==='2027-01');
+  registrar('espelho-indexeddb',()=>typeof espelho?.gravar==='function'&&
+    typeof espelho?.apagar==='function'&&typeof espelho?.conferir==='function'&&
+    typeof espelho?.obterEstado==='function');
   registrar('concorrencia-dados',()=>{
     let raw='origem';const storage={getItem:()=>raw};const eventos=[];
     const proteger=criarProtecaoConcorrencia({storage,chave:'teste',janela:{addEventListener:()=>{}},
