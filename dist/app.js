@@ -75,7 +75,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
   if(!storageLocked){
     try{const legado=localStorage.getItem(KEY);if(legado!==null)void espelho.iniciar(legado).then(ok=>{
-      if(!ok)registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+      if(!ok&&espelho.obterEstado().estado==='conflito')registrar('aviso','IDB_CONFLITO_INICIAL','dados');
     });}
     catch{registrar('aviso','IDB_ORIGEM_INDISPONIVEL','dados');}
   }

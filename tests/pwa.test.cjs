@@ -144,7 +144,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v45/);
+  assert.match(source, /meu-dinheiro-essencial-v46/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

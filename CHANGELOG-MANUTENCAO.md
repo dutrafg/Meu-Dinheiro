@@ -64,3 +64,10 @@
 ## P2.6 — Teste alinhado à estrutura atual de Ajustes
 
 - O teste de smartphone confere a seção de exportação/importação, os cinco comandos e o painel de atualizações/diagnóstico pelos rótulos reais.
+
+## P0.3a — Migração transacional incremental (v46)
+
+- Leitura, comparação e escrita passam a ocorrer em uma mesma transação IndexedDB, com confirmação somente em `oncomplete`.
+- Marcador de esquema do snapshot e trava de versão conhecida impedem sobrescrita por abas ou clientes defasados.
+- Eliminada a corrida entre inicialização e gravação enfileirada; falhas iniciais não são confundidas com conflito confirmado.
+- Cinco cenários novos de teste cobrem duas abas, conflito tardio, versão futura e falha de leitura; Chromium verifica a integridade do espelho no começo e após operações.

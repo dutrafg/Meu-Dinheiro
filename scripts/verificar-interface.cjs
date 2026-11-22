@@ -40,6 +40,24 @@ async function verificar(){
     page.on('pageerror',erro=>erros.push(erro.message));
     await page.goto(`http://127.0.0.1:${servidor.address().port}/`);
     await page.locator('#desktop-create-trigger').waitFor();
+    // Compara conteúdo real no IndexedDB sem expô-lo no log de testes.
+    const aguardarEspelho=()=>page.waitForFunction(async()=>{
+      const pedido=indexedDB.open('meu-dinheiro-financeiro',1);
+      const db=await new Promise((resolve,reject)=>{
+        pedido.onsuccess=()=>resolve(pedido.result);
+        pedido.onerror=()=>reject(pedido.error);
+      });
+      try{
+        const transacao=db.transaction('snapshots','readonly');
+        const consulta=transacao.objectStore('snapshots').get('principal');
+        const registro=await new Promise((resolve,reject)=>{
+          consulta.onsuccess=()=>resolve(consulta.result);
+          consulta.onerror=()=>reject(consulta.error);
+        });
+        return registro?.versao===1&&registro.conteudo===localStorage.getItem('meu-dinheiro-essencial:v1');
+      }finally{db.close();}
+    },null,{timeout:8000});
+    await aguardarEspelho();
     const logInicial=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('meu-dinheiro-essencial:diagnostico-sessao')||'[]'));
     assert.ok(logInicial.some(e=>e.nivel==='evento'&&e.codigo==='SESSAO_INICIADA'&&e.modulo==='sistema'),
       'O aplicativo inicia com telemetria técnica da sessão ativada');
@@ -154,6 +172,7 @@ async function verificar(){
       assert.equal(await page.locator('#'+id).count(),1,'Ferramenta disponível nos Ajustes: '+id);
     assert.match(await page.locator('.settings-tools summary').innerText(),/Atualizações e diagnóstico/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
+    await aguardarEspelho(); // Mesmo após criar e editar lançamentos, as duas cópias coincidem.
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');
     console.log('E2E desktop + mobile: navegação, calendário, cinco cadastros pelo +, edição de investimentos, saldo e layout validados.');
   }finally{

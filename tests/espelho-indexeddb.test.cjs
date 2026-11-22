@@ -6,30 +6,58 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../dist/modules/espelho-indexeddb.js'),'utf8');
 const apiModulo=import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 
-function fakeIndexedDB({falhar=false}={}){
+function fakeIndexedDB({falhar=false,falharSomente=null}={}){
   const registros=new Map();
+  let transacaoAnterior=Promise.resolve();
   const db={
     objectStoreNames:{contains:()=>false},
     createObjectStore:()=>{},
     close:()=>{},
     transaction:()=>{
+      const anterior=transacaoAnterior;
+      let liberar;
+      transacaoAnterior=new Promise(resolve=>{liberar=resolve;});
+      let pendentes=0,encerrada=false;
       const tx={
-        objectStore:()=>({
-          put:(value,key)=>queueMicrotask(()=>{
-            if(falhar){tx.error=new Error('falha fictícia');tx.onerror?.();return;}
-            registros.set(key,value);tx.oncomplete?.();
-          }),
-          delete:key=>queueMicrotask(()=>{
-            if(falhar){tx.error=new Error('falha fictícia');tx.onerror?.();return;}
-            registros.delete(key);tx.oncomplete?.();
-          }),
-          get:key=>{
-            const pedido={result:null};
-            queueMicrotask(()=>{pedido.result=registros.get(key);pedido.onsuccess?.();});
-            return pedido;
-          }
-        })
+        error:null,
+        abort(){
+          if(encerrada)return;
+          encerrada=true;tx.error=new Error('abortado');
+          tx.onabort?.();liberar();
+        }
       };
+      function encerrarSePronto(){
+        queueMicrotask(()=>{
+          if(encerrada||pendentes!==0)return;
+          encerrada=true;tx.oncomplete?.();liberar();
+        });
+      }
+      function agendar(tipo,executar){
+        pendentes++;
+        void anterior.then(()=>queueMicrotask(()=>{
+          if(encerrada)return;
+          if(falhar||falharSomente===tipo){
+            encerrada=true;tx.error=new Error('falha fictícia');
+            tx.onerror?.();liberar();return;
+          }
+          try{executar();}
+          catch(error){encerrada=true;tx.error=error;tx.onerror?.();liberar();return;}
+          pendentes--;
+          encerrarSePronto();
+        }));
+      }
+      tx.objectStore=()=>({
+        put:(value,key)=>agendar('put',()=>registros.set(key,value)),
+        delete:key=>agendar('delete',()=>registros.delete(key)),
+        get:key=>{
+          const pedido={result:null};
+          agendar('get',()=>{
+            pedido.result=registros.get(key);
+            pedido.onsuccess?.();
+          });
+          return pedido;
+        }
+      });
       return tx;
     }
   };
@@ -110,4 +138,67 @@ test('Inicialização idempotente preserva registro já sincronizado',async()=>{
   assert.equal(await primeiro.iniciar('arquivo-legado'),true);
   assert.equal(fake.registros.get('principal').atualizadoEm,data);
   assert.equal((await primeiro.conferir('arquivo-legado')).estado,'sincronizado');
+});
+
+test('Gravação enfileirada antes de detectar conflito não destrói a cópia original',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const antigo=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await antigo.iniciar('versao-indexeddb'),true);
+  const atual=criarEspelhoIndexedDB({api:fake.api});
+  const comparando=atual.iniciar('versao-local-antiga');
+  const salvando=atual.gravar('edicao-feita-durante-inicializacao');
+  assert.deepEqual(await Promise.all([comparando,salvando]),[false,false]);
+  assert.equal(fake.registros.get('principal').conteudo,'versao-indexeddb');
+  assert.equal(atual.obterEstado().estado,'conflito');
+});
+
+test('Duas abas que inicializam juntas não sobrescrevem snapshots diferentes',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const primeira=criarEspelhoIndexedDB({api:fake.api});
+  const segunda=criarEspelhoIndexedDB({api:fake.api});
+  assert.deepEqual(await Promise.all([primeira.iniciar('origem-a'),segunda.iniciar('origem-b')]),[true,false]);
+  assert.equal(fake.registros.get('principal').conteudo,'origem-a');
+  assert.equal(segunda.obterEstado().estado,'conflito');
+});
+
+test('Gravação entre abas é comparada na transação e não perde versão concorrente',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const aba1=criarEspelhoIndexedDB({api:fake.api});
+  const aba2=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await aba1.iniciar('mes-anterior'),true);
+  assert.equal(await aba2.iniciar('mes-anterior'),true);
+  assert.equal(await aba1.gravar('mes-atual'),true);
+  assert.equal(await aba2.gravar('edicao-antiga'),false);
+  assert.equal(fake.registros.get('principal').conteudo,'mes-atual');
+  assert.equal(aba2.obterEstado().estado,'conflito');
+});
+
+test('Esquema futuro desconhecido é preservado e legado recebe marcador de versão',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  fake.registros.set('principal',{conteudo:'dados-antigos',atualizadoEm:123});
+  const atual=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await atual.iniciar('dados-antigos'),true);
+  assert.equal(fake.registros.get('principal').versao,1);
+  assert.equal(fake.registros.get('principal').atualizadoEm,123);
+  fake.registros.set('principal',{conteudo:'dados-novos',versao:2,atualizadoEm:124});
+  const obsoleto=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await obsoleto.iniciar('dados-novos'),false);
+  assert.equal(await obsoleto.gravar('outra-versao'),false);
+  assert.equal(fake.registros.get('principal').versao,2);
+  assert.equal(fake.registros.get('principal').conteudo,'dados-novos');
+});
+
+test('Falha na transação de inicialização não autoriza gravação posterior arriscada',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB({falharSomente:'get'});
+  const codigos=[];
+  const espelho=criarEspelhoIndexedDB({api:fake.api,aoFalhar:codigo=>codigos.push(codigo)});
+  assert.equal(await espelho.iniciar('legado-valido'),false);
+  assert.equal(await espelho.gravar('outro-legado'),false);
+  assert.equal(fake.registros.has('principal'),false);
+  assert.deepEqual(codigos,['IDB_INICIALIZACAO_FALHOU']);
 });

@@ -33,3 +33,11 @@ O armazenamento oficial do PWA continua na chave legada "meu-dinheiro-essencial:
 ## P0.2 — Divergência entre cópias
 
 A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se forem diferentes, o espelho preexistente NÃO é sobrescrito silenciosamente. O diagnóstico marca a divergência; uma resolução automática de conflitos não está autorizada até que exista uma recuperação explícita e transacional.
+
+## P0.3a — comparação e gravação transacionais (v46)
+
+- A leitura, a comparação e a escrita do snapshot compartilham a mesma transação `readwrite` em IndexedDB. A confirmação ocorre somente em `transaction.oncomplete`.
+- O registro financeiro ganha um marcador interno `versao: 1` (a versão de abertura do banco continua 1); registros legados sem marcador são aceitos e recebem o marcador sem alterar o instante original.
+- Cada gravação compara a cópia existente com a última cópia confirmada pela instância. Se outra aba tiver alterado ou apagado o registro, a gravação antiga é bloqueada com `IDB_CONFLITO_TRANSACIONAL`.
+- Uma gravação enfileirada antes do fim da inicialização reavalia o bloqueio ao executar. Falha de leitura inicial mantém o espelho bloqueado até nova inicialização ou exclusão explícita.
+- **Não há escolha automática entre cópias.** A resolução assistida de conflitos, o marcador de exclusão (*tombstone*) e a troca de fonte primária permanecem para as próximas etapas. O `localStorage` continua oficial.
