@@ -83,7 +83,8 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   assert.match(css,/\.desktop-nav \.nav-button\.active\{[^\n]*color:var\(--accent-text\)/,
     'A navegação deve seguir a cor de destaque configurada');
   assert.match(css,/@media\(min-width:880px\)\{[\s\S]*?\.desktop-toolbar\{position:sticky;top:0;z-index:11\}/);
-  assert.match(css,/\.desktop-create\{position:relative;flex:none;margin-top:[^}]+border-top:1px solid var\(--border\)\}/);\n  assert.match(css,/\.desktop-create-menu\{position:absolute/);
+  assert.match(css,/\.desktop-create\{position:relative;flex:none;margin-top:[^}]+border-top:1px solid var\(--border\)\}/);
+  assert.match(css,/\.desktop-create-menu\{position:absolute/);
   assert.match(css,/\.fab\{display:none\}/);
   assert.match(media,/\.desktop-toolbar\{display:none\}/);
   assert.match(impressao,/\.desktop-toolbar,\.mobile-nav/);
