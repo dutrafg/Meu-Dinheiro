@@ -79,11 +79,11 @@ test('Barra desktop fica fixa no topo e ação de criação não sobrepõe os da
   assert.match(css,/\.desktop-toolbar\{display:flex/);
   assert.match(css,/\.desktop-toolbar\{[^\n]*margin:0 calc\(0px - clamp\(18px,2\.5vw,48px\)\) 16px/,
     'A barra ultrapassa somente o recuo horizontal do app-shell');
-  assert.match(css,/\.desktop-toolbar \.desktop-nav\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.desktop-toolbar \.desktop-nav\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
   assert.match(css,/\.desktop-nav \.nav-button\.active\{[^\n]*color:var\(--accent-text\)/,
     'A navegação deve seguir a cor de destaque configurada');
   assert.match(css,/@media\(min-width:880px\)\{[\s\S]*?\.desktop-toolbar\{position:sticky;top:0;z-index:11\}/);
-  assert.match(css,/\.desktop-create-menu\{position:absolute/);
+  assert.match(css,/\.desktop-create\{position:relative;flex:none;margin-top:[^}]+border-top:1px solid var\(--border\)\}/);\n  assert.match(css,/\.desktop-create-menu\{position:absolute/);
   assert.match(css,/\.fab\{display:none\}/);
   assert.match(media,/\.desktop-toolbar\{display:none\}/);
   assert.match(impressao,/\.desktop-toolbar,\.mobile-nav/);
@@ -125,7 +125,7 @@ test('Smartphone abre diálogo de cinco ações e mantém CSS e formulários mod
   assert.match(logica,/dialogoMovel\.addEventListener\('close'/);
   assert.match(logica,/dialogoMovel\.querySelectorAll\('\[data-create-kind\]'\)/);
   assert.match(read('dist/modules/objetivos.js'),/Toque para consultar e editar os aportes/);
-  assert.match(html,/Relatórios PDF, CSV e backup/);
+  assert.match(html,/id="reports-page"[\\s\\S]*id="export-pdf"/);
 });
 
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{
