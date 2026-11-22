@@ -90,6 +90,7 @@ test('Falha na leitura bloqueia substituição automática e permite restauraç�
     localStorage:{getItem:key=>entries.get(key),setItem:(key,value)=>entries.set(key,value)},
     dialogos:{informar:(_,message)=>{warnings.push(message);return Promise.resolve(true);}},
     registrar:()=>{},console:{error:()=>{}},folderBackup:null,
+    espelho:{gravar:()=>Promise.resolve(true)},
   };
   vm.createContext(sandbox);
   vm.runInContext(`${code}\nthis.readData=readData;this.persist=persist;`,sandbox);
