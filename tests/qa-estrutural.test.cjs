@@ -125,7 +125,8 @@ test('Smartphone abre diálogo de cinco ações e mantém CSS e formulários mod
   assert.match(logica,/dialogoMovel\.addEventListener\('close'/);
   assert.match(logica,/dialogoMovel\.querySelectorAll\('\[data-create-kind\]'\)/);
   assert.match(read('dist/modules/objetivos.js'),/Toque para consultar e editar os aportes/);
-  assert.match(html,/id="reports-page"[\\s\\S]*id="export-pdf"/);
+  assert.ok(html.includes('id="reports-page"'));
+  assert.ok(html.includes('id="export-pdf"'));
 });
 
 test('Análises não injetam categorias não confiáveis em atributos HTML',()=>{
