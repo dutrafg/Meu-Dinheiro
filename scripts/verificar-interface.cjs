@@ -314,8 +314,29 @@ async function verificar(){
         local:Boolean(local?.includes('Renda após reabrir IndexedDB'))};
     });
     assert.deepEqual(persistiu,{idb:true,local:true},'IDB primário mantém dados e recompõe espelho local');
+    // Importação OFX também atravessa a gravação indexada antes de encerrar o diálogo.
+    await paginaConflito.locator('.desktop-nav [data-view="ajustes"]').click();
+    const ofxFicticio='<OFX><STMTTRN><DTPOSTED>20261121<TRNAMT>-12.34<FITID>ofx-e2e-01<NAME>Mercado OFX fictício</STMTTRN></OFX>';
+    await paginaConflito.locator('#csv-import-file').setInputFiles({
+      name:'extrato-ficticio.ofx',mimeType:'application/x-ofx',buffer:Buffer.from(ofxFicticio)
+    });
+    await paginaConflito.locator('#csv-confirm-import').click();
+    await paginaConflito.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')||'{}')
+      .transactions?.some(t=>t.importKey==='ofx:ofx-e2e-01'));
+    await paginaConflito.waitForFunction(()=>!document.getElementById('csv-preview-dialog').open);
+    await aguardarEspelho(paginaConflito);
+    // Backup JSON restaurado substitui as coleções somente após duas confirmações.
+    const restauracao={app:'meu-dinheiro-essencial',version:1,...dados};
+    await paginaConflito.locator('#import-file').setInputFiles({
+      name:'backup-ficticio.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(restauracao))
+    });
+    await paginaConflito.locator('#confirmation-accept').click();
+    await paginaConflito.locator('#confirmation-accept').click();
+    await paginaConflito.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')||'{}')
+      .transactions?.length===2);
+    await aguardarEspelho(paginaConflito);
     await contextoConflito.close();
-    console.log('E2E desktop, smartphone, tombstone e recuperação assistida: validados.');
+    console.log('E2E desktop, smartphone, tombstone, recuperação, OFX e backup JSON: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));
