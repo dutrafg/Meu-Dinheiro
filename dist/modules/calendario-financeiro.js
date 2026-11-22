@@ -1,4 +1,4 @@
-// Calendário de fluxo diário: abre ao clicar no seletor de mês, fora do Resumo.
+// Calendário de fluxo diário: acessível pelo seletor de mês no Resumo.
 // Inspirado no heatmap de 5 níveis do Reserva Simples, incluindo renda e dias mistos.
 import {cliqueForaDoDialogo} from './dialogos.js';
 const DIAS_SEMANA=Object.freeze(['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']);
