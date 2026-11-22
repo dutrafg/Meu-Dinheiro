@@ -137,7 +137,9 @@ async function verificar(){
     }
     await page.locator('#quick-add').click();
     await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#quick-add').getAttribute('aria-expanded'),'false');
+    await page.waitForFunction(()=>document.getElementById('quick-add').getAttribute('aria-expanded')==='false');
+    assert.equal(await page.locator('#mobile-create-dialog').evaluate(el=>el.open),false,
+      'Esc encerra o diálogo nativo e o botão volta ao estado recolhido');
     await page.locator('.mobile-nav [data-view="metas"]').click();
     await page.locator('[data-objective-tab="dream"]').click();
     assert.equal(await page.locator('[data-objective-tab="dream"]').getAttribute('aria-pressed'),'true',

@@ -56,3 +56,7 @@
 ## P2.4 — Verificação do calendário fechado no celular
 
 - O teste do navegador agora confere o estado real do diálogo; o calendário mantém os dias no DOM após fechar, mas não é exibido ao usuário.
+
+## P2.5 — Sincronização do teste de fechamento móvel
+
+- O teste aguarda o evento nativo `close` do diálogo após Esc antes de validar `aria-expanded`, evitando uma corrida entre o browser e o teste.
