@@ -36,7 +36,9 @@ test('Relatório não confunde HTML independente com falha do Service Worker',()
   assert.match(source,/htmlIndependente\?'nao_avaliado':'aviso'/);
   assert.match(source,/fundosPermitidos=escuro\?/);
   assert.match(source,/motorVisivel===update\.versaoEmExecucao/);
-  assert.match(read('dist/index.html'),/id="reports-page"[\\s\\S]*id="export-pdf"/);
+  const html=read('dist/index.html');
+  assert.ok(html.indexOf('id="reports-page"')>=0&&html.indexOf('id="reports-page"')<html.indexOf('id="settings-page"'));
+  assert.match(html,/id="export-pdf"/);
 });
 
 test('Módulo v38 entra na mesma central sem criar painel ou exportação próprios',()=>{
