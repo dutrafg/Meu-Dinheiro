@@ -57,6 +57,23 @@ test('Falha no espelho legado preserva commit primário e sinaliza alerta',async
   assert.equal((await repo.gravar(criar())).ok,false);
 });
 
+test('Outra aba altera localStorage durante commit: preservar sua cópia sem sobrescrever',async()=>{
+  const {criarRepositorioFinanceiro}=await carregar();
+  const antigo=criar(),avisos=[];let local=antigo,liberar;
+  const repo=criarRepositorioFinanceiro({espelho:{obterEstado:()=>({habilitado:true}),
+    iniciar:async()=>true,obterCopiaParaRecuperacao:async()=>({estado:'dados',conteudo:antigo}),
+    gravar:()=>new Promise(resolve=>{liberar=()=>resolve(true);})},
+    storage:{getItem:()=>local,setItem:(key,raw)=>{local=raw;}},
+    chave:'dados',validar,aoAvisar:codigo=>avisos.push(codigo)});
+  await repo.iniciar();
+  const pendente=repo.gravar(JSON.stringify({transactions:[{id:'nova'}],goals:[]}));
+  local=JSON.stringify({transactions:[{id:'de-outra-aba'}],goals:[]});
+  liberar();
+  assert.deepEqual(await pendente,{ok:true,modo:'espelho-pendente'});
+  assert.match(local,/de-outra-aba/);
+  assert.deepEqual(avisos,['IDB_ESPELHO_LOCAL_CONFLITO']);
+});
+
 test('Com 1.000 e 10.000 registros o repositório preserva todos em ordem',async()=>{
   const {criarRepositorioFinanceiro}=await carregar();
   for(const n of [1000,10000]){

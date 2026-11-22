@@ -1,6 +1,6 @@
 # Persistência — Meu Dinheiro
 
-## Estado da migração (P0 — versão v51, em homologação)
+## Estado da migração (P0 — versão v52, em homologação)
 
 Em navegadores com IndexedDB disponível, o armazenamento financeiro **primário é IndexedDB** ("meu-dinheiro-financeiro" / "snapshots" / "principal") após migração idempotente e validação. A chave legada "meu-dinheiro-essencial:v1" do localStorage permanece como **espelho de compatibilidade**.
 
@@ -69,7 +69,7 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Exclusão financeira mantém tombstone transacional antes de remover o espelho local. Diagnóstico sanitizado informa quando IndexedDB é primário e quando o espelho local está pendente.
 - Testes sintéticos de 1.000 e 10.000 registros conferem persistência e integridade, sem dados reais.
 
-## P0.5 — IndexedDB primário, aguardando homologação no dispositivo (v51)
+## P0.5 — IndexedDB primário, aguardando homologação no dispositivo (v52)
 
 - `repositorio-financeiro.js` controla a ordem: validação → commit IndexedDB → espelho local → atualização da UI e backup de pasta. A fonte primária é o snapshot indexado quando disponível.
 - Cada snapshot migrado recebe `primario:true`. Na ausência da chave local, apenas snapshots com esse marcador podem reabrir o app; cópias legadas órfãs não são escolhidas automaticamente.

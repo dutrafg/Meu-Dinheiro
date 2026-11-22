@@ -111,3 +111,8 @@
 - Backup automático em pasta aguarda o carregamento do snapshot primário e fica suspenso durante divergências, evitando escrever estado vazio provisório.
 - Após recuperar ou excluir dados, o backup em pasta pode ser reinicializado com o estado correto.
 - QA do Chromium aguarda o fechamento dos formulários depois do commit assíncrono antes de comparar valores, eliminando leituras prematuras.
+
+## P0.5 — Conflito durante commit assíncrono (v52)
+
+- Se uma aba legada alterar localStorage enquanto o IndexedDB conclui uma gravação, a nova versão **não sobrescreve** essa origem. Ambos os estados são preservados para recuperação assistida; novas escritas são bloqueadas.
+- Teste unitário específico reproduz a alteração concorrente no intervalo entre commit indexado e atualização da cópia de compatibilidade.

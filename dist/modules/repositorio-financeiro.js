@@ -48,11 +48,21 @@ export function criarRepositorioFinanceiro({espelho,storage,chave,validar,aoAvis
       catch{return {ok:false,modo};}
     }
     if(modo!=='primario')return {ok:false,modo};
+    let legadoAnterior;
+    try{legadoAnterior=storage.getItem(chave);}catch{legadoAnterior=null;}
     const ok=await espelho.gravar(serializado);
     if(!ok){modo='conflito';aoAvisar('IDB_COMMIT_BLOQUEADO');return {ok:false,modo};}
     // A escrita só é considerada financeira depois do transaction.oncomplete.
     confirmado=serializado;
-    try{storage.setItem(chave,serializado);return {ok:true,modo};}
+    try{
+      // Outra aba legada pode mudar localStorage durante o commit assíncrono.
+      // Preservar essa cópia em conflito para a recuperação assistida.
+      if(storage.getItem(chave)!==legadoAnterior){
+        modo='espelho-pendente';aoAvisar('IDB_ESPELHO_LOCAL_CONFLITO');
+        return {ok:true,modo};
+      }
+      storage.setItem(chave,serializado);return {ok:true,modo};
+    }
     catch{
       modo='espelho-pendente';aoAvisar('IDB_ESPELHO_LOCAL_FALHOU');
       // O lançamento JÁ existe no banco primário. Não instruir o usuário a
