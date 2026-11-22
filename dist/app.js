@@ -31,6 +31,9 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
 
 (() => {
   'use strict';
+  // Ativado em cada inicialização: somente códigos técnicos, retidos na sessão.
+  configurarDetalhado(true);
+  registrarEvento('SESSAO_INICIADA','sistema');
   const KEY = 'meu-dinheiro-essencial:v1';
   const CDI_KEY = 'meu-dinheiro-essencial:cdi-oficial';
   const dialogos = iniciarDialogos();

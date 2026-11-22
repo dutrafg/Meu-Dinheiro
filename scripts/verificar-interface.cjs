@@ -40,6 +40,11 @@ async function verificar(){
     page.on('pageerror',erro=>erros.push(erro.message));
     await page.goto(`http://127.0.0.1:${servidor.address().port}/`);
     await page.locator('#desktop-create-trigger').waitFor();
+    const logInicial=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('meu-dinheiro-essencial:diagnostico-sessao')||'[]'));
+    assert.ok(logInicial.some(e=>e.nivel==='evento'&&e.codigo==='SESSAO_INICIADA'&&e.modulo==='sistema'),
+      'O aplicativo inicia com telemetria técnica da sessão ativada');
+    assert.ok(logInicial.every(e=>!Object.keys(e).some(c=>!['t','nivel','codigo','modulo'].includes(c))),
+      'A telemetria não contém campos financeiros nem descrições');
     assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>getComputedStyle(el).position),'sticky');
     assert.equal(await page.locator('#desktop-toolbar').evaluate(el=>el.getBoundingClientRect().width>=window.innerWidth*.9),true,
       'A barra dos seis módulos ocupa a largura útil do desktop');
@@ -114,7 +119,8 @@ async function verificar(){
     await page.locator('.mobile-nav [data-view="resumo"]').click();
     assert.equal(await page.locator('[aria-label="Resumo da reserva"]').count(),1);
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
-    assert.equal(await page.locator('.finance-calendar-day').count(),0,'No celular o calendário também fica recolhido');
+    assert.equal(await page.locator('#finance-calendar-dialog').evaluate(el=>el.open),false,
+      'No celular o calendário permanece fechado até ser solicitado');
     await page.locator('[data-calendar-open]').click();
     assert.equal(await page.locator('.finance-calendar-day').count(),30);
     assert.equal(await page.locator('#finance-calendar-dialog').isVisible(),true);

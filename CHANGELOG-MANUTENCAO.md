@@ -40,3 +40,19 @@
 - Removida capitalização automática do mês no calendário; preserva o padrão em português, como dezembro de 2026.
 - Teste de interface real detectou divergência entre texto renderizado e esperado.
 - Versão de homologação v43 sincronizada com o cache PWA.
+
+## P2.3 — Alternância entre objetivos corrigida
+
+- Botões acessíveis para alternar entre Metas/Reserva e Sonhos, que antes não eram exibidos apesar do suporte no controlador.
+- Teste real de desktop e smartphone agora utiliza a rota Objetivos e seleciona Sonhos explicitamente.
+- Versão de homologação v44, sem publicação na main.
+
+## P3.1 — Log técnico automático da sessão
+
+- Eventos técnicos detalhados são habilitados desde o início de cada abertura do aplicativo.
+- Evento `SESSAO_INICIADA` retido apenas na sessão, em estrutura restrita (horário, nível, código, módulo); máximo de 50 entradas, sem valores pessoais.
+- Navegador e teste estático verificam a ativação e o formato; versão de homologação v45.
+
+## P2.4 — Verificação do calendário fechado no celular
+
+- O teste do navegador agora confere o estado real do diálogo; o calendário mantém os dias no DOM após fechar, mas não é exibido ao usuário.

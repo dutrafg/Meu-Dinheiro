@@ -112,6 +112,18 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
   assert.match(css,/@media\(max-width:879px\)[\s\S]*\.proto-goals-grid\{grid-template-columns:1fr\}/);
 });
 
+test('Log detalhado inicia automaticamente sem registrar dados financeiros', () => {
+  const app=read('dist/app.js');
+  const ativacao=app.indexOf('configurarDetalhado(true);');
+  const inicializacao=app.indexOf("registrarEvento('SESSAO_INICIADA','sistema');");
+  const leitura=app.indexOf('let data = readData();');
+  assert.ok(ativacao>=0&&ativacao<inicializacao&&inicializacao<leitura,
+    'A telemetria precisa ser habilitada antes de ler dados locais');
+  const logger=read('dist/modules/log.js');
+  assert.match(logger,/const MAXIMO = 50;/);
+  assert.match(logger,/sessionStorage\.setItem\(CHAVE,JSON\.stringify\(buffer\)\)/);
+});
+
 test('Objetivos têm controles visíveis para alternar entre reserva e sonhos', () => {
   const objetivos=read('dist/modules/objetivos.js');
   const app=read('dist/app.js');
@@ -132,7 +144,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v44/);
+  assert.match(source, /meu-dinheiro-essencial-v45/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));
