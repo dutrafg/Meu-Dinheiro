@@ -112,6 +112,18 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
   assert.match(css,/@media\(max-width:879px\)[\s\S]*\.proto-goals-grid\{grid-template-columns:1fr\}/);
 });
 
+test('Objetivos têm controles visíveis para alternar entre reserva e sonhos', () => {
+  const objetivos=read('dist/modules/objetivos.js');
+  const app=read('dist/app.js');
+  const css=read('dist/css/objetivos.css');
+  assert.match(objetivos,/data-objective-tab="goal"/);
+  assert.match(objetivos,/data-objective-tab="dream"/);
+  assert.match(objetivos,/role="group" aria-label="Tipo de objetivo"/);
+  assert.match(objetivos,/aria-pressed=/);
+  assert.match(app,/objectiveTab\.dataset\.objectiveTab/);
+  assert.match(css,/\.objective-kind-button:focus-visible/);
+});
+
 test('Service worker coloca todos os arquivos offline no cache e muda de versão', () => {
   const source = read('dist/sw.js');
   const assets=JSON.parse(source.match(/const ASSETS=(\[[^\]]+\])/)[1].replaceAll("'",'"'));
@@ -120,7 +132,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v43/);
+  assert.match(source, /meu-dinheiro-essencial-v44/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

@@ -7,6 +7,11 @@
 .proto-goal-actions .button-danger{flex:0 0 45px;display:grid;place-items:center;padding:9px}
 .proto-goal-actions .button-danger svg{width:19px;height:19px}
 .proto-empty-card{padding:25px}
+.objective-kind-switch{display:flex;gap:8px;margin:0 0 16px;max-width:500px}
+.objective-kind-button{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-size:.9rem;font-weight:650;cursor:pointer}
+.objective-kind-button svg{width:18px;height:18px;flex:none}
+.objective-kind-button.active{background:var(--green-bg);border-color:var(--green);color:var(--green-text)}
+.objective-kind-button:focus-visible{outline:3px solid var(--green);outline-offset:2px}
 .fab{position:fixed;z-index:10;right:max(24px,calc((100vw - 1040px)/2 + 32px));bottom:26px;width:58px;height:58px;border-radius:50%;border:0;background:var(--green);color:#fff;font-size:2rem;font-weight:400;line-height:1;box-shadow:0 7px 19px #19a97455;transition:transform .18s,background .18s}
 .fab:hover{transform:translateY(-2px);background:#159c6b}
 .fab:active{transform:scale(.96)}

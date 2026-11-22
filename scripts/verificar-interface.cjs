@@ -79,7 +79,10 @@ async function verificar(){
     assert.equal(gravado.allocations[0].salaryId,'salario-teste');
     assert.equal(gravado.allocations[0].category,'Nova categoria pessoal');
 
-    await page.locator('.desktop-nav [data-view="sonho"]').click();
+    await page.locator('.desktop-nav [data-view="metas"]').click();
+    await page.locator('[data-objective-tab="dream"]').click();
+    assert.equal(await page.locator('[data-objective-tab="dream"]').getAttribute('aria-pressed'),'true',
+      'A aba Sonhos fica acessível dentro de Objetivos no desktop');
     await page.locator('[data-action="add-investment"]').click();
     assert.equal(await form.locator('[name="goalId"]').inputValue(),'sonho-teste');
     await form.locator('[name="description"]').fill('Aporte antigo para viagem');
@@ -129,7 +132,10 @@ async function verificar(){
     await page.locator('#quick-add').click();
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#quick-add').getAttribute('aria-expanded'),'false');
-    await page.locator('.mobile-nav [data-view="sonho"]').click();
+    await page.locator('.mobile-nav [data-view="metas"]').click();
+    await page.locator('[data-objective-tab="dream"]').click();
+    assert.equal(await page.locator('[data-objective-tab="dream"]').getAttribute('aria-pressed'),'true',
+      'A aba Sonhos fica acessível dentro de Objetivos no celular');
     await page.locator('details.proto-history summary').click();
     assert.equal(await page.locator('[data-action="edit-investment"]').count(),1,
       'Investimentos anteriores continuam editáveis no smartphone');

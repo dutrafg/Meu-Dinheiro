@@ -19,6 +19,10 @@ export function criarModuloObjetivos(ctx) {
     const sumSaved=Math.max(0,n2(goals.reduce((s,g)=>s+g.saved,0)+looseAllocations.reduce((s,a)=>s+a.amount,0)));
     const sumTarget=n2(goals.reduce((s,g)=>s+g.target,0));
     return `${header('')}
+      <div class="objective-kind-switch" role="group" aria-label="Tipo de objetivo">
+        <button type="button" class="objective-kind-button ${!isDream?'active':''}" data-objective-tab="goal" aria-pressed="${!isDream}">${icon('target')} Metas e reserva</button>
+        <button type="button" class="objective-kind-button ${isDream?'active':''}" data-objective-tab="dream" aria-pressed="${isDream}">${icon('sparkles')} Sonhos</button>
+      </div>
       <section class="card proto-total-card"><h3>${icon(isDream?'sparkles':'target')} ${isDream?'Seu sonho':'Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
       ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:
