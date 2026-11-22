@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** P0.3b concluída na branch de homologação `refactor/roadmap-manutencao-p0-20261122`; versão **v47**. `main` não alterada.
+**Situação:** P0.3c1 concluída na branch de homologação `refactor/roadmap-manutencao-p0-20261122`; versão **v48**. **Estamos na P0.3c2 (próxima etapa)**. `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -9,7 +9,8 @@
 | P0.2 | ✅ Concluída | Preservar cópias divergentes e bloqueio de sobrescrita |
 | P0.3a | ✅ Concluída | Transações atômicas, versão do snapshot e comparação entre abas |
 | P0.3b | ✅ Concluída | Tombstone de exclusão, inicialização vazia, proteção contra abas antigas |
-| P0.3c | ⏳ Pendente | Recuperação **assistida** de conflitos com exportação prévia de ambas as cópias e decisão explícita |
+| P0.3c1 | ✅ Concluída | Inspeção manual de localStorage e IndexedDB, contagens sem valores privados e exportação independente em JSON sem sobrescrita |
+| **P0.3c2** | **⏳ Próxima etapa** | Escolha explícita da cópia a recuperar, confirmação dupla, restauração transacional e testes de falhas/conflitos |
 | P0.4 | ⏳ Pendente | Adaptação de backup/restauração, importação CSV/OFX, limpeza e diagnóstico ao repositório; testes com 1 mil e 10 mil registros |
 | P0.5 | ⏳ Pendente | Tornar IndexedDB primário **após** testes de recuperação, validação real e homologação com backup |
 | **P1 — Modularização financeira** | **Parcial** | Motor puro mensal e reserva concluído; continuar extração e cobertura de regras |

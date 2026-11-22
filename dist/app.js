@@ -24,6 +24,7 @@ import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investi
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
 import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
+import {iniciarRecuperacaoConflitos} from './modules/recuperacao-conflitos.js';
 import {ocorrenciaNoMes,transacoesNoMes,totaisDoMes,principalReserva} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
@@ -432,6 +433,9 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const backup = iniciarModuloBackup(common);
   folderBackup = backup.folderBackup;
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
+  const recuperacao=iniciarRecuperacaoConflitos({espelho,storage:localStorage,chave:KEY,
+    validar:arquivo=>validarBackup({...arquivo,app:'meu-dinheiro-essencial',version:1},CATEGORIES),
+    notificar:notify,registrarEvento});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
     onSave:()=>folderBackup?.schedule()});
@@ -462,7 +466,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     getPersistenciaCheck:()=>espelho.conferir(localStorage.getItem(KEY)),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho});
   renderNav();render();
   if(typeof MutationObserver==='function')

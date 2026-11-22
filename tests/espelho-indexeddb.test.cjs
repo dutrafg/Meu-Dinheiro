@@ -289,3 +289,36 @@ test('Uma exclusão não regride o formato de um banco futuro desconhecido',asyn
   assert.equal(await atual.apagar(),false);
   assert.equal(fake.registros.get('principal').versao,7);
 });
+
+test('Inspeção de recuperação lê cópia válida sem alterar seu conteúdo',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const espelho=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await espelho.iniciar('dados-confidenciais-ficticios'),true);
+  const anterior=fake.registros.get('principal');
+  assert.deepEqual(await espelho.obterCopiaParaRecuperacao(),
+    {estado:'dados',conteudo:'dados-confidenciais-ficticios'});
+  assert.equal(fake.registros.get('principal'),anterior,'Inspecionar nunca regrava o snapshot');
+  assert.equal(JSON.stringify(espelho.obterEstado()).includes('dados-confidenciais-ficticios'),false);
+});
+
+test('Tombstone nunca é exportada como dado financeiro na recuperação',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const espelho=criarEspelhoIndexedDB({api:fake.api});
+  await espelho.iniciar('antigo');
+  await espelho.apagar();
+  assert.deepEqual(await espelho.obterCopiaParaRecuperacao(),{estado:'apagado'});
+  const vazia=criarEspelhoIndexedDB({api:fakeIndexedDB().api});
+  assert.deepEqual(await vazia.obterCopiaParaRecuperacao(),{estado:'vazio'});
+});
+
+test('Formato futuro e falha de leitura não expõem dados ao assistente',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  fake.registros.set('principal',{versao:999,conteudo:'copia-futura'});
+  const espelho=criarEspelhoIndexedDB({api:fake.api});
+  assert.deepEqual(await espelho.obterCopiaParaRecuperacao(),{estado:'invalido'});
+  const falha=criarEspelhoIndexedDB({api:fakeIndexedDB({falharSomente:'get'}).api});
+  assert.deepEqual(await falha.obterCopiaParaRecuperacao(),{estado:'erro'});
+});

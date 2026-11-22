@@ -226,7 +226,57 @@ async function verificar(){
     assert.equal((await lerEstadoEspelho(paginaLimpeza)).apagado,false,
       'Novo cadastro legítimo substitui o marcador somente após inicialização segura');
     await contextoLimpeza.close();
-    console.log('E2E desktop + mobile + exclusão com tombstone + novo cadastro: validados.');
+
+    // Conflito sintético em perfil isolado: o assistente apenas inspeciona e exporta.
+    const contextoConflito=await browser.newContext({viewport:{width:1280,height:800},serviceWorkers:'block',acceptDownloads:true});
+    const paginaConflito=await contextoConflito.newPage();
+    await paginaConflito.goto(`http://127.0.0.1:${servidor.address().port}/`);
+    await paginaConflito.locator('#desktop-create-trigger').waitFor();
+    await paginaConflito.evaluate(async base=>{
+      const local={...base,transactions:base.transactions.map((t,i)=>i===0?{...t,description:'Origem local fictícia'}:t)};
+      const indexado={...base,transactions:base.transactions.map((t,i)=>i===0?{...t,description:'Origem IndexedDB fictícia'}:t)};
+      localStorage.setItem('meu-dinheiro-essencial:v1',JSON.stringify(local));
+      const abertura=indexedDB.open('meu-dinheiro-financeiro',1);
+      const db=await new Promise((resolve,reject)=>{
+        abertura.onupgradeneeded=()=>{if(!abertura.result.objectStoreNames.contains('snapshots'))abertura.result.createObjectStore('snapshots');};
+        abertura.onsuccess=()=>resolve(abertura.result);
+        abertura.onerror=()=>reject(abertura.error);
+      });
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction('snapshots','readwrite');
+        tx.objectStore('snapshots').put({conteudo:JSON.stringify(indexado),versao:1,atualizadoEm:Date.now()},'principal');
+        tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+      });
+      db.close();
+    },dados);
+    await paginaConflito.reload();
+    await paginaConflito.locator('.desktop-nav [data-view="ajustes"]').click();
+    await paginaConflito.locator('#settings-recovery-title').click();
+    await paginaConflito.locator('#recovery-inspect').click();
+    await paginaConflito.waitForFunction(()=>document.getElementById('recovery-status').textContent.includes('As cópias são diferentes'));
+    assert.equal(await paginaConflito.locator('#recovery-download-local').isEnabled(),true);
+    assert.equal(await paginaConflito.locator('#recovery-download-indexeddb').isEnabled(),true);
+    const [downloadLocal]=await Promise.all([
+      paginaConflito.waitForEvent('download'),paginaConflito.locator('#recovery-download-local').click()
+    ]);
+    assert.match(downloadLocal.suggestedFilename(),/recuperacao-local-/);
+    const [downloadIndex]=await Promise.all([
+      paginaConflito.waitForEvent('download'),paginaConflito.locator('#recovery-download-indexeddb').click()
+    ]);
+    assert.match(downloadIndex.suggestedFilename(),/recuperacao-indexeddb-/);
+    const intactas=await paginaConflito.evaluate(async()=>{
+      const local=localStorage.getItem('meu-dinheiro-essencial:v1');
+      const abertura=indexedDB.open('meu-dinheiro-financeiro',1);
+      const db=await new Promise(resolve=>{abertura.onsuccess=()=>resolve(abertura.result);});
+      const pedido=db.transaction('snapshots','readonly').objectStore('snapshots').get('principal');
+      const registro=await new Promise(resolve=>{pedido.onsuccess=()=>resolve(pedido.result);});
+      db.close();
+      return {local:Boolean(local?.includes('Origem local fictícia')),
+        idb:Boolean(registro?.conteudo?.includes('Origem IndexedDB fictícia'))};
+    });
+    assert.deepEqual(intactas,{local:true,idb:true},'Os dois downloads não alteram nenhuma origem');
+    await contextoConflito.close();
+    console.log('E2E desktop, smartphone, tombstone e recuperação somente leitura: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

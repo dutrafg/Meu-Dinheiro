@@ -85,3 +85,15 @@
 .diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
 @media(max-width:879px){.settings-page>.settings-heading{top:92px}}
 @media(max-width:540px){.settings-colors{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-section{padding:13px}.settings-heading h2{font-size:1.15rem}.settings-row{align-items:flex-start;flex-direction:column;gap:7px}.settings-row>select,.settings-row>input{max-width:100%;width:100%}.settings-page>.settings-heading{top:92px}}
+
+.settings-recovery>p{font-size:.86rem;line-height:1.55;color:var(--sub);margin:12px 0}
+.settings-recovery #recovery-status{font-weight:650;color:var(--text)}
+.recovery-copies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:13px 0}
+.recovery-copy{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--bg);min-width:0}
+.recovery-copy h3{font-size:.88rem;margin:0 0 9px;color:var(--text)}
+.recovery-copy p{font-size:.82rem;line-height:1.5;color:var(--sub);overflow-wrap:anywhere;min-height:38px}
+.recovery-copy button,.settings-recovery #recovery-inspect{min-height:44px;max-width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-size:.86rem;cursor:pointer}
+.recovery-copy button{width:100%}
+.recovery-copy button:disabled{opacity:.5;cursor:not-allowed}
+.settings-recovery .recovery-warning{color:var(--red-text)}
+@media(max-width:600px){.recovery-copies{grid-template-columns:1fr}}

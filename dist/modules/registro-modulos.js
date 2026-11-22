@@ -20,7 +20,7 @@ import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './cate
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho} = api;
+    atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
@@ -50,6 +50,11 @@ export function registrarModulosDoApp(api) {
   registrar('espelho-indexeddb',()=>typeof espelho?.iniciar==='function'&&typeof espelho?.iniciarVazio==='function'&&typeof espelho?.gravar==='function'&&
     typeof espelho?.apagar==='function'&&typeof espelho?.conferir==='function'&&
     typeof espelho?.obterEstado==='function');
+  registrar('recuperacao-conflitos',()=>typeof recuperacao?.inspecionar==='function'&&
+    typeof recuperacao?.baixar==='function'&&typeof recuperacao?.getEstado==='function'&&
+    Boolean(document.getElementById('recovery-inspect'))&&
+    Boolean(document.getElementById('recovery-download-local'))&&
+    Boolean(document.getElementById('recovery-download-indexeddb')));
   registrar('concorrencia-dados',()=>{
     let raw='origem';const storage={getItem:()=>raw};const eventos=[];
     const proteger=criarProtecaoConcorrencia({storage,chave:'teste',janela:{addEventListener:()=>{}},

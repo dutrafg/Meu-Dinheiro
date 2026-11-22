@@ -51,3 +51,13 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Antes de apagar a chave local, o processo compara novamente o conteúdo com o valor lido antes da pausa do backup. Alterações de outra aba interrompem a exclusão.
 - O diagnóstico JSON expõe apenas o booleano técnico `exclusaoProtegida`; não inclui conteúdo nem identificador do marcador.
 - **Ainda pendente na P0.3:** recuperação assistida quando houver duas cópias divergentes, com exportação prévia e decisão do usuário. A tombstone não conclui a migração para IndexedDB primário.
+
+
+## P0.3c1 — Inspeção e exportação assistidas (v48)
+
+- Em **Ajustes → Recuperação de cópias financeiras**, o usuário inicia a leitura somente quando seleciona **Inspecionar cópias**.
+- A ferramenta consulta localStorage e IndexedDB por caminhos distintos, incluindo ausência, erro, versão desconhecida e tombstone de exclusão. A leitura IndexedDB utiliza transação `readonly` e aguarda operações previamente enfileiradas.
+- A interface exibe **somente estados e quantidades de registros**. Não mostra nem envia valores, descrições, nomes ou dados financeiros. Os arquivos JSON de recuperação, baixados sob comando do usuário, **contêm** os dados financeiros e devem ser guardados com cuidado.
+- Os dois downloads são independentes e têm nomes diferentes. Cada origem é validada antes da exportação, gerando JSON v1 importável. Se qualquer cópia mudar entre inspeção e download, o arquivo não é gerado e uma nova inspeção é exigida.
+- **Nenhuma leitura, inspeção ou exportação substitui, apaga ou migra dados.** O aplicativo conserva localStorage como fonte primária e mantém o bloqueio de divergências.
+- **P0.3c2 ainda pendente:** decisão explícita, restauração transacional e testes de retomada, sem ressuscitar tombstones por acidente.

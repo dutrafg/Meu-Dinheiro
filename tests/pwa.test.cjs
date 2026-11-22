@@ -134,6 +134,20 @@ test('Exclusão protegida usa tombstone e inicialização vazia em todo PWA', ()
   assert.match(diagnostico,/exclusaoProtegida:Boolean\(estadoEspelho\.exclusaoProtegida\)/);
 });
 
+test('Recuperação assistida tem duas exportações explícitas e não publica seleção automática', () => {
+  const html=read('dist/index.html');
+  const app=read('dist/app.js');
+  const modulo=read('dist/modules/recuperacao-conflitos.js');
+  for(const id of ['recovery-inspect','recovery-status','recovery-local-summary',
+    'recovery-indexeddb-summary','recovery-download-local','recovery-download-indexeddb'])
+    assert.match(html,new RegExp('id="'+id+'"'));
+  assert.match(app,/iniciarRecuperacaoConflitos\(/);
+  assert.match(modulo,/obterCopiaParaRecuperacao\(\)/);
+  assert.match(modulo,/montarBackupRecuperacao/);
+  assert.doesNotMatch(modulo,/\.setItem\(|\.removeItem\(|\.clear\(|\.put\(|\.delete\(/);
+  assert.match(read('dist/sw.js'),/\.\/modules\/recuperacao-conflitos\.js/);
+});
+
 test('Objetivos têm controles visíveis para alternar entre reserva e sonhos', () => {
   const objetivos=read('dist/modules/objetivos.js');
   const app=read('dist/app.js');
@@ -154,7 +168,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v47/);
+  assert.match(source, /meu-dinheiro-essencial-v48/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

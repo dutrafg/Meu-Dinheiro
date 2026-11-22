@@ -176,8 +176,28 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     }
   }
 
+  // Exposição restrita à recuperação iniciada pelo usuário; nunca usada pelo Diagnóstico.
+  async function obterCopiaParaRecuperacao(){
+    await fila;
+    if(!habilitado)return {estado:'indisponivel'};
+    try{
+      const db=await abrir();
+      const registro=await new Promise((resolve,reject)=>{
+        const pedido=db.transaction(COLECAO_ESPELHO,'readonly')
+          .objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
+        pedido.onsuccess=()=>resolve(pedido.result??null);
+        pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
+      });
+      const copia=classificar(registro);
+      if(copia.tipo==='dados')return {estado:'dados',conteudo:copia.conteudo};
+      if(copia.tipo==='apagado')return {estado:'apagado'};
+      if(copia.tipo==='vazio')return {estado:'vazio'};
+      return {estado:'invalido'};
+    }catch{return {estado:'erro'};}
+  }
+
   return Object.freeze({
-    iniciar,iniciarVazio,
+    iniciar,iniciarVazio,obterCopiaParaRecuperacao,
     gravar:conteudo=>typeof conteudo==='string'&&conteudo.length>0?
       enfileirar('gravar',conteudo):Promise.resolve(false),
     apagar:()=>enfileirar('apagar',null),

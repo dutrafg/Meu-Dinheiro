@@ -36,6 +36,8 @@ dist/
     concorrencia-dados.js   # Conflitos entre abas e proteção opcional do armazenamento
     ciclo-periodo.js        # Dia/mês atual após retomar o PWA ou virar a data
     backup.js              # Backup completo JSON e cópias na pasta
+    espelho-indexeddb.js   # Espelho transacional e leitura de recuperação somente leitura
+    recuperacao-conflitos.js # Inspeção manual e duas exportações sem substituir origens
     csv-interface.js       # Visualização, classificação e importação CSV
     validacao.js           # Datas, integridade e restauração segura
     atualizador.js         # Detecção de versões e confirmação do usuário
@@ -83,6 +85,7 @@ dist/
 - Para modificar somente a interface, altere o arquivo da área em `dist/modules/` e/ou `dist/css/` correspondente.
 - Ao criar, renomear ou remover qualquer script/CSS/ícone, atualize `ASSETS` em `dist/sw.js` e incremente a versão de `CACHE`.
 - **Versão visível e sincronizada:** `VERSAO_EM_EXECUCAO` em `dist/modules/atualizador.js` representa o código atualmente aberto e deve ser atualizado junto com `CACHE` em `dist/sw.js` a cada publicação. O teste `tests/atualizador.test.cjs` impede a publicação caso os números não coincidam. O Diagnóstico confere se a versão aparece corretamente em Ajustes.
+- **Recuperação segura (P0.3c1):** `recuperacao-conflitos.js` só lê as duas origens quando o usuário solicita inspeção, exibe contagens sem registros financeiros e gera arquivos JSON independentes após revalidar que ambas não mudaram. Não seleciona vencedora, não escreve, não contorna tombstones. A escolha e troca transacional de fonte serão etapa separada.
 - **Exclusão local protegida:** `modules/limpeza-dados.js` orquestra confirmação visual, frase `APAGAR` e exclusão somente da chave financeira; `folder-backup.js` pausa antes de apagar, aguarda gravações ativas e protege backups externos. `tests/limpeza-dados.test.cjs` e `tests/folder-backup.test.cjs` cobrem cancelamento, erros e recuperação.
 - **Relatório PDF explícito:** `modules/relatorio-pdf.js` consulta `#pdf-report-type` em Ajustes e não depende de uma aba visitada anteriormente; o modelo puro `modules/relatorio-pdf-conteudo.js` inclui movimentações do mês e, no resumo completo, aplicações e objetivos. O Diagnóstico confirma a presença e a validade do seletor; testes verificam os dados de exemplo.
 - **Largura responsiva:** `css/estrutura.css` libera a largura de desktop, `css/responsivo.css` organiza tablet/smartphone e `css/ajustes.css` mantém a página de configurações fluida. O CSS de impressão não herda as dimensões da interface.

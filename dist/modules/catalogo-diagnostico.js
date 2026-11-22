@@ -2,7 +2,7 @@
 // O teste de arquitetura compara esta lista com o diretório inteiro, sem exceções.
 export const MODULOS_OBRIGATORIOS = Object.freeze([
   'acao-rapida','ajustes','atualizador','auditoria-codigo','backup','calendario-financeiro','catalogo-diagnostico','categorias-brasileiras','ciclo-periodo','concorrencia-dados','csv-interface','diagnostico','diagnostico-proposta','dialogos','espelho-indexeddb',
-  'integridade','investimentos','lancamentos','limpeza-dados','log','motor-financeiro','notificacoes','objetivos','preferencias','registro-modulos','regras-financeiras','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','validacao'
+  'integridade','investimentos','lancamentos','limpeza-dados','log','motor-financeiro','notificacoes','objetivos','preferencias','recuperacao-conflitos','registro-modulos','regras-financeiras','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','validacao'
 ]);
 
 const registros=new Map();

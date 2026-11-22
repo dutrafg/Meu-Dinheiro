@@ -99,6 +99,17 @@
           <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
           <div class="settings-tool-buttons"><button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button></div>
         </details>
+        <details class="settings-section settings-recovery" aria-labelledby="settings-recovery-title">
+          <summary id="settings-recovery-title">Recuperação de cópias financeiras</summary>
+          <p>Verifique separadamente o armazenamento local e a cópia IndexedDB. Esta ferramenta apenas inspeciona e gera arquivos JSON; ela não substitui, restaura nem apaga dados.</p>
+          <button type="button" id="recovery-inspect" class="button button-secondary">Inspecionar cópias</button>
+          <p id="recovery-status" role="status" aria-live="polite">Aguardando inspeção manual.</p>
+          <div class="recovery-copies">
+            <div class="recovery-copy"><h3>Armazenamento local</h3><p id="recovery-local-summary">Ainda não verificado.</p><button type="button" id="recovery-download-local" disabled>Baixar cópia local (JSON)</button></div>
+            <div class="recovery-copy"><h3>IndexedDB</h3><p id="recovery-indexeddb-summary">Ainda não verificado.</p><button type="button" id="recovery-download-indexeddb" disabled>Baixar cópia IndexedDB (JSON)</button></div>
+          </div>
+          <p class="recovery-warning">Os arquivos baixados contêm seus registros financeiros. Guarde-os em local seguro. Se as cópias forem diferentes, preserve ambas; a escolha assistida para substituição será implementada na próxima etapa.</p>
+        </details>
         <details class="settings-section settings-danger-zone" aria-labelledby="settings-danger-title">
           <summary id="settings-danger-title">Apagar dados financeiros</summary>
           <p>Remove deste navegador lançamentos, metas, sonhos, aplicações e lembretes. Preferências e arquivos de backup serão preservados. O backup automático na pasta será pausado.</p>

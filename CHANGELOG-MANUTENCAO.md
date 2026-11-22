@@ -79,3 +79,12 @@
 - Bloqueio de gravações e exclusões obsoletas de abas antigas; revisão da origem antes de excluir.
 - Diagnóstico inclui apenas sinalização técnica da proteção; testes abrangem falha e retomada da exclusão.
 - Fluxo de exclusão e criação posterior coberto também no teste real de Chromium.
+
+
+## P0.3c1 — Leitura e backups independentes de conflitos (v48)
+
+- Nova seção de recuperação em Ajustes, acessível por inspeção manual, com estados/contagens sanitizados de localStorage e IndexedDB.
+- Exportação separada das duas origens em JSON v1 validado, sem modificar nenhuma delas. Conflitos, tombstone, dados inválidos e alterações concorrentes impedem operações inseguras.
+- Leitura IndexedDB transacional somente leitura, após a fila já existente, isolada dos diagnósticos automáticos.
+- Testes unitários de privacidade, exportação, concorrência e ausência de escrita; Chromium testa divergência com dois downloads e preservação das origens.
+- Cache e versão de homologação sincronizados na **v48**. A escolha transacional (P0.3c2) continua pendente; `main` não alterada.
