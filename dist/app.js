@@ -76,7 +76,6 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   let cdiQuote = readCdiCache();
   const viewContent = document.getElementById('view-content');
   const settingsPage = document.getElementById('settings-page');
-  const reportsPage = document.getElementById('reports-page');
   const transactionDialog = document.getElementById('transaction-dialog');
   const transactionForm = document.getElementById('transaction-form');
   const goalDialog = document.getElementById('goal-dialog');
@@ -293,7 +292,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     document.getElementById('header-balance').textContent=money(sums(month).balance);
     acaoRapida.atualizar(view);
     settingsPage.classList.toggle('hidden',view!=='ajustes');
-    reportsPage.classList.toggle('hidden',view!=='relatorios');
+    document.getElementById('reports-page')?.classList.toggle('hidden',view!=='relatorios');
     viewContent.classList.toggle('hidden',view==='ajustes'||view==='relatorios');
     if(view==='ajustes'||view==='relatorios')return;
     if (view === 'resumo') viewContent.innerHTML = renderSummary();
