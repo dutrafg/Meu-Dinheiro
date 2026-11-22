@@ -28,10 +28,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .desktop-nav .nav-button svg{width:29px;height:29px;stroke-width:1.9}
 .desktop-nav .nav-button.active{background:var(--card);color:var(--accent-text);box-shadow:0 3px 10px #1212120c}
 .desktop-nav .nav-button:hover{color:var(--accent-text)}
-.desktop-toolbar{display:flex;align-items:center;gap:12px;padding:8px clamp(18px,2.5vw,48px) 12px;margin:0 calc(0px - clamp(18px,2.5vw,48px)) 16px;background:color-mix(in srgb,var(--bg) 95%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
-.desktop-toolbar .desktop-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;max-width:none;flex:1;min-width:0;margin:0;gap:4px}
+.desktop-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px clamp(18px,2.5vw,48px) 12px;margin:0 calc(0px - clamp(18px,2.5vw,48px)) 16px;background:color-mix(in srgb,var(--bg) 95%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.desktop-toolbar .desktop-nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;max-width:none;flex:0 0 100%;min-width:0;margin:0;gap:4px}
 .desktop-toolbar .desktop-nav .nav-button{min-width:0;padding:12px clamp(6px,1vw,17px)}
-.desktop-create{position:relative;flex:none}
+.desktop-create{position:relative;flex:none;margin-top:2px;padding-top:9px;border-top:1px solid var(--border)}
 .desktop-create-trigger{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:.9rem;font-weight:750;white-space:nowrap;box-shadow:0 5px 13px #00000012}
 .desktop-create-trigger:hover{background:var(--accent-hover)}
 .desktop-create-trigger svg{width:19px;height:19px;flex:none}
