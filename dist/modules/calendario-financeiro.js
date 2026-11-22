@@ -117,11 +117,6 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
   }
   dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
   dialogoCalendario.addEventListener('click',event=>{
-    if(event.target.closest?.('[data-calendar-today]')){
-      const hoje=new Date(),ym=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
-      setMonth(ym);render();atualizarCalendario();return;
-    }
-    if(event.target.closest?.('[data-calendar-mode]')){agenda=!agenda;atualizarCalendario();return;}
     const controle=event.target.closest?.('[data-calendar-month]');
     if(controle){
       const passos=Number(controle.dataset.calendarMonth);
@@ -130,6 +125,11 @@ export function criarModuloCalendarioFinanceiro({getMonth,setMonth,render,transa
       catch{return;}
       render();atualizarCalendario();return;
     }
+    if(event.target.closest?.('[data-calendar-today]')){
+      const hoje=new Date(),ym=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+      setMonth(ym);render();atualizarCalendario();return;
+    }
+    if(event.target.closest?.('[data-calendar-mode]')){agenda=!agenda;atualizarCalendario();return;}
     if(cliqueForaDoDialogo(event,dialogoCalendario))dialogoCalendario.close();
   });
   return {renderCalendario,abrirCalendario,atualizarCalendario,abrirDia,calendarioDoMes};
