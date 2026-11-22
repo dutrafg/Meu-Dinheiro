@@ -88,3 +88,4 @@
 - Leitura IndexedDB transacional somente leitura, após a fila já existente, isolada dos diagnósticos automáticos.
 - Testes unitários de privacidade, exportação, concorrência e ausência de escrita; Chromium testa divergência com dois downloads e preservação das origens.
 - Cache e versão de homologação sincronizados na **v48**. A escolha transacional (P0.3c2) continua pendente; `main` não alterada.
+- Falhas de transação de leitura agora são tratadas explicitamente e nunca deixam inspeções pendentes.

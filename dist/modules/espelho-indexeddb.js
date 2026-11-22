@@ -161,8 +161,10 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
       const db=await abrir();
       const registro=await new Promise((resolve,reject)=>{
         try{
-          const pedido=db.transaction(COLECAO_ESPELHO,'readonly')
-            .objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
+          const transacao=db.transaction(COLECAO_ESPELHO,'readonly');
+          transacao.onerror=()=>reject(transacao.error||new Error('IDB_TRANSACTION'));
+          transacao.onabort=()=>reject(transacao.error||new Error('IDB_ABORT'));
+          const pedido=transacao.objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
           pedido.onsuccess=()=>resolve(pedido.result??null);
           pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
         }catch(error){reject(error);}
@@ -183,8 +185,10 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
     try{
       const db=await abrir();
       const registro=await new Promise((resolve,reject)=>{
-        const pedido=db.transaction(COLECAO_ESPELHO,'readonly')
-          .objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
+        const transacao=db.transaction(COLECAO_ESPELHO,'readonly');
+        transacao.onerror=()=>reject(transacao.error||new Error('IDB_TRANSACTION'));
+        transacao.onabort=()=>reject(transacao.error||new Error('IDB_ABORT'));
+        const pedido=transacao.objectStore(COLECAO_ESPELHO).get(REGISTRO_ESPELHO);
         pedido.onsuccess=()=>resolve(pedido.result??null);
         pedido.onerror=()=>reject(pedido.error||new Error('IDB_READ'));
       });
