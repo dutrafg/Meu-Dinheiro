@@ -77,6 +77,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Navegadores sem IndexedDB mantêm modo legado com aviso explícito. Falha ao espelhar localmente após um commit indexado preserva o lançamento e bloqueia novas escritas até recuperação.
 - **Pendente para declarar P0 concluída:** teste manual de instalação/offline no dispositivo do usuário, restauração de backup real e retorno de um diagnóstico JSON sanitizado. Não publicar na `main` sem autorização.
 
+## P1.2 — Cálculos financeiros isolados (v53)
+
+- Lembretes de aporte e projeção bruta de CDI foram isolados em funções puras do motor financeiro; não alteram o protocolo transacional P0.5 nem migram dados.
+- O repositório IndexedDB permanece primário, com espelho local de compatibilidade. A homologação real da P0.5 continua pendente.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

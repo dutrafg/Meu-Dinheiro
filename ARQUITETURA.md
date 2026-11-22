@@ -121,9 +121,11 @@ O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão
 `tests/estabilidade-v31.test.cjs` exercita colisão entre abas, armazenamento persistente opcional, mudança de dia/mês, restauração legada, limite salarial, CSV e contraste de temas. `scripts/verificar-interface.cjs` também confere a escolha explícita da origem em ambiente de navegador, quando disponível.
 `tests/diagnostico-proposta.test.cjs` valida os requisitos da proposta e sua integração sem falsear erros; `tests/navegacao.test.cjs` simula as seis abas, o descarte de prévias e os alertas de atualização/backup.
 
-## P1.1 — Motor financeiro único
+## P1.1 e P1.2 — Motor financeiro único
 
 As regras puras para ocorrências de recorrências, listagem por mês, totais monetários e reserva principal passam a residir em dist/modules/motor-financeiro.js. O app.js oferece somente adaptadores finos para as telas; os testes do motor não dependem do DOM ou banco de dados.
+
+Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI bruto de 21 dias úteis também mora no motor. A data de referência é um argumento explícito; a função de percentual configurável é injetada a partir de `regras-financeiras.js`, preservando uma única origem para essa regra. O `app.js` apenas fornece estado e formata o texto. Simulações não alteram saldos, investimentos, conclusão de aportes nem armazenamento.
 
 ## P2.1 — Homologação no navegador
 

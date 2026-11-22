@@ -116,3 +116,10 @@
 
 - Se uma aba legada alterar localStorage enquanto o IndexedDB conclui uma gravação, a nova versão **não sobrescreve** essa origem. Ambos os estados são preservados para recuperação assistida; novas escritas são bloqueadas.
 - Teste unitário específico reproduz a alteração concorrente no intervalo entre commit indexado e atualização da cópia de compatibilidade.
+
+## P1.2 — Regras de lembretes e CDI isoladas (v53)
+
+- `motor-financeiro.js` concentra agora a busca por aportes pendentes, com janela de seis meses, recorrências, conclusões e data de referência injetada.
+- A estimativa bruta de CDI em dias úteis foi isolada da geração de HTML, sem criar rendimento, aporte ou alteração de saldo.
+- `app.js` passou a adaptar as funções do motor à interface e reutilizar a regra de percentual de `regras-financeiras.js`; autoverificação e testes de 10 mil rendas sintéticas ampliados.
+- Cache PWA e versão visível avançam juntos para **v53**. P0.5 permanece aguardando instalação/offline e backup real em dispositivo antes da conclusão; `main` permanece intacta.

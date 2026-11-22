@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** P0.1–P0.4 implementadas na branch `refactor/roadmap-manutencao-p0-20261122`; **v52 em homologação da P0.5**. `main` não alterada.
+**Situação:** P0.1–P0.4 implementadas na branch `refactor/roadmap-manutencao-p0-20261122`; **v53 com P1.2 implementada e P0.5 ainda em homologação**. `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -13,7 +13,9 @@
 | P0.3c2 | ✅ Concluída | Escolha explícita após exportar ambas as cópias, dupla confirmação, restauração transacional e proteção contra falhas/conflitos |
 | P0.4 | ✅ Implementada | Backup/restauração, CSV e OFX usam gravação confirmada pelo repositório; limpeza e diagnóstico integrados; testes de 1 mil e 10 mil registros |
 | **P0.5** | **🧪 Em homologação** | IndexedDB é fonte primária transacional; localStorage é espelho de compatibilidade. Necessário teste manual no PWA instalado e backup real antes de encerrar P0 |
-| **P1 — Modularização financeira** | **Parcial** | Motor puro mensal e reserva concluído; continuar extração e cobertura de regras |
+| **P1 — Modularização financeira** | **Parcial** | P1.1 e P1.2 implementadas; avançar regras de objetivos/investimentos com contratos puros e testes |
+| P1.1 | ✅ Implementada | Motor puro de recorrências, totais mensais e reserva, coberto por testes com 10 mil transações |
+| P1.2 | ✅ Implementada, em QA da branch | Motor puro de lembretes de aporte (janela de seis meses, dia 31, concluídos) e estimativa CDI bruta; adaptadores finos no app |
 | **P2 — Qualidade e interface** | **Base implementada** | Chromium desktop/mobile no CI; correções de calendário e navegação; continuar auditorias |
 | **P3 — Logs e observabilidade** | **Parcial** | Log técnico de sessão automático e JSON sanitizado; ampliar verificações sem dados privados |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |

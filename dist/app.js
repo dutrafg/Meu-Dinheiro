@@ -26,7 +26,7 @@ import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/co
 import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
 import {iniciarRecuperacaoConflitos} from './modules/recuperacao-conflitos.js';
 import {criarRepositorioFinanceiro} from './modules/repositorio-financeiro.js';
-import {ocorrenciaNoMes,transacoesNoMes,totaisDoMes,principalReserva} from './modules/motor-financeiro.js';
+import {transacoesNoMes,totaisDoMes,principalReserva,aportesPendentes,estimarRendimentoCdi} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
 import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
@@ -231,7 +231,6 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)verificarVirada();});
   window.addEventListener('pageshow',verificarVirada);
   window.setInterval(verificarVirada,60000);
-  function occurrenceDate(t, ym) { return ocorrenciaNoMes(t,ym); }
   function transactionsInMonth(ym,type) { return transacoesNoMes(data.transactions,ym,type); }
   function sums(ym) { return totaisDoMes(data.transactions,ym); }
   function savingPlan(ym) {
@@ -242,27 +241,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const quote=validCdiQuote(),principal=reservePrincipal();
     if(!quote||!principal)return '';
     // Projeção ilustrativa de 21 dias úteis a 100% do CDI, antes de IR/IOF e taxas.
-    const estimated=n2(principal*(Math.pow(1+quote.dailyPercent/100,21)-1));
+    const estimated=estimarRendimentoCdi(principal,quote.dailyPercent);
+    if(estimated===null)return '';
     return `<p class="proto-cdi-estimate">CDB a 100% do CDI · rendimento bruto estimado em 21 dias úteis: <strong>${money(estimated)}</strong><small>Simulação sobre ${money(principal)}. Não é rendimento confirmado; sem impostos ou taxas.</small></p>`;
   }
   function dueAportes() {
-    const todayText=isoDate(new Date());
-    const threshold=shiftMonth(todayText.slice(0,7),-5)+'-01';
-    const done=new Set(data.completedAportes||[]);
-    const items=[];
-    for(const t of data.transactions){
-      if(t.type!=='income')continue;
-      const months=t.recurring?Array.from({length:6},(_,i)=>shiftMonth(todayText.slice(0,7),i-5)):[t.date.slice(0,7)];
-      for(const ym of months){
-        const date=occurrenceDate(t,ym);
-        if(!date||date>todayText||date<threshold)continue;
-        const key=`${t.id}@${date}`;
-        if(done.has(key))continue;
-        const tenPercent=calcularAporte(t,preferencias.obter());
-        items.push({key,date,description:t.description,category:t.category,tenPercent});
-      }
-    }
-    return items.sort((a,b)=>b.date.localeCompare(a.date));
+    const prefs=preferencias.obter();
+    return aportesPendentes(data.transactions,data.completedAportes,isoDate(new Date()),t=>calcularAporte(t,prefs));
   }
   function renderReminderCount() {
     notificacoes.renderBadge();

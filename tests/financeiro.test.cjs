@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname,'..','dist','app.js'),'utf8');
-const section = source.slice(source.indexOf('  function occurrenceDate(t, ym) {'),source.indexOf('  function renderReminderCount() {'));
+const section = source.slice(source.indexOf('  function transactionsInMonth(ym,type) {'),source.indexOf('  function renderReminderCount() {'));
 
 function model(data) {
   const sandbox = {
@@ -19,7 +19,7 @@ function model(data) {
   vm.createContext(sandbox);
   const rules=fs.readFileSync(path.join(__dirname,'..','dist','modules','regras-financeiras.js'),'utf8').replace(/^export /gm,'');
   const engine=fs.readFileSync(path.join(__dirname,'..','dist','modules','motor-financeiro.js'),'utf8').replace(/^export /gm,'');
-  vm.runInContext(`${rules}\n${engine}\n${section}\nthis.api={occurrenceDate,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
+  vm.runInContext(`${rules}\n${engine}\n${section}\nthis.api={occurrenceDate:ocorrenciaNoMes,transactionsInMonth,sums,savingPlan,reservePrincipal,reserveYieldEstimate,dueAportes}`,sandbox);
   sandbox.api.setPreferences=prefs=>{sandbox.preferencias.obter=()=>prefs;};
   return sandbox.api;
 }

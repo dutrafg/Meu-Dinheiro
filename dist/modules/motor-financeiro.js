@@ -40,3 +40,41 @@ export function principalReserva(dados,reservaGoalId='') {
     .reduce((total,aplicacao)=>total+centavosMotor(aplicacao.amount),0);
   return Math.max(0,reaisMotor(metasCentavos+semVinculo));
 }
+
+// Lista ocorrências de rendas ainda sem aporte concluído no intervalo de seis meses.
+// O cálculo do percentual é injetado para manter regras-financeiras.js como única
+// origem dos percentuais configuráveis. Nunca marca aportes nem altera os dados.
+export function aportesPendentes(transacoes,concluidos,hojeISO,calcularValorAporte) {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO)||typeof calcularValorAporte!=='function')return [];
+  const mesAtual=hojeISO.slice(0,7);
+  const deslocarMes=deslocamento=>{
+    const [ano,mes]=mesAtual.split('-').map(Number);
+    const data=new Date(Date.UTC(ano,mes-1+deslocamento,1));
+    return `${data.getUTCFullYear()}-${String(data.getUTCMonth()+1).padStart(2,'0')}`;
+  };
+  const meses=Array.from({length:6},(_,i)=>deslocarMes(i-5));
+  const inicio=meses[0]+'-01';
+  const feitos=new Set(Array.isArray(concluidos)?concluidos:[]);
+  const itens=[];
+  for(const t of Array.isArray(transacoes)?transacoes:[]){
+    if(t.type!=='income')continue;
+    const mesesDaRenda=t.recurring?meses:[t.date.slice(0,7)];
+    for(const mes of mesesDaRenda){
+      const date=ocorrenciaNoMes(t,mes);
+      if(!date||date>hojeISO||date<inicio)continue;
+      const key=`${t.id}@${date}`;
+      if(feitos.has(key))continue;
+      itens.push({key,date,description:t.description,category:t.category,
+        tenPercent:calcularValorAporte(t)});
+    }
+  }
+  return itens.sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+// Simulação bruta ilustrativa, sem IOF/IR/taxas, baseada no CDI diário oficial.
+// Os dias úteis e a taxa são parâmetros explícitos; nunca registra rendimento.
+export function estimarRendimentoCdi(principal,percentualDiario,diasUteis=21) {
+  if(!Number.isFinite(principal)||principal<=0||!Number.isFinite(percentualDiario)||
+    percentualDiario<=0||percentualDiario>=1||!Number.isSafeInteger(diasUteis)||diasUteis<1)return null;
+  return reaisMotor(centavosMotor(principal*(Math.pow(1+percentualDiario/100,diasUteis)-1)));
+}
