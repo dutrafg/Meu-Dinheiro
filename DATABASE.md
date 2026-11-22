@@ -61,3 +61,12 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Os dois downloads são independentes e têm nomes diferentes. Cada origem é validada antes da exportação, gerando JSON v1 importável. Se qualquer cópia mudar entre inspeção e download, o arquivo não é gerado e uma nova inspeção é exigida.
 - **Nenhuma leitura, inspeção ou exportação substitui, apaga ou migra dados.** O aplicativo conserva localStorage como fonte primária e mantém o bloqueio de divergências.
 - **P0.3c2 ainda pendente:** decisão explícita, restauração transacional e testes de retomada, sem ressuscitar tombstones por acidente.
+
+## P0.3c2 — Recuperação transacional escolhida (v49)
+
+- A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.
+- A origem é escolhida manualmente, seguida de **duas confirmações**; nenhuma resolução automática é realizada.
+- O IndexedDB aplica a escolha em transação `readwrite` com comparação da versão exata previamente inspecionada, e confirma apenas em `transaction.oncomplete`.
+- Em seguida, a chave legada é sincronizada. Se a chave local mudar entre inspeção e confirmação ou a escrita falhar, o processo não declara sucesso e exige nova inspeção; os arquivos externos precisam ser preservados.
+- Tombstone de exclusão, versões desconhecidas e cópias inválidas continuam bloqueadas para escolha direta. Recuperação nesses casos exige backup JSON externo.
+- O controlador atualiza a memória e o backup de pasta **somente após** a confirmação das gravações. Falhas são registradas apenas como códigos técnicos.

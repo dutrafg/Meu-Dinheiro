@@ -52,9 +52,11 @@ export function registrarModulosDoApp(api) {
     typeof espelho?.obterEstado==='function');
   registrar('recuperacao-conflitos',()=>typeof recuperacao?.inspecionar==='function'&&
     typeof recuperacao?.baixar==='function'&&typeof recuperacao?.getEstado==='function'&&
+    typeof recuperacao?.recuperar==='function'&&
     Boolean(document.getElementById('recovery-inspect'))&&
     Boolean(document.getElementById('recovery-download-local'))&&
-    Boolean(document.getElementById('recovery-download-indexeddb')));
+    Boolean(document.getElementById('recovery-download-indexeddb'))&&
+    Boolean(document.getElementById('recovery-choice'))&&Boolean(document.getElementById('recovery-apply')));
   registrar('concorrencia-dados',()=>{
     let raw='origem';const storage={getItem:()=>raw};const eventos=[];
     const proteger=criarProtecaoConcorrencia({storage,chave:'teste',janela:{addEventListener:()=>{}},

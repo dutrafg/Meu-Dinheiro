@@ -45,16 +45,31 @@ function downloadLocal(arquivo,nome,documento){
 }
 
 export function iniciarRecuperacaoConflitos({espelho,storage,chave,validar,documento=document,
-  notificar=()=>{},registrarEvento=()=>{},salvarArquivo=downloadLocal}){
+  notificar=()=>{},registrarEvento=()=>{},salvarArquivo=downloadLocal,
+  confirmar=async()=>false,aoRecuperar=()=>{}}){
   const inspecionarBotao=documento.getElementById('recovery-inspect');
   const localBotao=documento.getElementById('recovery-download-local');
   const idbBotao=documento.getElementById('recovery-download-indexeddb');
   const status=documento.getElementById('recovery-status');
   const localResumo=documento.getElementById('recovery-local-summary');
   const idbResumo=documento.getElementById('recovery-indexeddb-summary');
+  const escolha=documento.getElementById('recovery-choice');
+  const recuperarBotao=documento.getElementById('recovery-apply');
   let captura=null,emAndamento=false,ultimaSituacao='nao-verificado';
-  const desativar=()=>{localBotao.disabled=true;idbBotao.disabled=true;};
+  let exportadas={local:false,indexeddb:false};
+  const desativar=()=>{
+    localBotao.disabled=true;idbBotao.disabled=true;escolha.disabled=true;recuperarBotao.disabled=true;
+    exportadas={local:false,indexeddb:false};
+  };
   desativar();
+
+  function atualizarEscolha(){
+    const elegivel=captura?.relatorio.local.estado==='valida'&&
+      captura?.relatorio.indexeddb.estado==='valida'&&
+      exportadas.local&&exportadas.indexeddb&&captura.relatorio.situacao==='divergente';
+    escolha.disabled=!elegivel;
+    recuperarBotao.disabled=!elegivel||!['local','indexeddb'].includes(escolha.value);
+  }
 
   function descricao(copia){
     if(copia.estado!=='valida')return ({
@@ -85,6 +100,7 @@ export function iniciarRecuperacaoConflitos({espelho,storage,chave,validar,docum
         'A verificação encontrou uma cópia indisponível ou inválida. Não substitua os dados.';
       localBotao.disabled=relatorio.local.estado!=='valida';
       idbBotao.disabled=relatorio.indexeddb.estado!=='valida';
+      atualizarEscolha();
       registrarEvento('RECUPERACAO_INSPECAO','dados');
       return relatorio;
     }catch{
@@ -110,6 +126,8 @@ export function iniciarRecuperacaoConflitos({espelho,storage,chave,validar,docum
       const data=new Date().toISOString().slice(0,10);
       const nome=`meu-dinheiro-recuperacao-${origem}-${data}.json`;
       if(!salvarArquivo(backup,nome,documento))throw Error('Download indisponível');
+      exportadas[origem]=true;
+      atualizarEscolha();
       registrarEvento(origem==='local'?'RECUPERACAO_BACKUP_LOCAL':'RECUPERACAO_BACKUP_IDB','dados');
       notificar('Cópia de recuperação gerada. Guarde o arquivo em local seguro.');
       return true;
@@ -119,8 +137,47 @@ export function iniciarRecuperacaoConflitos({espelho,storage,chave,validar,docum
     }finally{emAndamento=false;}
   }
 
+  async function recuperar(){
+    atualizarEscolha();
+    if(emAndamento||recuperarBotao.disabled)return false;
+    const origem=escolha.value;
+    emAndamento=true;recuperarBotao.disabled=true;
+    try{
+      const {localRaw,idb,relatorio}=captura;
+      if(relatorio.situacao!=='divergente'||idb.estado!=='dados'||
+        storage.getItem(chave)!==localRaw)return false;
+      const atual=await espelho.obterCopiaParaRecuperacao();
+      if(atual.estado!=='dados'||atual.conteudo!==idb.conteudo)return false;
+      const conteudo=origem==='local'?localRaw:idb.conteudo;
+      montarBackupRecuperacao(conteudo,validar);
+      const nome=origem==='local'?'armazenamento local':'IndexedDB';
+      if(!await confirmar({titulo:'Escolher cópia financeira',
+        mensagem:`Você baixou as duas cópias? A recuperação vai substituir os dados pela versão de ${nome}.`,
+        acao:'Continuar recuperação',perigoso:true}))return false;
+      if(!await confirmar({titulo:'Última confirmação',
+        mensagem:`Confirma recuperar a cópia de ${nome}? Os dados atuais serão substituídos. Guarde os dois arquivos JSON.`,
+        acao:'Confirmar substituição',perigoso:true}))return false;
+      const ok=await espelho.recuperarComEscolha({idbAnterior:idb.conteudo,
+        localAnterior:localRaw,conteudoEscolhido:conteudo,
+        lerLocal:()=>storage.getItem(chave),gravarLocal:raw=>storage.setItem(chave,raw)});
+      if(!ok)throw Error('Recuperação não confirmada');
+      aoRecuperar(conteudo);
+      registrarEvento('RECUPERACAO_CONCLUIDA','dados');
+      status.textContent='Cópia escolhida recuperada. Inspecione novamente para verificar a sincronização.';
+      notificar('Recuperação concluída. As duas cópias foram sincronizadas.');
+      return true;
+    }catch{
+      status.textContent='Não foi possível concluir com segurança. Preserve ambos os backups e inspecione novamente.';
+      return false;
+    }finally{
+      captura=null;desativar();emAndamento=false;
+    }
+  }
+
   inspecionarBotao.addEventListener('click',()=>{void inspecionar();});
   localBotao.addEventListener('click',()=>{void baixar('local');});
   idbBotao.addEventListener('click',()=>{void baixar('indexeddb');});
-  return {inspecionar,baixar,getEstado:()=>({situacao:ultimaSituacao,copiasInspecionadas:Boolean(captura)})};
+  escolha.addEventListener('change',atualizarEscolha);
+  recuperarBotao.addEventListener('click',()=>{void recuperar();});
+  return {inspecionar,baixar,recuperar,getEstado:()=>({situacao:ultimaSituacao,copiasInspecionadas:Boolean(captura)})};
 }

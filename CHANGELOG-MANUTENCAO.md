@@ -89,3 +89,9 @@
 - Testes unitários de privacidade, exportação, concorrência e ausência de escrita; Chromium testa divergência com dois downloads e preservação das origens.
 - Cache e versão de homologação sincronizados na **v48**. A escolha transacional (P0.3c2) continua pendente; `main` não alterada.
 - Falhas de transação de leitura agora são tratadas explicitamente e nunca deixam inspeções pendentes.
+
+## P0.3c2 — Escolha explícita e recuperação transacional (v49)
+
+- A tela de Ajustes passou a oferecer seleção da origem após os dois arquivos JSON e duas confirmações.
+- Recuperação de conflitos só altera o IndexedDB após comparar o snapshot na transação e depois sincroniza localStorage; falhas impedem anunciar conclusão.
+- Proteção contra abas concorrentes, tombstone e dados inválidos; testes de cancelamento, substituição e falha de escrita, inclusive no Chromium.

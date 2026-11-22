@@ -134,17 +134,22 @@ test('Exclusão protegida usa tombstone e inicialização vazia em todo PWA', ()
   assert.match(diagnostico,/exclusaoProtegida:Boolean\(estadoEspelho\.exclusaoProtegida\)/);
 });
 
-test('Recuperação assistida tem duas exportações explícitas e não publica seleção automática', () => {
+test('Recuperação assistida exige inspeção, dois backups e seleção com dupla confirmação', () => {
   const html=read('dist/index.html');
   const app=read('dist/app.js');
   const modulo=read('dist/modules/recuperacao-conflitos.js');
   for(const id of ['recovery-inspect','recovery-status','recovery-local-summary',
-    'recovery-indexeddb-summary','recovery-download-local','recovery-download-indexeddb'])
+    'recovery-indexeddb-summary','recovery-download-local','recovery-download-indexeddb',
+    'recovery-choice','recovery-apply'])
     assert.match(html,new RegExp('id="'+id+'"'));
   assert.match(app,/iniciarRecuperacaoConflitos\(/);
   assert.match(modulo,/obterCopiaParaRecuperacao\(\)/);
   assert.match(modulo,/montarBackupRecuperacao/);
-  assert.doesNotMatch(modulo,/\.setItem\(|\.removeItem\(|\.clear\(|\.put\(|\.delete\(/);
+  const leitura=modulo.slice(modulo.indexOf('async function inspecionar()'),
+    modulo.indexOf('async function recuperar()'));
+  assert.doesNotMatch(leitura,/\.setItem\(|\.removeItem\(|\.clear\(|\.put\(|\.delete\(/);
+  assert.match(modulo,/recuperarComEscolha\(/);
+  assert.equal((modulo.match(/await confirmar\(/g)||[]).length,2);
   assert.match(read('dist/sw.js'),/\.\/modules\/recuperacao-conflitos\.js/);
 });
 
@@ -168,7 +173,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v48/);
+  assert.match(source, /meu-dinheiro-essencial-v49/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

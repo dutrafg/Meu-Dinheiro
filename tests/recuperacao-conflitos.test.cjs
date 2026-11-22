@@ -18,9 +18,10 @@ async function validar(){
 function tela(){
   const elementos=new Map();
   for(const id of ['recovery-inspect','recovery-download-local','recovery-download-indexeddb',
-    'recovery-status','recovery-local-summary','recovery-indexeddb-summary']){
+    'recovery-status','recovery-local-summary','recovery-indexeddb-summary',
+    'recovery-choice','recovery-apply']){
     const eventos={};
-    elementos.set(id,{disabled:false,textContent:'',addEventListener:(evento,fn)=>{eventos[evento]=fn;},
+    elementos.set(id,{disabled:false,textContent:'',value:'',addEventListener:(evento,fn)=>{eventos[evento]=fn;},
       click:()=>eventos.click?.()});
   }
   return {documento:{getElementById:id=>elementos.get(id)},elementos,pegar:id=>elementos.get(id)};
@@ -108,4 +109,53 @@ test('Se uma aba alterar qualquer cópia após inspeção, download obsoleto é 
   idb=dados('Outra alteração concorrente');
   assert.equal(await app.baixar('indexeddb'),false);
   assert.equal(salvos.length,0);
+});
+
+test('Recuperação requer dois downloads, duas confirmações e gravação transacional',async()=>{
+  const {iniciarRecuperacaoConflitos}=await modulo,verificar=await validar();
+  const t=tela(),confirmacoes=[],gravacoes=[],avisos=[];
+  let local=dados('Origem local'),idb=dados('Origem Indexada');
+  const espelho={
+    obterCopiaParaRecuperacao:async()=>({estado:'dados',conteudo:idb}),
+    recuperarComEscolha:async op=>{
+      assert.equal(op.idbAnterior,idb);
+      assert.equal(op.localAnterior,local);
+      idb=op.conteudoEscolhido;
+      op.gravarLocal(op.conteudoEscolhido);
+      return true;
+    }
+  };
+  const app=iniciarRecuperacaoConflitos({storage:{getItem:()=>local,setItem:(key,value)=>{gravacoes.push(value);local=value;}},
+    chave:'financeiro',espelho,validar:verificar,documento:t.documento,
+    salvarArquivo:()=>true,confirmar:async prompt=>{confirmacoes.push(prompt);return true;},
+    aoRecuperar:raw=>avisos.push(raw)});
+  await app.inspecionar();
+  t.pegar('recovery-choice').value='indexeddb';
+  assert.equal(await app.recuperar(),false,'Não pode recuperar sem os dois arquivos');
+  await app.baixar('local');
+  assert.equal(await app.recuperar(),false,'Um backup não basta');
+  await app.baixar('indexeddb');
+  assert.equal(await app.recuperar(),true);
+  assert.equal(confirmacoes.length,2);
+  assert.equal(gravacoes.length,1);
+  assert.equal(local,idb);
+  assert.deepEqual(avisos,[idb]);
+  assert.equal(t.pegar('recovery-apply').disabled,true);
+});
+
+test('Recuperação cancelada não grava e exige nova inspeção se a origem mudar',async()=>{
+  const {iniciarRecuperacaoConflitos}=await modulo,verificar=await validar();
+  const t=tela();let local=dados('Local'),idb=dados('Indexado'),gravar=0;
+  const app=iniciarRecuperacaoConflitos({storage:{getItem:()=>local,setItem:()=>{gravar++;}},
+    chave:'financeiro',espelho:{obterCopiaParaRecuperacao:async()=>({estado:'dados',conteudo:idb}),
+      recuperarComEscolha:async()=>{gravar++;return true;}},validar:verificar,
+    documento:t.documento,salvarArquivo:()=>true,confirmar:async()=>false});
+  await app.inspecionar();await app.baixar('local');await app.baixar('indexeddb');
+  t.pegar('recovery-choice').value='local';
+  assert.equal(await app.recuperar(),false);
+  assert.equal(gravar,0);
+  await app.inspecionar();await app.baixar('local');await app.baixar('indexeddb');
+  local=dados('Local alterado em outra aba');
+  assert.equal(await app.recuperar(),false);
+  assert.equal(gravar,0);
 });

@@ -108,7 +108,11 @@
             <div class="recovery-copy"><h3>Armazenamento local</h3><p id="recovery-local-summary">Ainda não verificado.</p><button type="button" id="recovery-download-local" disabled>Baixar cópia local (JSON)</button></div>
             <div class="recovery-copy"><h3>IndexedDB</h3><p id="recovery-indexeddb-summary">Ainda não verificado.</p><button type="button" id="recovery-download-indexeddb" disabled>Baixar cópia IndexedDB (JSON)</button></div>
           </div>
-          <p class="recovery-warning">Os arquivos baixados contêm seus registros financeiros. Guarde-os em local seguro. Se as cópias forem diferentes, preserve ambas; a escolha assistida para substituição será implementada na próxima etapa.</p>
+          <p class="recovery-warning">Os arquivos baixados contêm seus registros financeiros. Guarde-os em local seguro. Para resolver um conflito, baixe as duas cópias antes de escolher qual preservar. Um marcador de exclusão nunca é substituído por este assistente.</p>
+          <div class="recovery-choice"><label for="recovery-choice">Qual cópia deseja recuperar?</label>
+            <select id="recovery-choice" disabled><option value="">Escolha a origem</option><option value="local">Armazenamento local</option><option value="indexeddb">IndexedDB</option></select>
+            <button type="button" id="recovery-apply" disabled>Recuperar a cópia escolhida</button>
+          </div>
         </details>
         <details class="settings-section settings-danger-zone" aria-labelledby="settings-danger-title">
           <summary id="settings-danger-title">Apagar dados financeiros</summary>

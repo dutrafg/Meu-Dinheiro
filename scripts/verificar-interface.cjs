@@ -264,6 +264,15 @@ async function verificar(){
       paginaConflito.waitForEvent('download'),paginaConflito.locator('#recovery-download-indexeddb').click()
     ]);
     assert.match(downloadIndex.suggestedFilename(),/recuperacao-indexeddb-/);
+    await paginaConflito.locator('#recovery-choice').selectOption('local');
+    await paginaConflito.locator('#recovery-apply').click();
+    await paginaConflito.locator('#confirmation-accept').click();
+    await paginaConflito.locator('#confirmation-accept').click();
+    await paginaConflito.waitForFunction(()=>
+      document.getElementById('recovery-status').textContent.includes('Cópia escolhida recuperada'));
+    await paginaConflito.locator('#recovery-inspect').click();
+    await paginaConflito.waitForFunction(()=>
+      document.getElementById('recovery-status').textContent.includes('sincronizadas'));
     const intactas=await paginaConflito.evaluate(async()=>{
       const local=localStorage.getItem('meu-dinheiro-essencial:v1');
       const abertura=indexedDB.open('meu-dinheiro-financeiro',1);
@@ -272,11 +281,11 @@ async function verificar(){
       const registro=await new Promise(resolve=>{pedido.onsuccess=()=>resolve(pedido.result);});
       db.close();
       return {local:Boolean(local?.includes('Origem local fictícia')),
-        idb:Boolean(registro?.conteudo?.includes('Origem IndexedDB fictícia'))};
+        idb:Boolean(registro?.conteudo?.includes('Origem local fictícia'))};
     });
-    assert.deepEqual(intactas,{local:true,idb:true},'Os dois downloads não alteram nenhuma origem');
+    assert.deepEqual(intactas,{local:true,idb:true},'A escolha confirmou uma única origem após ambos os downloads');
     await contextoConflito.close();
-    console.log('E2E desktop, smartphone, tombstone e recuperação somente leitura: validados.');
+    console.log('E2E desktop, smartphone, tombstone e recuperação assistida: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

@@ -322,3 +322,41 @@ test('Formato futuro e falha de leitura não expõem dados ao assistente',async(
   const falha=criarEspelhoIndexedDB({api:fakeIndexedDB({falharSomente:'get'}).api});
   assert.deepEqual(await falha.obterCopiaParaRecuperacao(),{estado:'erro'});
 });
+
+test('Escolha explícita resolve conflito apenas se a origem indexada não mudou',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const anterior=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await anterior.iniciar('versao-indexada'),true);
+  const atual=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await atual.iniciar('versao-local'),false);
+  let local='versao-local';
+  const op=()=>({idbAnterior:'versao-indexada',localAnterior:'versao-local',
+    conteudoEscolhido:'versao-local',lerLocal:()=>local,gravarLocal:raw=>{local=raw;}});
+  fake.registros.set('principal',{versao:1,conteudo:'modificado-em-outra-aba'});
+  assert.equal(await atual.recuperarComEscolha(op()),false);
+  assert.equal(fake.registros.get('principal').conteudo,'modificado-em-outra-aba');
+  fake.registros.set('principal',{versao:1,conteudo:'versao-indexada'});
+  assert.equal(await atual.recuperarComEscolha(op()),true);
+  assert.equal(fake.registros.get('principal').conteudo,'versao-local');
+  assert.equal(atual.obterEstado().estado,'sincronizado');
+  assert.equal(await atual.gravar('nova-versao'),true);
+});
+
+test('Tombstone e falha no espelho legado não são escondidas pela recuperação',async()=>{
+  const {criarEspelhoIndexedDB}=await apiModulo;
+  const fake=fakeIndexedDB();
+  const espelho=criarEspelhoIndexedDB({api:fake.api});
+  await espelho.iniciar('dados-originais');
+  let local='dados-legados';
+  const args={idbAnterior:'dados-originais',localAnterior:local,
+    conteudoEscolhido:local,lerLocal:()=>local,gravarLocal:()=>{throw Error('Quota');}};
+  assert.equal(await espelho.recuperarComEscolha(args),false);
+  assert.equal(espelho.obterEstado().estado,'erro');
+  const nova=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await nova.iniciar('dados-legados'),true);
+  assert.equal(await nova.apagar(),true);
+  const aposExclusao=criarEspelhoIndexedDB({api:fake.api});
+  assert.equal(await aposExclusao.recuperarComEscolha({...args,gravarLocal:raw=>{local=raw;}}),false);
+  assert.equal(fake.registros.get('principal').apagado,true);
+});

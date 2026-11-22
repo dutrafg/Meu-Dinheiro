@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** P0.3c1 concluída na branch de homologação `refactor/roadmap-manutencao-p0-20261122`; versão **v48**. **Estamos na P0.3c2 (próxima etapa)**. `main` não alterada.
+**Situação:** P0.3c2 implementada na branch de homologação `refactor/roadmap-manutencao-p0-20261122`; versão **v49**. **Próxima etapa: P0.4**. `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -10,8 +10,8 @@
 | P0.3a | ✅ Concluída | Transações atômicas, versão do snapshot e comparação entre abas |
 | P0.3b | ✅ Concluída | Tombstone de exclusão, inicialização vazia, proteção contra abas antigas |
 | P0.3c1 | ✅ Concluída | Inspeção manual de localStorage e IndexedDB, contagens sem valores privados e exportação independente em JSON sem sobrescrita |
-| **P0.3c2** | **⏳ Próxima etapa** | Escolha explícita da cópia a recuperar, confirmação dupla, restauração transacional e testes de falhas/conflitos |
-| P0.4 | ⏳ Pendente | Adaptação de backup/restauração, importação CSV/OFX, limpeza e diagnóstico ao repositório; testes com 1 mil e 10 mil registros |
+| P0.3c2 | ✅ Concluída | Escolha explícita após exportar ambas as cópias, dupla confirmação, restauração transacional e proteção contra falhas/conflitos |
+| **P0.4** | **⏳ Próxima etapa** | Adaptação de backup/restauração, importação CSV/OFX, limpeza e diagnóstico ao repositório; testes com 1 mil e 10 mil registros |
 | P0.5 | ⏳ Pendente | Tornar IndexedDB primário **após** testes de recuperação, validação real e homologação com backup |
 | **P1 — Modularização financeira** | **Parcial** | Motor puro mensal e reserva concluído; continuar extração e cobertura de regras |
 | **P2 — Qualidade e interface** | **Base implementada** | Chromium desktop/mobile no CI; correções de calendário e navegação; continuar auditorias |

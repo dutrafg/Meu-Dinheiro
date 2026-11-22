@@ -98,6 +98,13 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
               if(atual.tipo!=='dados'||atual.conteudo!==conteudo)
                 loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
               resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
+            }else if(tipo==='recuperar'){
+              // Só substituir uma cópia válida que ainda é idêntica à inspecionada.
+              // Nunca resolver automaticamente nem remover uma tombstone.
+              if(atual.tipo!=='dados'||referencia.tipo!=='dados'||!coincide(atual,referencia))return;
+              if(atual.conteudo!==conteudo)
+                loja.put({conteudo,versao:1,atualizadoEm:Date.now()},REGISTRO_ESPELHO);
+              resultado={estado:'ok',esperado:{tipo:'dados',conteudo}};
             }else if(tipo==='apagar'){
               // Confirmado pelo usuário no controlador; não apagar nova versão de outra aba.
               if(!coincide(atual,referencia)&&atual.tipo!=='apagado')return;
@@ -154,6 +161,33 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
   }
   function iniciarVazio(){return enfileirar('iniciarVazio',null);}
 
+  // A confirmação e a exportação das duas origens são exigidas pelo controlador.
+  // O commit IndexedDB ocorre primeiro; falha posterior do espelho legado é
+  // reportada como conflito, sem alegar recuperação concluída.
+  function recuperarComEscolha({idbAnterior,localAnterior,conteudoEscolhido,lerLocal,gravarLocal}){
+    if(!habilitado||![idbAnterior,conteudoEscolhido].every(v=>typeof v==='string')||
+      typeof lerLocal!=='function'||typeof gravarLocal!=='function')return Promise.resolve(false);
+    const tarefa=fila.catch(()=>false).then(async()=>{
+      try{
+        if(lerLocal()!==localAnterior)return false;
+        const resultado=await transacionar('recuperar',conteudoEscolhido,
+          {tipo:'dados',conteudo:idbAnterior});
+        if(resultado.estado!=='ok'){bloqueado=true;estado='conflito';return false;}
+        esperado=resultado.esperado;
+        if(lerLocal()!==localAnterior){bloqueado=true;estado='conflito';return false;}
+        gravarLocal(conteudoEscolhido);
+        bloqueado=false;estado='sincronizado';ultimaSincronizacao=new Date().toISOString();
+        return true;
+      }catch{
+        bloqueado=true;estado='erro';falhas++;
+        try{aoFalhar('IDB_RECUPERACAO_FALHOU');}catch{/* Apenas telemetria técnica. */}
+        return false;
+      }
+    });
+    fila=tarefa;
+    return tarefa;
+  }
+
   async function conferir(conteudoLegado){
     await fila;
     if(!habilitado)return {estado:'indisponivel'};
@@ -201,7 +235,7 @@ export function criarEspelhoIndexedDB({api=null,aoFalhar=()=>{}}={}) {
   }
 
   return Object.freeze({
-    iniciar,iniciarVazio,obterCopiaParaRecuperacao,
+    iniciar,iniciarVazio,obterCopiaParaRecuperacao,recuperarComEscolha,
     gravar:conteudo=>typeof conteudo==='string'&&conteudo.length>0?
       enfileirar('gravar',conteudo):Promise.resolve(false),
     apagar:()=>enfileirar('apagar',null),

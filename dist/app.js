@@ -435,7 +435,14 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
   const recuperacao=iniciarRecuperacaoConflitos({espelho,storage:localStorage,chave:KEY,
     validar:arquivo=>validarBackup({...arquivo,app:'meu-dinheiro-essencial',version:1},CATEGORIES),
-    notificar:notify,registrarEvento});
+    notificar:notify,registrarEvento,confirmar:dialogos.confirmar,
+    aoRecuperar:raw=>{
+      data=normalizarDadosLocais(JSON.parse(raw));
+      storageLocked=false;
+      guardaConcorrencia.registrarGravacao(raw);
+      folderBackup?.schedule();
+      render();
+    }});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
     onSave:()=>folderBackup?.schedule()});
