@@ -147,6 +147,15 @@ test('A nova área permanece no DOM durante a troca de telas e possui controles 
   assert.match(html,/<main id="main-content"[^>]*><div id="view-content"/);
   assert.match(html,/<section id="settings-page" class="settings-page hidden"/);
   assert.match(html,/<button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"\/>/);
+  const ajustes=html.slice(html.indexOf('<section id="settings-page"'),html.indexOf('</main>'));
+  assert.equal((ajustes.match(/id="open-diagnostics"/g)||[]).length,1,'Somente um acionador de diagnóstico em Ajustes');
+  assert.ok(ajustes.indexOf('id="open-diagnostics"')<ajustes.indexOf('<form id="settings-form"'),
+    'O acionador deve ficar ao alcance direto, antes das seções recolhíveis');
+  assert.ok(ajustes.indexOf('id="open-diagnostics"')<ajustes.indexOf('<details class="settings-section settings-tools"'),
+    'Diagnóstico não fica dentro de Atualizações');
+  const css=read('dist/css/ajustes.css');
+  assert.match(css,/\.settings-diagnostics-shortcut button\{[^}]*min-height:44px/);
+  assert.match(css,/@media\(max-width:540px\)\{\.settings-diagnostics-shortcut/);
   assert.match(html,/<symbol id="i-settings"/);
   assert.match(app,/\['ajustes', 'Ajustes', 'settings'\]/);
   assert.match(app,/if\(view==='ajustes'\)ajustes\.abrir\(\)/);
@@ -154,6 +163,18 @@ test('A nova área permanece no DOM durante a troca de telas e possui controles 
   assert.doesNotMatch(app,/ultimaVisaoFinanceira/);
   assert.match(html,/id="pdf-report-type"/);
   assert.doesNotMatch(html,/id="backup-menu-button"|id="settings-dialog"/);
+});
+
+test('Proposta aponta pendência somente se o diagnóstico voltar a ficar em painel fechado',async()=>{
+  const {verificarPropostaInterface}=await carregar();
+  const mock=ambiente();
+  const botao=mock.documento.getElementById('open-diagnostics');
+  const status=()=>verificarPropostaInterface(mock).itens.find(i=>i.codigo==='PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO').estado;
+  assert.equal(status(),'ok');
+  botao.closest=seletor=>seletor==='details:not([open])'?{}:null;
+  assert.equal(status(),'pendente');
+  botao.closest=()=>null;
+  assert.equal(status(),'ok');
 });
 
 test('Barras seguem um componente visual único, indicador por módulo e movimento reduzido',()=>{

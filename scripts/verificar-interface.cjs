@@ -261,7 +261,7 @@ async function verificar(){
     assert.match(await page.locator('#reports-tools-title').innerText(),/Exportar, importar e compartilhar/);
     for(const id of ['export-pdf','export-csv','import-csv','export-data','import-data'])
       assert.equal(await page.locator('#'+id).count(),1,'Ferramenta disponível nos Ajustes: '+id);
-    assert.match(await page.locator('.settings-tools summary').innerText(),/Atualizações e diagnóstico/);
+    assert.match(await page.locator('.settings-tools summary').innerText(),/Atualizações do aplicativo/);
     // Ao tocar em Tirar/Mostrar no meio da lista, o mesmo botão e a rolagem permanecem.
     const opcoesCategoria=page.locator('#category-manager-list [data-category-toggle]');
     assert.ok(await opcoesCategoria.count()>10,'Categorias suficientes para testar rolagem móvel');
@@ -542,7 +542,10 @@ async function verificar(){
     await paginaOffline.locator('#mobile-nav [data-view="despesas"]').click();
     assert.match(await paginaOffline.locator('body').innerText(),/Despesa fictícia/);
     await paginaOffline.locator('#mobile-nav [data-view="ajustes"]').click();
-    await paginaOffline.locator('#settings-update-title').click();
+    assert.equal(await paginaOffline.locator('#open-diagnostics').isVisible(),true,
+      'Diagnóstico fica visível em Ajustes sem expandir Atualizações');
+    assert.equal(await paginaOffline.locator('#open-diagnostics').evaluate(el=>el.closest('details')===null),true,
+      'Botão de diagnóstico não pode ficar escondido em seção recolhida');
     await paginaOffline.locator('#open-diagnostics').click();
     await paginaOffline.waitForFunction(()=>document.getElementById('diagnostics-dialog').open);
     // O relatório usa caches.match, não fetch: deve inspecionar os arquivos desconectado.
@@ -585,13 +588,16 @@ async function verificar(){
       const grupos=[...document.querySelectorAll('.diagnostics-group')];
       const orcamento=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('orcamento'));
       const interfaceGrupo=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('interface'));
+      const propostaGrupo=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('proposta interface'));
       return {orcamentoOk:orcamento?.querySelectorAll('.diagnostics-ok').length===1,
         relatoriosOk:[...(interfaceGrupo?.querySelectorAll('.diagnostics-ok')||[])].some(item=>
           item.textContent.includes('PDF, CSV, importação e backup estão disponíveis em Relatórios')),
         semDuplicacao:[...(interfaceGrupo?.querySelectorAll('.diagnostics-ok')||[])].some(item=>
-          item.textContent.includes('Ajustes não duplica controles financeiros de Relatórios'))};
+          item.textContent.includes('Ajustes não duplica controles financeiros de Relatórios')),
+        diagnosticoDireto:[...(propostaGrupo?.querySelectorAll('.diagnostics-ok')||[])].some(item=>
+          item.textContent.includes('Diagnóstico acessível diretamente a partir da página Ajustes'))};
     });
-    assert.deepEqual(regressaoDiagnostico,{orcamentoOk:true,relatoriosOk:true,semDuplicacao:true},
+    assert.deepEqual(regressaoDiagnostico,{orcamentoOk:true,relatoriosOk:true,semDuplicacao:true,diagnosticoDireto:true},
       'Os erros reais recebidos no JSON devem permanecer corrigidos no HTML offline');
     assert.equal(errosHtml.length,0,`Erros JavaScript no HTML independente: ${errosHtml.join('; ')}`);
     await contextoHtml.close();
