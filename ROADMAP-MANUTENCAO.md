@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45175055623 e 45175055621). Diagnóstico v68 no Samsung/HTML independente: **230 verificações, zero erros, um risco preventivo, dez não avaliadas e zero propostas pendentes**; `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` passou de pendente na v67 para aprovado na v68. **P4.1 e P4.2a automatizada concluídas**; **P4.2b PWA instalado/backup, P0.5 e P2.6 ainda em homologação física**. Não publicar v68 em `main` sem nova autorização.
+**Situação:** **v68 publicada em `main` em 23/11/2026** por autorização expressa e integração do PR #2 (commit `e96d300f97e777a80f2b9e68bc1f217945ee4bf3`). **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45181194986 e 45181194981). Diagnóstico v68 no Samsung/HTML independente: **230 verificações, zero erros, um risco preventivo, dez não avaliadas e zero propostas pendentes**; `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` passou de pendente na v67 para aprovado na v68. **Publicação v68 e P4.2a automatizada concluídas**; **P4.2b PWA instalado/backup, P0.5 e P2.6 ainda em homologação física**. A publicação não substitui o teste de restauração com dados fictícios.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -28,7 +28,7 @@
 | P2.6 | 🟡 v67 CI aprovado; homologação física pendente | Orçamento do dia prioritário, seis abas sem sobreposição, botão + único, valor nativo e preservação de posição ao ocultar/reexibir categorias. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
 | **P3 — Logs e observabilidade** | **✅ Publicada em `main`; melhoria v68 em homologação** | Diagnóstico distingue erros reais e riscos preventivos; v68 torna o acesso direto sem duplicar botão e cobre regressão |
-| **P4 — Homologação e publicação** | **🟡 P4.1 concluída; P4.2 em andamento** | v67 publicada em `main`; v68 na branch. Próximo: ensaio físico do PWA instalado, backup externo e restauração fictícia antes de encerrar P0.5/P2.6/P4 |
+| **P4 — Homologação e publicação** | **🟡 Publicação v68 concluída; P4.2 física em andamento** | v68 publicada em `main` via PR #2. Próximo: ensaio físico do PWA instalado, backup externo e restauração fictícia antes de encerrar P0.5/P2.6/P4 |
 
 ## Regras de avanço
 
@@ -104,6 +104,13 @@
 - `OFFLINE_HTML_JAVASCRIPT`, `OFFLINE_HTML_ESTILOS`, `OFFLINE_HTML_SEM_DEPENDENCIAS` e `OFFLINE_HTML_BIBLIOTECAS` passaram. `instalado:false`; Service Worker, controle e cache PWA **não** se aplicam ao HTML independente e não foram ensaiados fisicamente.
 - Prévia PWA da branch v68 está **READY** na Vercel, protegida por login do proprietário: https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app. Ela usa origem separada da versão em produção e permite testes com dados fictícios sem modificar os dados locais do domínio principal.
 - **Próxima etapa P4.2b2:** abrir a prévia no Samsung, instalar PWA, executar diagnóstico conectado/desconectado, verificar cache e IndexedDB após reabertura e exportar/restaurar backup JSON fictício em ambiente isolado. **P0.5/P2.6/P4.2 ainda não concluídas.**
+
+## Publicação v68 em main (PR #2 — 23/11/2026)
+
+- Após autorização expressa do usuário, PR https://github.com/dutrafg/Meu-Dinheiro/pull/2 integrado por squash em `main`: `e96d300f97e777a80f2b9e68bc1f217945ee4bf3`.
+- **375 testes Node e QA Chromium desktop/celular/offline verdes no último commit da branch** (runs 45181194986 e 45181194981). O diagnóstico Samsung HTML v68 confirmou 230 verificações sem erros e acesso direto ao Diagnóstico aprovado.
+- A alteração publicada **não mexe em IndexedDB, formato de backup, registros, preferências ou lógica financeira**; inclui navegação, CSS, testes, versão/cache PWA v68 e documentação.
+- **Estado atual: P4.2b2 pendente**, incluindo abertura do PWA instalado no Samsung, teste real offline, exportação e restauração de backup fictício. P0.5 e P2.6 também permanecem abertos até validação física.
 
 ## Verificação da P2 até v60
 

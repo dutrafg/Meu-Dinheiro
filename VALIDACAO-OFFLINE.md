@@ -1,6 +1,6 @@
 # Validação offline — Meu Dinheiro v68 (P4.2)
 
-Este roteiro usa **somente dados fictícios em perfil de navegador separado, sem dados financeiros reais**. A homologação não autoriza publicação nem substitui backup real. A v68 é uma prévia em branch, enquanto a v67 permanece publicada em `main`.
+Este roteiro usa **somente dados fictícios em perfil de navegador separado, sem dados financeiros reais**. A v68 já foi publicada em `main` por autorização expressa, mas a homologação física de armazenamento e backup continua aberta. Para testes que criam/restauram registros fictícios, prefira a prévia em domínio separado.
 
 ## A) Arquivo HTML independente — celular ou PC
 
@@ -14,7 +14,7 @@ Este roteiro usa **somente dados fictícios em perfil de navegador separado, sem
 
 ## B) PWA instalado — celular ou PC
 
-1. Com internet, abra a versão v68 da **branch de homologação** em https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app. Esta prévia está protegida pelo login da Vercel do proprietário; não desative essa proteção. O domínio é diferente do principal, de modo que o armazenamento local fica separado. Use **somente dados fictícios**, aguarde o Service Worker ativar e recarregue uma vez. O HTML independente `file://`/`content://` não substitui este teste do PWA.
+1. Com internet, prefira a **prévia isolada v68** em https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app para testar com registros fictícios. Esta prévia está protegida pelo login da Vercel do proprietário; não desative essa proteção. O domínio é diferente do principal, de modo que o armazenamento local fica separado. Aguarde o Service Worker ativar e recarregue uma vez. O HTML independente `file://`/`content://` não substitui este teste do PWA; a versão em produção também é v68, mas não use o domínio principal para experiências de restauração.
 2. Em **Ajustes**, toque no botão visível **Executar diagnóstico completo**, sem expandir Atualizações; verifique os grupos **offline** e **proposta interface**. Entrada, scripts, CSS, manifesto, ícones, persistência, validação, notificações e diagnóstico devem estar em cache; `OFFLINE_CACHE_INTEGRIDADE` e `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` devem indicar sucesso.
 3. Se `OFFLINE_CACHE_VERSAO` alertar versão diferente, conclua a atualização e repita online antes de cortar a conexão.
 4. Use apenas lançamentos fictícios, habilite modo avião, feche a aba/PWA e abra novamente sem internet. Resumo, Renda, Despesas, Objetivos, previsões e diagnóstico devem abrir; não dependa do CDI remoto.
@@ -43,4 +43,4 @@ Envie apenas os **códigos/estados do diagnóstico** e quais itens foram validad
 | `RISCO_OFFLINE_EVICCAO_DADOS` aviso | Não é perda detectada: navegador pode limpar dados por espaço. Fazer backups externos regulares. |
 | `ESPELHO_INDEXEDDB` ou `GRAVACAO_SEGURA` erro | Não insistir em gravar. Exportar backups independentes e acionar fluxo de recuperação. |
 
-**Critério para concluir P4.2:** Node + Chromium em CI, testes manuais offline e de backup/restauração em dispositivo físico e sua confirmação explícita. A v68 não será publicada em `main` sem nova autorização.
+**Critério para concluir P4.2:** Node + Chromium em CI, testes manuais offline e de backup/restauração em dispositivo físico e sua confirmação explícita. A v68 foi publicada com sua autorização; isso não encerra a homologação física nem substitui backup externo.
