@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67: correção de rolagem em Minhas categorias**, na branch `refactor/roadmap-manutencao-p0-20261122`, em homologação automatizada. A v66 teve 372/372 testes Node e QA Chromium aprovados; o diagnóstico v64 do Samsung passou em 225 verificações sem erros, com um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente; P2.6 aguarda testes da v67 e inspeção física no Samsung. **P1 concluída**, **P0.5 em homologação física** e `main` não alterada.
+**Situação:** **v67: rolagem de Minhas categorias corrigida; 374/374 testes Node e QA Chromium aprovados no CI**, na branch `refactor/roadmap-manutencao-p0-20261122` (runs 45141050370 e 45141050207). O diagnóstico v64 do Samsung passou em 225 verificações sem erros, com um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente; P2.6 aguarda inspeção física no Samsung. **P1 concluída**, **P0.5 em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,13 +19,13 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **v67 em testes; inspeção física pendente** | Visual aprovado mantido; correção de continuidade da lista de categorias após Tirar/Mostrar, mantendo botão + e teclado monetário nativo |
+| **P2 — Qualidade, interface e funções de referência** | **v67 CI aprovado; inspeção física pendente** | Visual aprovado mantido; correção de continuidade da lista de categorias após Tirar/Mostrar, mantendo botão + e teclado monetário nativo |
 | P2.1 | ✅ Concluída em branch; teclado simplificado em v66 | Celular: valor via teclado do sistema, categorias por ícones e cadastros no +, sem barra fixa. PC: ações do Resumo. Histórico agrupado por dia |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
 | P2.4 | ✅ Concluída (CI v62) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
-| P2.6 | 🟡 v67 em homologação | Orçamento do dia prioritário, seis abas sem sobreposição, botão + único, valor nativo e preservação de posição ao ocultar/reexibir categorias. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
+| P2.6 | 🟡 v67 CI aprovado; homologação física pendente | Orçamento do dia prioritário, seis abas sem sobreposição, botão + único, valor nativo e preservação de posição ao ocultar/reexibir categorias. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
 | **P3 — Logs e observabilidade** | **v66 CI aprovado** | Diagnóstico distingue erros reais e riscos preventivos; v66 detecta campo nativo bloqueado ou retorno acidental de teclado customizado |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
@@ -78,6 +78,7 @@
 - Para Tirar/Mostrar, o controlador continua salvando a mesma preferência e atualizando o restante do aplicativo, mas muda **apenas o texto e o estado da linha clicada**. A lista e o botão permanecem conectados no DOM; mudar de tipo ou criar/renomear ainda atualiza a lista inteira quando necessário.
 - Regressões Node verificam duas categorias ocultadas consecutivamente, reexibição, identidade do botão, rolagem e falha de gravação. Chromium E2E faz Tirar/Mostrar numa posição baixa da lista e confirma que a página não volta ao topo.
 - Nenhum esquema, categoria histórica ou dado financeiro foi alterado. **P0.5 e homologação física da P2.6 continuam pendentes.**
+- **CI v67 aprovado:** 374/374 testes Node (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141050370) e Chromium desktop/móvel + offline (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141050207), com teste de Tirar/Mostrar e rolagem no smartphone.
 
 ## Verificação da P2 até v60
 

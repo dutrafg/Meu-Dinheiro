@@ -4,7 +4,7 @@
 
 - Ao clicar em **Tirar/Mostrar**, atualiza somente a categoria clicada após salvar com sucesso, preservando o botão, o foco e a posição na lista. Não desmonta e recria todas as categorias.
 - Criar, renomear e alternar a lista entre entradas/despesas continuam atualizando a estrutura quando necessário. Falhas ao salvar mantêm o estado visual anterior.
-- Testes Node e Chromium simulam várias remoções na parte de baixo da tela e confirmam que a rolagem não muda. Versão/cache v67, sem alteração nos contratos de dados nem publicação na `main`.
+- **374/374 testes Node e QA Chromium desktop/móvel/offline aprovados no CI** (runs 45141050370 e 45141050207), incluindo ocultar/mostrar categorias na parte de baixo da tela sem saltar para o topo. Versão/cache v67, sem alteração nos contratos de dados nem publicação na `main`.
 
 ## v66 — Teclado numérico somente do celular
 
