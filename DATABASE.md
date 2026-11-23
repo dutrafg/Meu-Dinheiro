@@ -82,7 +82,7 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Lembretes de aporte e projeção bruta de CDI foram isolados em funções puras do motor financeiro; não alteram o protocolo transacional P0.5 nem migram dados.
 - O repositório IndexedDB permanece primário, com espelho local de compatibilidade. A homologação real da P0.5 continua pendente.
 
-## P1.3–P1.5 — Domínios financeiros isolados (v54)
+## P1.3–P1.5 — Domínios financeiros isolados (v55)
 
 - Metas/sonhos, investimentos e vínculos salariais possuem regras puras independentes da UI. O cálculo de saldo disponível também usa o motor financeiro compartilhado.
 - **Nenhum esquema, chave, identificador ou formato de backup mudou** nesta etapa; o fluxo de escrita transacional continua idêntico ao da v53. Os exports anteriores dos controladores permanecem acessíveis.

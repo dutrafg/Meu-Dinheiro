@@ -129,13 +129,13 @@ As regras puras para ocorrências de recorrências, listagem por mês, totais mo
 
 Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI bruto de 21 dias úteis também mora no motor. A data de referência é um argumento explícito; a função de percentual configurável é injetada a partir de `regras-financeiras.js`, preservando uma única origem para essa regra. O `app.js` apenas fornece estado e formata o texto. Simulações não alteram saldos, investimentos, conclusão de aportes nem armazenamento.
 
-## P1.3–P1.5 — Domínios puros e contratos de compatibilidade (v54)
+## P1.3–P1.5 — Domínios puros e contratos de compatibilidade (v55)
 
 - `dominio-objetivos.js` contém o progresso, restante, soma de metas/sonhos sem contar aplicações vinculadas duas vezes, seleção de candidatos e cartões de destaque. `objetivos.js` controla apenas UI, formulários e formatação.
 - `dominio-investimentos.js` contém localização de salários, validação dos vínculos, inserção e edição imutável de investimentos. `investimentos.js` controla os diálogos e reexporta as APIs antigas para preservar consumidores existentes.
 - `motor-financeiro.js` também calcula o saldo disponível histórico até a data de referência. `resumo.js` faz a renderização e mantém o export antigo como encaminhamento.
 - Nenhum domínio puro lê DOM, IndexedDB, localStorage, rede ou relógio implicitamente (datas são argumentos). A interface continua usando `persist()` para submeter alterações; nenhum cálculo grava dados.
-- Dois novos módulos integram catálogo, registro de autoverificações, cache PWA e prévia HTML; testes validam dados imutáveis, valores em centavos e carga com 10 mil aplicações sintéticas.
+- Dois novos módulos integram catálogo, registro de autoverificações, cache PWA e prévia HTML; testes validam dados imutáveis, sintaxe JS, valores em centavos e carga com 10 mil aplicações sintéticas.
 
 ## P2.1 — Homologação no navegador
 

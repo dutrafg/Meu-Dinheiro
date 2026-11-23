@@ -2,8 +2,18 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const {execFileSync}=require('node:child_process');
 const root=path.join(__dirname,'..');
 const ler=nome=>fs.readFileSync(path.join(root,nome),'utf8');
+
+test('P1: cada módulo e o ponto de entrada passam pela checagem de sintaxe JavaScript',()=>{
+  const arquivos=['dist/app.js',...fs.readdirSync(path.join(root,'dist/modules'))
+    .filter(nome=>nome.endsWith('.js')).map(nome=>`dist/modules/${nome}`)];
+  for(const arquivo of arquivos){
+    assert.doesNotThrow(()=>execFileSync(process.execPath,['--check','--input-type=module'],
+      {input:ler(arquivo),stdio:['pipe','pipe','pipe']}),`Sintaxe inválida: ${arquivo}`);
+  }
+});
 
 test('P1: módulos de cálculo não dependem de DOM, persistência, rede ou UI',()=>{
   for(const arquivo of ['motor-financeiro','dominio-objetivos','dominio-investimentos','regras-financeiras']){

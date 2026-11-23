@@ -9,7 +9,6 @@ import {acaoMovelParaVisao,TIPOS_CRIACAO_RAPIDA} from './acao-rapida.js';
 import {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior} from './investimentos.js';
 import {calcularCalendarioFinanceiro,compactarValorCalendario,navegarMesCalendario,renderBotaoCalendario} from './calendario-financeiro.js';
 import {avaliarRequisitosProposta,REQUISITOS_PROPOSTA} from './diagnostico-proposta.js';
-import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './concorrencia-dados.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
