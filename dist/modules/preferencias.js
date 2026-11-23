@@ -7,7 +7,13 @@ export const TEMAS = Object.freeze(['auto','claro','escuro']);
 export const CATEGORIAS_APORTE_PADRAO = Object.freeze(['Salário base','Salário','Personal']);
 
 export function preferenciasPadrao() {
-  return {tema:'auto',cor:'azul',percentual:10,categoriasAporte:[...CATEGORIAS_APORTE_PADRAO],reservaGoalId:''};
+  return {tema:'auto',cor:'azul',percentual:10,categoriasAporte:[...CATEGORIAS_APORTE_PADRAO],reservaGoalId:'',limiteMensal:null,metaPoupancaMensal:null};
+}
+
+function valorMonetarioOpcional(valor){
+  if(valor===null||valor===undefined||valor==='')return null;
+  if(typeof valor!=='number'||!Number.isFinite(valor)||valor<=0||valor>999999999)return null;
+  return Math.round((valor+Number.EPSILON)*100)/100;
 }
 
 export function normalizarPreferencias(valor, categoriasRenda=[]) {
@@ -20,7 +26,9 @@ export function normalizarPreferencias(valor, categoriasRenda=[]) {
     cor:Object.hasOwn(CORES,valor.cor)?valor.cor:padrao.cor,
     percentual:typeof valor.percentual==='number'&&Number.isFinite(valido)&&valido>=0&&valido<=100?Math.round(valido*100)/100:padrao.percentual,
     categoriasAporte:Array.isArray(valor.categoriasAporte)?[...new Set(valor.categoriasAporte.filter(c=>typeof c==='string'&&permitidas.has(c)))]:padrao.categoriasAporte.filter(c=>permitidas.has(c)),
-    reservaGoalId:typeof valor.reservaGoalId==='string'&&valor.reservaGoalId.length<=200?valor.reservaGoalId:''
+    reservaGoalId:typeof valor.reservaGoalId==='string'&&valor.reservaGoalId.length<=200?valor.reservaGoalId:'',
+    limiteMensal:valorMonetarioOpcional(valor.limiteMensal),
+    metaPoupancaMensal:valorMonetarioOpcional(valor.metaPoupancaMensal)
   };
 }
 

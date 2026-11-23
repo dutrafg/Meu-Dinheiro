@@ -29,6 +29,8 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
     const prefs=atual();
     form.elements.namedItem('tema').value=prefs.tema;
     form.elements.namedItem('percentual').value=prefs.percentual;
+    form.elements.namedItem('limiteMensal').value=prefs.limiteMensal??'';
+    form.elements.namedItem('metaPoupancaMensal').value=prefs.metaPoupancaMensal??'';
     cores.replaceChildren();
     for(const [codigo,hex] of Object.entries(CORES)){
       const label=document.createElement('label');label.className='settings-color-option';
@@ -59,10 +61,21 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
       estado('Informe um percentual válido de 0% a 100%. Nada foi alterado.',true);
       return false;
     }
+    const leituraMonetaria=nome=>{
+      const texto=String(form.elements.namedItem(nome).value).trim();
+      const valor=Number(texto);
+      return texto===''?null:Number.isFinite(valor)&&valor>0&&valor<=999999999?valor:NaN;
+    };
+    const limiteMensal=leituraMonetaria('limiteMensal');
+    const metaPoupancaMensal=leituraMonetaria('metaPoupancaMensal');
+    if(Number.isNaN(limiteMensal)||Number.isNaN(metaPoupancaMensal)){
+      estado('Limite e meta devem ser maiores que zero; deixe vazio para desativar.',true);
+      return false;
+    }
     const prefs=normalizarPreferencias({tema:form.elements.namedItem('tema').value,
       cor:form.querySelector('input[name="cor"]:checked')?.value,
       percentual,categoriasAporte:[...form.querySelectorAll('input[name="categoriaAporte"]:checked')].map(el=>el.value),
-      reservaGoalId:reserva.value},CATEGORIES.income);
+      reservaGoalId:reserva.value,limiteMensal,metaPoupancaMensal},CATEGORIES.income);
     if(JSON.stringify(prefs)===JSON.stringify(atual())){
       aplicarAparencia(prefs);estado('Tudo salvo automaticamente.');return true;
     }
@@ -75,7 +88,7 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
   }
   form.addEventListener('change',salvarAutomaticamente);
   form.addEventListener('input',event=>{
-    if(event.target?.name!=='percentual')return;
+    if(!['percentual','limiteMensal','metaPoupancaMensal'].includes(event.target?.name))return;
     if(pending!==null)clearTimeout(pending);
     pending=setTimeout(salvarAutomaticamente,500);
   });

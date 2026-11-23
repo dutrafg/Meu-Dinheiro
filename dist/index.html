@@ -92,6 +92,11 @@
             <div class="settings-row"><label for="settings-reserve">Meta principal de reserva</label><select id="settings-reserve" name="reservaGoalId"></select></div>
             <p class="field-hint">A configuração apenas calcula sugestões: não movimenta dinheiro nem altera lançamentos.</p>
           </section>
+          <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-wallet"/></svg> Meu limite e minha meta</h3>
+            <div class="settings-row"><label for="settings-monthly-limit">Quero gastar no máximo por mês (R$)</label><input id="settings-monthly-limit" name="limiteMensal" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" placeholder="Sem limite definido" /></div>
+            <div class="settings-row"><label for="settings-monthly-saving">Quero guardar por mês (R$)</label><input id="settings-monthly-saving" name="metaPoupancaMensal" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" placeholder="Sem meta definida" /></div>
+            <p class="field-hint">Valores opcionais. A tela Resumo usa o limite para estimar quanto ainda pode gastar por dia; a meta é uma referência e não registra aportes.</p>
+          </section>
         </form>
         <details class="settings-section settings-tools" aria-labelledby="settings-update-title"><summary id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e diagnóstico</summary>
           <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>

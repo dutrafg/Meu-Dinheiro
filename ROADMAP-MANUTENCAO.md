@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v56: P2.1 implementada para celular e PC** na branch `refactor/roadmap-manutencao-p0-20261122`, com 337 testes automatizados locais aprovados. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v57: P2.1 concluída e P2.2 implementada em validação** na branch `refactor/roadmap-manutencao-p0-20261122`. P2.1 aprovada pelo CI Node e Chromium; P2.2 passou em 342 testes Node locais. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,9 +19,9 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v56)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
-| P2.1 | ✅ Implementada; QA de branch em andamento | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
-| P2.2 | ⏳ Planejada | Limites e metas mensais, visão do gasto diário seguro e cards compactos de acompanhamento, sem apresentar estimativas como saldo bancário |
+| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v57)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
+| P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
+| P2.2 | ✅ Implementada; CI de branch em validação | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | P2.3 | ⏳ Planejada | Contas a pagar, contas mensais e previsão dos 12 meses com vencimentos e recorrências; preservar registros históricos |
 | P2.4 | ⏳ Planejada | Gestão de categorias e parcelas de cartão com regras de integridade e importação compatíveis |
 | P2.5 | ⏳ Planejada | Relatório anual, desafio de 52 semanas e compartilhamento explícito do resumo, quando aplicável |

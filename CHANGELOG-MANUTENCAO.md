@@ -137,5 +137,12 @@
 - Adicionados dois atalhos de cadastro de renda/despesa no celular e ações diretas no Resumo do PC, preservando o botão + e todas as opções originais.
 - Novo teclado monetário móvel, com valores em centavos, visor em reais, operação de apagar e limite de valor. Categorias rápidas reutilizam o catálogo oficial; formulário nativo continua disponível.
 - Listas de Renda/Despesas agora incluem agrupamento por dia, sem alterar saldos ou recorrências.
-- Incluídos testes de teclado, acessibilidade estrutural, catálogo único e agrupamento; **337 testes Node locais aprovados**, com Chromium no CI da branch a validar.
+- Incluídos testes de teclado, acessibilidade estrutural, catálogo único e agrupamento; **337 testes Node locais e CI Node/Chromium aprovados**.
 - As demais ideias das referências foram organizadas em P2.2–P2.7. `main` permanece intacta; P0.5 continua pendente de validação física.
+
+## P2.2 — Limite mensal e orçamento por dia (v57)
+
+- Em Ajustes, configurações opcionais de teto mensal e valor desejado de economia, sem preenchimento fictício ou automático. Ambos persistem na chave de preferências já existente e são validados antes de salvar.
+- No Resumo do mês atual, cartão “Hoje você pode gastar” calcula cota do dia sobre o saldo do orçamento após os gastos anteriores, desconta os gastos de hoje, mostra progresso e avisa ao atingir 80% do teto. Recorrências são consideradas somente após o vencimento.
+- O cálculo isolado `orcamento.js` opera em centavos, é somente leitura e não confunde projeção com saldo bancário. A meta de economia não produz lançamentos nem aportes.
+- Testes de orçamento, datas, limite ultrapassado, preferências e validação de formulário adicionados; **342 testes Node locais aprovados**, com CI Node/Chromium a validar na branch. `main` e a homologação física de P0.5 permanecem intocados.

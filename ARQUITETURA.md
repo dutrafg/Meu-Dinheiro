@@ -148,3 +148,9 @@ Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI br
 ## P2.1 — Homologação no navegador
 
 Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e executa scripts/verificar-interface.cjs em um servidor efêmero com lançamentos fictícios. Nenhum dado real é carregado, e a distribuição PWA não inclui a dependência de teste.
+
+## P2.2 — Orçamento diário e preferência mensal (v57)
+
+- `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.
+- `resumo.js` apenas apresenta a leitura no mês atual; `ajustes.js` valida campos opcionais e grava exclusivamente as preferências locais. Não há escrita no repositório de lançamentos, migração nem alteração nos backups financeiros.
+- O catálogo, registro obrigatório, SW e gerador de HTML incluem o novo módulo e testes cobrem recorrências, fim de mês, orçamento excedido e compatibilidade com preferências anteriores.

@@ -17,8 +17,8 @@ function montarAjustes(){
   const pagina=obter('settings-page');
   pagina.classList={contains:n=>n==='hidden'?false:false};
   const form=obter('settings-form');
-  const tema={value:'auto'},percentual={value:'10'};
-  form.elements={namedItem:n=>({tema,percentual})[n]};
+  const tema={value:'auto'},percentual={value:'10'},limiteMensal={value:''},metaPoupancaMensal={value:''};
+  form.elements={namedItem:n=>({tema,percentual,limiteMensal,metaPoupancaMensal})[n]};
   const cores=obter('settings-colors');
   form.querySelector=()=>cores.children.flatMap(label=>label.children).find(input=>input.name==='cor'&&input.checked);
   form.querySelectorAll=()=>[];
@@ -26,7 +26,7 @@ function montarAjustes(){
   const meta={content:''};
   const document={documentElement:root,querySelector:()=>meta,getElementById:obter,
     createElement:tag=>Object.assign(elemento(tag),{style:{}}),createTextNode:text=>text};
-  const preferenciasPadrao={tema:'auto',cor:'azul',percentual:10,categoriasAporte:[],reservaGoalId:''};
+  const preferenciasPadrao={tema:'auto',cor:'azul',percentual:10,categoriasAporte:[],reservaGoalId:'',limiteMensal:null,metaPoupancaMensal:null};
   let salvo={...preferenciasPadrao};
   const gestor={obter:()=>({...salvo}),salvar:novas=>{salvo=novas;return true;}};
   const mensagens=[];
@@ -42,7 +42,7 @@ function montarAjustes(){
     for(const label of cores.children)for(const input of label.children){if(input.name==='cor')input.checked=input.value===novaCor;}
     eventos.get('settings-form:change')({target:{name:'tema'}});
   };
-  return {eventos,pagina,root,meta,gestor,mensagens,selecionar,percentual,api};
+  return {eventos,pagina,root,meta,gestor,mensagens,selecionar,percentual,limiteMensal,metaPoupancaMensal,api};
 }
 
 test('Tema e cor são aplicados e gravados automaticamente ao alterar preferência',()=>{
@@ -70,6 +70,18 @@ test('Sair de Ajustes não desfaz mudanças e valores inválidos não substituem
   assert.equal(typeof app.api.concluirEdicao,'function');
   assert.equal(app.root.dataset.theme,'escuro');
   assert.equal(app.root.dataset.accent,'roxo');
+});
+
+test('Limite mensal e meta são opcionais; entrada inválida não altera configuração salva',()=>{
+  const app=montarAjustes();
+  app.api.abrir();
+  app.limiteMensal.value='2600';app.metaPoupancaMensal.value='300';
+  app.eventos.get('settings-form:change')({target:{name:'limiteMensal'}});
+  assert.equal(app.gestor.obter().limiteMensal,2600);
+  assert.equal(app.gestor.obter().metaPoupancaMensal,300);
+  app.limiteMensal.value='-1';
+  app.eventos.get('settings-form:change')({target:{name:'limiteMensal'}});
+  assert.equal(app.gestor.obter().limiteMensal,2600);
 });
 
 test('Ajustes têm estado de gravação acessível e nenhum botão Salvar/Descartar',()=>{

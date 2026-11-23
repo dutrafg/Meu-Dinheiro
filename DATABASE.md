@@ -93,6 +93,12 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Teclado em centavos, seleção visual de categorias, agrupamento de lista e botões rápidos usam as estruturas financeiras e `persist()` existentes. Nenhuma chave nova, migração ou modificação do formato do backup.
 - A homologação da P0.5 em dispositivo físico continua pendente e independente dos testes de layout da P2.
 
+## P2.2 — Preferências de planejamento (v57)
+
+- `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.
+- Essas opções **não** integram o snapshot financeiro IndexedDB, os lançamentos nem o backup JSON financeiro. São preferências locais deste navegador; devem ser reconfiguradas após a troca de dispositivo.
+- A simulação orçamentária usa somente leituras de transações e ocorrências mensais já existentes; não escreve automaticamente em nenhuma base nem representa saldo bancário.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

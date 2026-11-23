@@ -101,6 +101,18 @@ async function verificar(){
     assert.equal(await page.locator('[aria-label="Resumo da reserva"]').count(),1);
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
 
+    // P2.2: preferências ficam isoladas do snapshot financeiro e refletem no Resumo.
+    assert.match(await page.locator('.proto-budget-card').innerText(),/Defina um limite mensal/);
+    await page.locator('.proto-budget-heading [data-view="ajustes"]').click();
+    await page.locator('#settings-monthly-limit').fill('2600');
+    await page.locator('#settings-monthly-saving').fill('300');
+    await page.locator('#settings-monthly-saving').dispatchEvent('change');
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').metaPoupancaMensal===300);
+    assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('meu-dinheiro-essencial:v1'))).transactions.length,2);
+    await page.locator('.desktop-nav [data-view="resumo"]').click();
+    assert.match(await page.locator('.proto-budget-card').innerText(),/Limite R\$ 2\.600,00/);
+    assert.match(await page.locator('.proto-budget-card').innerText(),/Meta de economia mensal/);
+
     await page.locator('#desktop-create-trigger').click();
     await page.locator('#desktop-create-menu [data-create-kind="investment"]').click();
     const form=page.locator('#investment-form');

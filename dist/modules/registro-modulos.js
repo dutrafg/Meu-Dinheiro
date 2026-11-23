@@ -19,6 +19,7 @@ import {cliqueForaDoDialogo} from './dialogos.js';
 import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
 import {converterOfxParaCsv,identificarOfx} from './ofx.js';
 import {aplicarTeclaMonetaria} from './teclado-monetario.js';
+import {calcularOrcamentoDia} from './orcamento.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -32,6 +33,10 @@ export function registrarModulosDoApp(api) {
   registrar('lancamentos',()=>typeof moduloLancamentos.renderTransactions==='function'&&typeof moduloLancamentos.openTransaction==='function');
   registrar('teclado-monetario',()=>aplicarTeclaMonetaria('0','1')==='0.01'&&
     aplicarTeclaMonetaria('0.12','3')==='1.23'&&aplicarTeclaMonetaria('1.23','backspace')==='0.12');
+  registrar('orcamento',()=>{
+    const calculo=calcularOrcamentoDia([{date:'2026-11-01',type:'expense',amount:20}],300,'2026-11-02');
+    return calculo?.gastoAnterior===20&&calculo.cotaHoje===10&&calculo.diasRestantes===29;
+  });
   registrar('categorias-brasileiras',()=>{
     const obrigatorias=['Aluguel','Água e esgoto','Energia elétrica','Supermercado','Combustível','IPVA',
       'Condomínio','IPTU','Farmácia','Cartão de crédito','Plano de saúde'];

@@ -16,15 +16,18 @@ test('Instalações novas usam azul, tema automático e aporte de 10%',()=>{
   const p=preferenciasPadrao();
   assert.equal(p.tema,'auto');assert.equal(p.cor,'azul');assert.equal(p.percentual,10);
   assert.deepEqual([...p.categoriasAporte],['Salário base','Salário','Personal']);
+  assert.equal(p.limiteMensal,null);assert.equal(p.metaPoupancaMensal,null);
 });
 
 test('Preferências rejeitam valores manipulados, categorias estranhas e percentuais fora do intervalo',()=>{
   const {normalizarPreferencias}=carregar();
   const p=normalizarPreferencias({tema:'__proto__',cor:'não existe',percentual:1000,
-    categoriasAporte:['Salário','Salário','CPF 123','Personal'],reservaGoalId:42},['Salário','Personal']);
+    categoriasAporte:['Salário','Salário','CPF 123','Personal'],reservaGoalId:42,
+    limiteMensal:Infinity,metaPoupancaMensal:-5},['Salário','Personal']);
   assert.equal(p.tema,'auto');assert.equal(p.cor,'azul');assert.equal(p.percentual,10);
   assert.deepEqual([...p.categoriasAporte],['Salário','Personal']);
   assert.equal(p.reservaGoalId,'');
+  assert.equal(p.limiteMensal,null);assert.equal(p.metaPoupancaMensal,null);
 });
 
 test('Mudanças ficam em chave própria, sem sobrescrever os dados financeiros',()=>{
@@ -32,10 +35,11 @@ test('Mudanças ficam em chave própria, sem sobrescrever os dados financeiros',
   const values=new Map([['meu-dinheiro-essencial:v1','REGISTROS_FINANCEIROS']]);
   const storage={getItem:key=>values.get(key)||null,setItem:(key,val)=>values.set(key,val)};
   const manager=api.criarGestorPreferencias({storage,categoriasRenda:['Salário','Personal']});
-  assert.equal(manager.salvar({tema:'escuro',cor:'roxo',percentual:15,categoriasAporte:['Salário'],reservaGoalId:'meta-1'}),true);
+  assert.equal(manager.salvar({tema:'escuro',cor:'roxo',percentual:15,categoriasAporte:['Salário'],reservaGoalId:'meta-1',limiteMensal:2600,metaPoupancaMensal:300}),true);
   assert.equal(values.get('meu-dinheiro-essencial:v1'),'REGISTROS_FINANCEIROS');
   const reload=api.criarGestorPreferencias({storage,categoriasRenda:['Salário','Personal']});
   assert.equal(reload.obter().percentual,15);assert.equal(reload.obter().tema,'escuro');
+  assert.equal(reload.obter().limiteMensal,2600);assert.equal(reload.obter().metaPoupancaMensal,300);
   const pref=reload.obter();pref.categoriasAporte.push('Outro');
   assert.deepEqual([...reload.obter().categoriasAporte],['Salário']);
 });
