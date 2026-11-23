@@ -10,6 +10,13 @@
   .mobile-nav .nav-button{flex:1;min-width:0;font-size:.72rem;font-weight:650;border-radius:11px;min-height:57px;padding:7px 3px 5px;gap:3px;color:var(--sub)}
   .mobile-nav .nav-button svg{width:23px;height:23px;stroke-width:1.9}
   .mobile-nav .nav-button.active{background:transparent;box-shadow:none;color:var(--green-text)}
+  .mobile-nav .nav-button:focus-visible{outline:3px solid var(--accent-text);outline-offset:-3px}
+  /* A prioridade móvel é o limite do dia, antes dos gráficos completos. */
+  #view-content:has(> .proto-budget-card){display:flex;flex-direction:column}
+  #view-content:has(> .proto-budget-card)>*{order:3}
+  #view-content:has(> .proto-budget-card)>.proto-page-meta{order:0}
+  #view-content:has(> .proto-budget-card)>.proto-budget-card{order:1}
+  #view-content:has(> .proto-budget-card)>.proto-overview{order:2}
   .proto-overview{display:block}
   .proto-donut-card{min-height:unset;padding:16px;margin-bottom:13px}
   .proto-donut-card h3{margin-bottom:0}

@@ -172,3 +172,8 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - `desafio-52.js` define os 52 valores, gera a grade e deriva o andamento somente da coleção financeira `allocations` ligada à meta nominal dedicada. Exige correspondência de semana, valor e categoria; duplicatas são sinalizadas.
 - `objetivos.js` renderiza o desafio com as outras metas. `app.js` apenas abre o diálogo de meta ou de investimento existente e preenche valores; a escolha da origem e o commit ficam nas validações e no repositório já testados. Sem novos formatos de backup ou migrações.
 - Testes de fórmulas e situações inconsistentes, E2E mobile, autodiagnóstico, HTML independente e SW fazem parte da revisão.
+
+## P2.6a/P2.7a — Ordem visual e cobertura de larguras (v61)
+
+- CSS responsivo reorganiza apenas a exibição móvel do Resumo, colocando o orçamento antes da visão gráfica. Nenhum elemento financeiro é duplicado, removido ou gravado; desktop e DOM fonte mantêm a ordem estrutural anterior.
+- Foco da navegação inferior destacado, com seis módulos preservados. E2E confere ausência de overflow nas larguras 320, 390 e 768 px, além das rotas já cobertas em desktop e mobile.

@@ -217,6 +217,13 @@ async function verificar(){
     await page.locator('.proto-challenge summary').click();
     assert.equal(await page.locator('[data-action="challenge-week"][data-week="1"]').isDisabled(),true);
     assert.match(await page.locator('.challenge-summary').innerText(),/1 de 52 semanas confirmadas/);
+    for(const largura of [320,390,768]){
+      await page.setViewportSize({width:largura,height:844});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,
+        `Sem rolagem horizontal da página em ${largura}px`);
+      assert.equal(await page.locator('.mobile-nav .nav-button').count(),6);
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.locator('[data-objective-tab="dream"]').click();
     assert.equal(await page.locator('[data-objective-tab="dream"]').getAttribute('aria-pressed'),'true',
       'A aba Sonhos fica acessível dentro de Objetivos no celular');
