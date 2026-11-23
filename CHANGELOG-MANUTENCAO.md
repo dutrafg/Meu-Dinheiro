@@ -1,5 +1,11 @@
 # Mudanças propostas — roadmap de manutenção
 
+## 23/11/2026 — Diagnóstico v68 no Samsung: 230 verificações sem falhas
+
+- O HTML independente v68 executou **230 verificações, 0 erros, 1 aviso preventivo, 10 não avaliadas e nenhuma proposta pendente**. A pendência de acesso direto ao Diagnóstico da v67 virou `ok`, e duas verificações adicionais de Resumo foram aprovadas.
+- Persistência IndexedDB primária/sincronizada; backup externo não configurado. Os testes de Service Worker e Cache Storage continuam não avaliáveis no arquivo `content://`/`file://`, não sendo erros.
+- Prévia PWA v68 da branch **READY** na Vercel (protegida por login). Faltam testes físicos de instalação, retomada offline, backup/recuperação fictícios. `main` permanece na v67.
+
 ## v68 — Diagnóstico em um toque nos Ajustes (branch de homologação)
 
 - O único botão **Executar diagnóstico completo** foi movido de Atualizações (seção normalmente fechada) para uma faixa compacta e visível no topo de Ajustes. A seção de versões agora se chama **Atualizações do aplicativo**.

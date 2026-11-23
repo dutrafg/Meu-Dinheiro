@@ -14,7 +14,7 @@ Este roteiro usa **somente dados fictícios em perfil de navegador separado, sem
 
 ## B) PWA instalado — celular ou PC
 
-1. Com internet, abra a versão v68 da **branch de homologação** em um perfil de teste, sem registros reais; aguarde o Service Worker ativar e atualize a página uma vez. O HTML independente `file://` não substitui este teste do PWA.
+1. Com internet, abra a versão v68 da **branch de homologação** em https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app. Esta prévia está protegida pelo login da Vercel do proprietário; não desative essa proteção. O domínio é diferente do principal, de modo que o armazenamento local fica separado. Use **somente dados fictícios**, aguarde o Service Worker ativar e recarregue uma vez. O HTML independente `file://`/`content://` não substitui este teste do PWA.
 2. Em **Ajustes**, toque no botão visível **Executar diagnóstico completo**, sem expandir Atualizações; verifique os grupos **offline** e **proposta interface**. Entrada, scripts, CSS, manifesto, ícones, persistência, validação, notificações e diagnóstico devem estar em cache; `OFFLINE_CACHE_INTEGRIDADE` e `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` devem indicar sucesso.
 3. Se `OFFLINE_CACHE_VERSAO` alertar versão diferente, conclua a atualização e repita online antes de cortar a conexão.
 4. Use apenas lançamentos fictícios, habilite modo avião, feche a aba/PWA e abra novamente sem internet. Resumo, Renda, Despesas, Objetivos, previsões e diagnóstico devem abrir; não dependa do CDI remoto.
@@ -24,8 +24,8 @@ Este roteiro usa **somente dados fictícios em perfil de navegador separado, sem
 
 ## Checklist físico para P4.2
 
-- [ ] Diagnóstico direto acessível em Ajustes com um toque, no celular.
-- [ ] HTML independente abriu sem rede e seu diagnóstico `OFFLINE_HTML_*` foi aprovado.
+- [x] Diagnóstico direto em Ajustes reportado como `ok` no HTML independente do Samsung (v68).
+- [x] Diagnóstico do HTML independente executou `OFFLINE_HTML_*` sem erros no Samsung (v68); confirmar manualmente o modo avião continua sendo recomendado.
 - [ ] PWA instalado abriu e navegou após modo avião e reinicialização.
 - [ ] Após reconectar, os registros **fictícios** permaneceram sem duplicações.
 - [ ] Cópia JSON de teste exportada para fora do navegador e restauração testada em ambiente isolado.

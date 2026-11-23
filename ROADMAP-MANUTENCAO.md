@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026; diagnóstico Samsung v67 com **228 verificações, zero erros**, um risco preventivo e uma proposta de navegação pendente. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com acesso direto ao Diagnóstico em Ajustes; **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45175055623 e 45175055621). **P4.1 e P4.2a automatizada concluídas**; **P4.2 física, P0.5 e P2.6 seguem em homologação no aparelho**. Não publicar v68 em `main` sem nova autorização.
+**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45175055623 e 45175055621). Diagnóstico v68 no Samsung/HTML independente: **230 verificações, zero erros, um risco preventivo, dez não avaliadas e zero propostas pendentes**; `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` passou de pendente na v67 para aprovado na v68. **P4.1 e P4.2a automatizada concluídas**; **P4.2b PWA instalado/backup, P0.5 e P2.6 ainda em homologação física**. Não publicar v68 em `main` sem nova autorização.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -96,6 +96,14 @@
 - **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI remoto**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055623 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055621. Chromium local não iniciou por restrição do executor (`socket() failed: Operation not permitted`), contornada pelo CI remoto, sem modificar código nem dados.
 - Guia `VALIDACAO-OFFLINE.md` atualizado para v68: distingue HTML independente do PWA instalado e exige perfil de testes, backup JSON fora do navegador e restauração fictícia sem tocar nos dados reais.
 - **P4.2 ainda não concluída:** falta homologação física de Samsung/PWA, backup e restauração. Publicação de v68 em `main` depende de autorização explícita.
+
+## P4.2b1 — Novo diagnóstico Samsung recebido (v68, 23/11/2026)
+
+- JSON v68 enviado do HTML independente aberto no aparelho: **230 verificações, 0 erros, 1 aviso preventivo, 10 não avaliadas, 0 propostas pendentes**. O IndexedDB aparece primário/sincronizado e sem falhas, mas o backup externo está desligado.
+- Em relação à v67, dois checks adicionais `UI_ADICIONAR_RESUMO` e `UI_SALDO_PERIODO` passaram; **`PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` mudou de pendente para ok**. A prévia de cores caiu de `ok` para `nao_avaliado` por depender de componente visual presente no contexto de abertura; não foi registrada falha de interface ou dado.
+- `OFFLINE_HTML_JAVASCRIPT`, `OFFLINE_HTML_ESTILOS`, `OFFLINE_HTML_SEM_DEPENDENCIAS` e `OFFLINE_HTML_BIBLIOTECAS` passaram. `instalado:false`; Service Worker, controle e cache PWA **não** se aplicam ao HTML independente e não foram ensaiados fisicamente.
+- Prévia PWA da branch v68 está **READY** na Vercel, protegida por login do proprietário: https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app. Ela usa origem separada da versão em produção e permite testes com dados fictícios sem modificar os dados locais do domínio principal.
+- **Próxima etapa P4.2b2:** abrir a prévia no Samsung, instalar PWA, executar diagnóstico conectado/desconectado, verificar cache e IndexedDB após reabertura e exportar/restaurar backup JSON fictício em ambiente isolado. **P0.5/P2.6/P4.2 ainda não concluídas.**
 
 ## Verificação da P2 até v60
 
