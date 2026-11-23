@@ -20,6 +20,7 @@ import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
+import { criarModuloPrevisoes } from './modules/previsoes.js';
 import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
@@ -289,6 +290,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     settingsPage.classList.toggle('hidden',view!=='ajustes');
     document.getElementById('reports-page')?.classList.toggle('hidden',view!=='relatorios');
     viewContent.classList.toggle('hidden',view==='ajustes'||view==='relatorios');
+    if(view==='relatorios')document.getElementById('forecast-content').innerHTML=moduloPrevisoes.renderPrevisoes();
     if(view==='ajustes'||view==='relatorios')return;
     if (view === 'resumo') viewContent.innerHTML = renderSummary();
     else if (view === 'renda' || view === 'despesas') viewContent.innerHTML = renderTransactions(view==='renda'?'income':'expense');
@@ -323,6 +325,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
     fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
   const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
+  const moduloPrevisoes=criarModuloPrevisoes(common);
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{

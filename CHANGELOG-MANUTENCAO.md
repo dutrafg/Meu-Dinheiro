@@ -146,3 +146,11 @@
 - No Resumo do mês atual, cartão “Hoje você pode gastar” calcula cota do dia sobre o saldo do orçamento após os gastos anteriores, desconta os gastos de hoje, mostra progresso e avisa ao atingir 80% do teto. Recorrências são consideradas somente após o vencimento.
 - O cálculo isolado `orcamento.js` opera em centavos, é somente leitura e não confunde projeção com saldo bancário. A meta de economia não produz lançamentos nem aportes.
 - Testes de orçamento, datas, limite ultrapassado, preferências e validação de formulário adicionados; **342 testes Node locais aprovados**, com CI Node/Chromium a validar na branch. `main` e a homologação física de P0.5 permanecem intocados.
+
+## P2.3a — Agenda prevista e projeção de 12 meses (v58)
+
+- Em Relatórios, nova agenda de despesas esperadas nos próximos 30 dias e projeção de 12 meses com receitas, despesas e diferença, considerando apenas ocorrências válidas de lançamentos únicos ou recorrentes já existentes.
+- A tela distingue explicitamente *projeção* de cobrança paga, vencimento confirmado ou saldo bancário. Não oferece baixa fictícia, não duplica transações e não introduz esquemas de dados sem proteção transacional.
+- Módulo puro `previsoes.js`, tabela responsiva com rolagem horizontal, conteúdo acessível e texto escapado; catálogo, diagnóstico, cache offline e HTML independente atualizados.
+- Adicionados quatro testes de projeção, recorrência, dias 31 e integridade; **346 testes Node locais aprovados**. Corrigido no E2E um padrão de comparação do espaço não quebrável da moeda retornada pelo navegador.
+- **P2.3 continua parcialmente pendente:** cadastro real de contas e status de pagamento, recorrências com número limitado de vezes e cartão de crédito ainda requerem modelo de dados e validação de backup. Nenhum dado real foi utilizado.

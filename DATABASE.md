@@ -99,6 +99,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Essas opções **não** integram o snapshot financeiro IndexedDB, os lançamentos nem o backup JSON financeiro. São preferências locais deste navegador; devem ser reconfiguradas após a troca de dispositivo.
 - A simulação orçamentária usa somente leituras de transações e ocorrências mensais já existentes; não escreve automaticamente em nenhuma base nem representa saldo bancário.
 
+## P2.3a — Previsões sem esquema novo (v58)
+
+- `previsoes.js` projeta somente transações existentes por data de ocorrência, reutilizando a regra de recorrência do motor financeiro. Não cadastra obrigação, não marca pagamento e não insere lançamento futuro: os resultados permanecem fora do snapshot e do backup.
+- Ausência de uma coleção de contas a pagar significa ausência de estado “paga/atrasada”; exibir esse estado sem registro verificável seria incorreto. O cadastro persistente de contas ainda depende de projeto de esquema, validação, recuperação e fluxo de backup antes de habilitar escrita.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

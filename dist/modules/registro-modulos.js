@@ -20,6 +20,7 @@ import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './cate
 import {converterOfxParaCsv,identificarOfx} from './ofx.js';
 import {aplicarTeclaMonetaria} from './teclado-monetario.js';
 import {calcularOrcamentoDia} from './orcamento.js';
+import {criarModuloPrevisoes,projetarDozeMeses,proximasDespesasPrevistas} from './previsoes.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -36,6 +37,14 @@ export function registrarModulosDoApp(api) {
   registrar('orcamento',()=>{
     const calculo=calcularOrcamentoDia([{date:'2026-11-01',type:'expense',amount:20}],300,'2026-11-02');
     return calculo?.gastoAnterior===20&&calculo.cotaHoje===10&&calculo.diasRestantes===29;
+  });
+  registrar('previsoes',()=>{
+    const teste=[{type:'income',amount:200,date:'2026-11-05',recurring:true},
+      {type:'expense',amount:50,date:'2026-11-10',recurring:true}];
+    const meses=projetarDozeMeses(teste,'2026-11');
+    return meses.length===12&&meses[0].livre===150&&meses[11].livre===150&&
+      proximasDespesasPrevistas(teste,'2026-11-08').length===1&&
+      typeof criarModuloPrevisoes==='function'&&Boolean(document.getElementById('forecast-panel'));
   });
   registrar('categorias-brasileiras',()=>{
     const obrigatorias=['Aluguel','Água e esgoto','Energia elétrica','Supermercado','Combustível','IPVA',

@@ -154,3 +154,9 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.
 - `resumo.js` apenas apresenta a leitura no mês atual; `ajustes.js` valida campos opcionais e grava exclusivamente as preferências locais. Não há escrita no repositório de lançamentos, migração nem alteração nos backups financeiros.
 - O catálogo, registro obrigatório, SW e gerador de HTML incluem o novo módulo e testes cobrem recorrências, fim de mês, orçamento excedido e compatibilidade com preferências anteriores.
+
+## P2.3a — Agenda de compromissos e previsões (v58)
+
+- `previsoes.js` é um módulo de leitura: recebe a lista de transações e datas de referência para listar as próximas despesas registradas ou recorrentes e totalizar os 12 meses seguintes via `motor-financeiro.js`.
+- `Relatórios` recebe a tabela responsiva de 12 meses e agenda próxima sem formulário nem ação de baixa. Conteúdo de lançamentos é escapado. O modelo atual não possui obrigação distinta de transação: por isso não apresenta etiquetas “paga” ou “atrasada”.
+- Contratos de backup, IndexedDB, importação e exclusão permanecem inalterados. O módulo foi registrado em catálogo/autodiagnóstico, SW, import do app e HTML único, com testes puros e inspeção de navegador.

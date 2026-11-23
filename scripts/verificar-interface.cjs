@@ -110,8 +110,12 @@ async function verificar(){
     await page.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').metaPoupancaMensal===300);
     assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('meu-dinheiro-essencial:v1'))).transactions.length,2);
     await page.locator('.desktop-nav [data-view="resumo"]').click();
-    assert.match(await page.locator('.proto-budget-card').innerText(),/Limite R\$ 2\.600,00/);
+    assert.match(await page.locator('.proto-budget-card').innerText(),/Limite R\$\s*2\.600,00/);
     assert.match(await page.locator('.proto-budget-card').innerText(),/Meta de economia mensal/);
+    await page.locator('.desktop-nav [data-view="relatorios"]').click();
+    assert.equal(await page.locator('.forecast-table tbody tr').count(),12);
+    assert.match(await page.locator('#forecast-content').innerText(),/Próximos 12 meses/);
+    await page.locator('.desktop-nav [data-view="resumo"]').click();
 
     await page.locator('#desktop-create-trigger').click();
     await page.locator('#desktop-create-menu [data-create-kind="investment"]').click();
