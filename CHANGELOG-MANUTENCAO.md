@@ -4,7 +4,7 @@
 
 - O único botão **Executar diagnóstico completo** foi movido de Atualizações (seção normalmente fechada) para uma faixa compacta e visível no topo de Ajustes. A seção de versões agora se chama **Atualizações do aplicativo**.
 - Resolvida a proposta `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` indicada no JSON v67; teste de regressão garante que voltar a esconder o botão em um painel fechado será detectado. E2E offline abrirá o diagnóstico sem expandir Atualizações.
-- Versão e cache PWA passam a v68; CSS responsivo com alvo de 44 px; **375/375 testes Node aprovados localmente**. QA Chromium será validado no CI (navegador local bloqueado pelo ambiente).
+- Versão e cache PWA passam a v68; CSS responsivo com alvo de 44 px; **375/375 testes Node e Chromium desktop/móvel/offline aprovados no CI** (runs 45175055623 e 45175055621). Navegador local permaneceu bloqueado pelo ambiente, mas o CI executou os fluxos reais.
 - Sem alterações em dados financeiros, preferências, IndexedDB, backup, categorias, CSV/OFX ou regras de cálculo. **v67 permanece em `main`**; P4.2/P0.5/P2.6 ainda exigem ensaio físico.
 
 ## 23/11/2026 — Auditoria v67 e publicação em main (P4.1)

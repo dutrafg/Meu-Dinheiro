@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026; diagnóstico Samsung v67 com **228 verificações, zero erros**, um risco preventivo e uma proposta de navegação pendente. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com acesso direto ao Diagnóstico em Ajustes e teste de regressão Node; **375/375 testes locais aprovados, QA Chromium em CI pendente**. **P4.1 concluída**; **P4.2, P0.5 e P2.6 seguem em homologação física**. Não publicar v68 em `main` sem nova autorização.
+**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026; diagnóstico Samsung v67 com **228 verificações, zero erros**, um risco preventivo e uma proposta de navegação pendente. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com acesso direto ao Diagnóstico em Ajustes; **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45175055623 e 45175055621). **P4.1 e P4.2a automatizada concluídas**; **P4.2 física, P0.5 e P2.6 seguem em homologação no aparelho**. Não publicar v68 em `main` sem nova autorização.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -93,7 +93,7 @@
 - A proposta `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO`, que estava pendente no JSON v67, foi endereçada: o **único** botão para abrir Diagnóstico foi movido da seção fechada Atualizações para uma faixa compacta visível no início de Ajustes, em celular e PC.
 - A seção inferior foi renomeada **Atualizações do aplicativo**. O acionador continua o mesmo `#open-diagnostics`; não há dois botões nem mudanças em backup, IndexedDB, valores ou fórmulas.
 - Novos testes verificam acesso antes das seções recolhíveis, botão único, área de toque de 44 px, detecção de regressão caso volte a um `details` fechado e abertura offline em um toque.
-- **375/375 testes Node locais aprovados**. Chromium local não iniciou por restrição do ambiente de execução (`socket() failed: Operation not permitted`); enviar para CI remoto e aguardar QA antes de declarar aprovação de navegador.
+- **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI remoto**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055623 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055621. Chromium local não iniciou por restrição do executor (`socket() failed: Operation not permitted`), contornada pelo CI remoto, sem modificar código nem dados.
 - Guia `VALIDACAO-OFFLINE.md` atualizado para v68: distingue HTML independente do PWA instalado e exige perfil de testes, backup JSON fora do navegador e restauração fictícia sem tocar nos dados reais.
 - **P4.2 ainda não concluída:** falta homologação física de Samsung/PWA, backup e restauração. Publicação de v68 em `main` depende de autorização explícita.
 
