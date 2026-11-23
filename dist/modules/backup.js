@@ -13,7 +13,7 @@ export function iniciarModuloBackup(ctx) {
   const folderBackup=window.MeuDinheiroFolderBackup.createBrowserManager({
     getSnapshot:()=>{
       const data=getData();
-      return {app:'meu-dinheiro-essencial',version:1,transactions:data.transactions,goals:data.goals,allocations:data.allocations||[],completedAportes:data.completedAportes||[],preferences:getPreferences()};
+      return {app:'meu-dinheiro-essencial',version:1,transactions:data.transactions,goals:data.goals,allocations:data.allocations||[],completedAportes:data.completedAportes||[],commitments:data.commitments||[],preferences:getPreferences()};
     },
     confirmReplace:message=>confirmar({titulo:'Proteger backup existente',mensagem:message,acao:'Guardar cópia e substituir',perigoso:true}),
     onStatus:({code,message,folder})=>{
@@ -76,7 +76,7 @@ export function iniciarModuloBackup(ctx) {
       const incoming=validarBackup(arquivo,CATEGORIES);
       const categoriasAntigas=incoming.transactions.filter(t=>!CATEGORIES[t.type].includes(t.category)).length;
       if(arquivo.preferences!==undefined && JSON.stringify(arquivo.preferences).length>8192)throw Error('Preferências excessivas');
-      if(!await confirmar({titulo:'Restaurar backup completo',mensagem:`Este backup contém ${incoming.transactions.length} lançamentos e ${incoming.goals.length} objetivos.${categoriasAntigas?` ${categoriasAntigas} lançamento(s) com categorias antigas serão preservados sem alteração.`:''} Deseja substituir todos os dados atuais?`,acao:'Restaurar dados',perigoso:true}))return;
+      if(!await confirmar({titulo:'Restaurar backup completo',mensagem:`Este backup contém ${incoming.transactions.length} lançamentos, ${incoming.goals.length} objetivos e ${(incoming.commitments||[]).length} compromissos.${categoriasAntigas?` ${categoriasAntigas} lançamento(s) com categorias antigas serão preservados sem alteração.`:''} Deseja substituir todos os dados atuais?`,acao:'Restaurar dados',perigoso:true}))return;
       if(!await confirmar({titulo:'Confirmar substituição financeira',mensagem:'Este arquivo substituirá os dados do banco primário. Guarde uma cópia do estado atual antes de prosseguir. Tem certeza?',acao:'Confirmar restauração',perigoso:true}))return;
       registrarEvento('RESTAURAR_BACKUP','backup');
       if(await persist(incoming,{allowRecovery:true})){

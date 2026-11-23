@@ -18,11 +18,11 @@ test('Calendário não aceita datas inexistentes, inclusive em anos bissextos', 
   for (const date of ['2026-02-29','2026-02-31','2026-04-31','1900-02-29','2026-00-10','2026-13-01','2026-12-00','2026-12-32','2026-2-01','texto']) assert.equal(validarDataISO(date),false,date);
 });
 
-test('Backup existente restaura todas as quatro coleções sem alterar os valores', async () => {
+test('Backup existente restaura coleções antigas e adiciona compromissos vazios sem alterar valores', async () => {
   const {validarBackup} = await load('dist/modules/validacao.js');
   const original=backup();
   const restored=validarBackup(original,categories);
-  assert.deepEqual(restored,{transactions:original.transactions,goals:original.goals,allocations:original.allocations,completedAportes:original.completedAportes});
+  assert.deepEqual(restored,{transactions:original.transactions,goals:original.goals,allocations:original.allocations,completedAportes:original.completedAportes,commitments:[]});
   assert.equal(original.goals[0].saved,500);
 });
 

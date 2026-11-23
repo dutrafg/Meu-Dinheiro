@@ -1,4 +1,4 @@
-import {CORES,TEMAS,normalizarPreferencias} from './preferencias.js';
+import {CORES,TEMAS,normalizarPreferencias,ICONES_PERSONALIZADOS} from './preferencias.js';
 
 const ROTULOS_CORES={verde:'Verde',azul:'Azul',roxo:'Roxo',laranja:'Laranja',rosa:'Rosa',turquesa:'Turquesa'};
 
@@ -20,13 +20,66 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
   const reserva=document.getElementById('settings-reserve');
   const atual=()=>gestor.obter();
   const status=document.getElementById('settings-autosave-status');
+  const listaCategorias=document.getElementById('category-manager-list');
+  const formCategoria=document.getElementById('category-manager-form');
+  const tipoCategoria=document.getElementById('category-manager-kind');
+  const iconeCategoria=formCategoria?.elements?.namedItem?.('icon');
   let pending=null;
+  if(iconeCategoria)for(const emoji of ICONES_PERSONALIZADOS){const option=document.createElement('option');option.value=emoji;option.textContent=`${emoji} Ícone`;iconeCategoria.append(option);}
+  function categoriaTipo(){return tipoCategoria.value==='income'?'income':'expense';}
+  function resetarCategoria(){formCategoria.reset();formCategoria.elements.namedItem('oldName').value='';document.getElementById('category-manager-save').textContent='+ Criar categoria';}
+  function renderCategorias(){
+    if(!iconeCategoria||!listaCategorias?.replaceChildren||!tipoCategoria)return;
+    listaCategorias.replaceChildren();
+    const prefs=atual(),tipo=categoriaTipo();
+    const nomes=[...new Set([...CATEGORIES[tipo],...prefs.categoriasExtras[tipo]])];
+    for(const nome of nomes){
+      const oculta=prefs.categoriasOcultas[tipo].includes(nome);
+      const linha=document.createElement('div');linha.className='category-manager-item';
+      const titulo=document.createElement('span');titulo.textContent=`${prefs.categoriaIcones[nome]||'🏷️'} ${nome}${oculta?' (oculta)':''}`;
+      const mudar=document.createElement('button');mudar.type='button';mudar.textContent='Mudar';mudar.dataset.categoryEdit=nome;mudar.className='button button-secondary';
+      const tirar=document.createElement('button');tirar.type='button';tirar.textContent=oculta?'Mostrar':'Tirar';tirar.dataset.categoryToggle=nome;tirar.className='button button-secondary';
+      linha.append(titulo,mudar,tirar);listaCategorias.append(linha);
+    }
+  }
+  function salvarCategoria(next){
+    if(!gestor.salvar(next)){estado('Não foi possível salvar categorias.',true);notify('Falha ao salvar categorias.');return false;}
+    renderCategorias();render();onSave?.();estado('Categorias salvas. O histórico foi preservado.');return true;
+  }
+  tipoCategoria?.addEventListener?.('change',()=>{resetarCategoria();renderCategorias();});
+  listaCategorias?.addEventListener?.('click',event=>{
+    const editar=event.target.closest('[data-category-edit]');const toggle=event.target.closest('[data-category-toggle]');
+    if(!editar&&!toggle)return;
+    const prefs=atual(),tipo=categoriaTipo(),nome=(editar||toggle).dataset.categoryEdit||(editar||toggle).dataset.categoryToggle;
+    if(editar){formCategoria.elements.namedItem('oldName').value=nome;formCategoria.elements.namedItem('name').value=nome;iconeCategoria.value=prefs.categoriaIcones[nome]||'🏷️';document.getElementById('category-manager-save').textContent='Salvar mudança';formCategoria.elements.namedItem('name').focus();return;}
+    const ocultas=prefs.categoriasOcultas[tipo];
+    prefs.categoriasOcultas[tipo]=ocultas.includes(nome)?ocultas.filter(v=>v!==nome):[...ocultas,nome];
+    salvarCategoria(prefs);
+  });
+  formCategoria?.addEventListener?.('submit',event=>{
+    event.preventDefault();const prefs=atual(),tipo=categoriaTipo(),campo=formCategoria.elements;
+    const nome=campo.namedItem('name').value.trim(),anterior=campo.namedItem('oldName').value;
+    const nomes=[...CATEGORIES[tipo],...prefs.categoriasExtras[tipo]];
+    if(!nome||nome.length>50||/[<>\r\n]/.test(nome)||nomes.some(v=>v.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')&&v!==anterior)){
+      notify('Nome inválido ou categoria já existente.');return;
+    }
+    if(anterior&&anterior!==nome){
+      // Renomear não reclassifica registros já salvos; o nome antigo é ocultado.
+      if(!prefs.categoriasOcultas[tipo].includes(anterior))prefs.categoriasOcultas[tipo].push(anterior);
+    }
+    if(!nomes.includes(nome))prefs.categoriasExtras[tipo].push(nome);
+    prefs.categoriasOcultas[tipo]=prefs.categoriasOcultas[tipo].filter(n=>n!==nome);
+    prefs.categoriaIcones[nome]=campo.namedItem('icon').value;
+    if(salvarCategoria(prefs))resetarCategoria();
+  });
+  document.getElementById('category-manager-cancel')?.addEventListener?.('click',resetarCategoria);
   function estado(message,error=false){
     if(status){status.textContent=message;status.dataset.state=error?'error':'ok';}
   }
   function abrir() {
     hideBackupMenu();
     const prefs=atual();
+    renderCategorias();
     form.elements.namedItem('tema').value=prefs.tema;
     form.elements.namedItem('percentual').value=prefs.percentual;
     form.elements.namedItem('limiteMensal').value=prefs.limiteMensal??'';
@@ -72,7 +125,7 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
       estado('Limite e meta devem ser maiores que zero; deixe vazio para desativar.',true);
       return false;
     }
-    const prefs=normalizarPreferencias({tema:form.elements.namedItem('tema').value,
+    const prefs=normalizarPreferencias({...atual(),tema:form.elements.namedItem('tema').value,
       cor:form.querySelector('input[name="cor"]:checked')?.value,
       percentual,categoriasAporte:[...form.querySelectorAll('input[name="categoriaAporte"]:checked')].map(el=>el.value),
       reservaGoalId:reserva.value,limiteMensal,metaPoupancaMensal},CATEGORIES.income);

@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v61: P2.1, P2.2 e P2.5 concluídas; P2.3 parcial; P2.6/P2.7 parcialmente iniciadas, P2.4 pendente** na branch `refactor/roadmap-manutencao-p0-20261122`. **356 testes Node e CI Chromium aprovados na v61**. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v62 em validação: P2.1–P2.5 implementadas; diagnóstico/notificações ampliados; P2.6/P2.7 em homologação final** na branch `refactor/roadmap-manutencao-p0-20261122`. A v61 obteve 356 testes Node e CI Chromium aprovados; a v62 está aguardando CI de navegador. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,15 +19,15 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v61)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
+| **P2 — Qualidade, interface e funções de referência** | **Em homologação (v62)** | Funções de referência implementadas com armazenamento compatível; aguardar CI Chromium e verificação física em smartphone/PWA antes de declarar encerramento irrestrito |
 | P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
-| **P2.3** | **🟡 Parcial: agenda e projeção aprovadas; contas a pagar pendentes** | Relatórios exibem despesas futuras previstas e tabela dos próximos 12 meses com receitas/despesas recorrentes; falta modelo independente de contas a pagar, confirmação de pagamento e cadastro de contas mensais sem dupla contagem |
-| P2.4 | ⏳ Planejada | Gestão de categorias e parcelas de cartão com regras de integridade e importação compatíveis |
+| **P2.3** | **✅ Implementada (CI v62 pendente)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
+| P2.4 | ✅ Implementada (CI v62 pendente) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
-| P2.6 | 🟡 Parcial (v61) | No celular, orçamento diário exibido antes dos gráficos e foco visível da navegação; restam revisão visual de contraste/espaçamento em dispositivos físicos, proteção de dados e modo de exemplo somente isolado |
-| P2.7 | 🟡 Parcial (v61) | QA desktop/mobile já existe; regressão expandida para 320/390/768 px sem overflow. Restam auditoria final após P2.3b/P2.4 e testes em dispositivos reais |
-| **P3 — Logs e observabilidade** | **Parcial** | Log técnico de sessão automático e JSON sanitizado; ampliar verificações sem dados privados |
+| P2.6 | 🟡 Em homologação | Orçamento do dia prioritário, responsividade de compromissos e categorias no celular/PC; falta inspeção manual em aparelhos reais; modo demonstrativo permanece fora do escopo publicado para não arriscar dados do usuário |
+| P2.7 | 🟡 Em homologação | Testes Node novos, regressão E2E de compromissos/categorias/notificações em 320/390/768/1440 px; CI e inspeção física pendentes |
+| **P3 — Logs e observabilidade** | **Ampliada em v62** | Diagnóstico distingue erros reais de riscos preventivos (sobreposição de recorrência, cota, falta de backup e falhas repetidas), testa backups/parcela duplicada; notificações locais de vencimentos, parcelas, limites e armazenamento |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 
 ## Regras de avanço
@@ -44,7 +44,16 @@
 - QA Chromium desktop/celular: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707644 — **aprovado**, incluindo desafio 52 semanas e aportes fictícios.
 - Prévia isolada v60: https://meu-dinheiro-mt7bc81l7-dutra8.vercel.app — não equivale à publicação em produção.
 - Na v61: cartão de limite do dia priorizado no celular e cobertura responsiva ampliada; **356 testes Node e Chromium aprovados**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45091040107 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45091040083.
-- Próximos blocos de implementação: P2.3b (contas com status de pagamento), P2.4 (categorias editáveis e parcelas), P2.6 (acabamento visual), P2.7 (auditoria final). **Não considerar P2 totalmente concluída** enquanto esses blocos e os testes reais necessários estiverem pendentes.
+- v62: entregas de P2.3b/P2.4, novos avisos e riscos preventivos estão integrados localmente. **Não considerar P2 totalmente homologada** antes de aprovação de CI Chromium e verificação manual do PWA/dispositivo real.
+
+## P2.3b, P2.4 e expansão P3 — contas, cartão, categorias e alertas (v62)
+
+- Criado `commitments` opcional no backup JSON v1 e no snapshot IndexedDB para contas mensais, fixos finitos e compras parceladas. Pagamento é vinculado à transação (`commitmentId`, `commitmentMonth`) e confirmado via `persist`, com bloqueio de baixa duplicada, ajuste de dia 31 e histórico preservado após remoção do plano.
+- Previsão inclui exclusivamente compromissos não pagos, sem somá-los outra vez aos pagamentos confirmados. Não gera transações automáticas e diferencia projeção de desembolso real.
+- Categorias personalizadas, ocultação, ícone e mudança de nome em preferências separadas; renomear não reclassifica o passado. Categorias históricas continuam editáveis; restauração de backups mantém categorias antigas.
+- Sininho mantém lembretes de aporte e acrescenta contas atrasadas, vencimentos nos próximos sete dias, cartão, limite 80%/100%, falha de backup em pasta e bloqueio de gravação; dispensar não equivale a pagar.
+- Diagnóstico sanitizado sinaliza possíveis previsões duplicadas, cota de armazenamento acima de 80%, quase mil compromissos, ausência de cópia externa e três erros técnicos repetidos. Testes sintéticos comprovam backup de parcelas, compatibilidade legada e rejeição de pagamentos duplicados.
+- Versão v62, cache, inventário de módulos e HTML independente atualizados. **CI de navegador e ensaios físicos ainda precisam validar esta versão.**
 
 ## Critérios de encerramento da P1 (v55)
 

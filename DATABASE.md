@@ -93,6 +93,14 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Teclado em centavos, seleção visual de categorias, agrupamento de lista e botões rápidos usam as estruturas financeiras e `persist()` existentes. Nenhuma chave nova, migração ou modificação do formato do backup.
 - A homologação da P0.5 em dispositivo físico continua pendente e independente dos testes de layout da P2.
 
+## P2.3b/P2.4 — Compromissos financeiros opcionais (v62)
+
+- `commitments` é um array opcional no mesmo snapshot financeiro e arquivo backup JSON v1. Backup antigo sem o campo migra para `[]`, sem apagar os demais dados. Cada item `{id,kind,name,category,amount,day,startMonth,monthsCount}`. `kind` aceita `bill` e `card`; `monthsCount` é `null` (indefinido para contas mensais) ou inteiro 1–120; cartão exige quantidade finita.
+- Um pagamento explicitamente confirmado gera um lançamento convencional de despesa com campos opcionais `commitmentId` e `commitmentMonth`. O mesmo plano/mês só aceita um pagamento; qualquer duplicação invalida o snapshot e o backup. O vencimento ajusta dias 29–31 em meses curtos.
+- Se o usuário excluir um compromisso, pagamentos antigos conservam vínculo histórico sem obrigar reintrodução do plano. Alterações de período ou tipo são restritas caso existam pagamentos. Projeções não geram lançamentos e separam o pago do a pagar.
+- Categorias personalizadas (`categoriasExtras`, `categoriasOcultas`, `categoriaIcones`) continuam na chave de preferências, com tamanho máximo de 8192 caracteres, independente do snapshot financeiro. Renomear ou ocultar afeta a lista futura, não o histórico. Preferências antigas são normalizadas e preservadas.
+- Nenhum dado financeiro ou nome de compromisso é registrado no diagnóstico JSON. Avisos de contas/cartão/limite/armazenamento são apenas locais, com IDs de dispensa isolados. **P0.5 ainda precisa da homologação real do PWA.**
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.

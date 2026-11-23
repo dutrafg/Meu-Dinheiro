@@ -1,0 +1,26 @@
+.commitments-group{margin:1rem 0;padding:1rem;border:1px solid var(--line,#d5dce2);border-radius:14px;background:var(--surface,#fff)}
+.commitments-group h4{margin:0 0 .9rem;font-size:1.05rem}
+.commitment-row{display:grid;grid-template-columns:minmax(130px,1fr) auto auto;gap:.65rem;align-items:center;padding:.85rem 0;border-bottom:1px solid var(--line,#d5dce2)}
+.commitment-row:last-child{border-bottom:0}
+.commitment-row-main{min-width:0;display:grid;gap:.3rem;overflow-wrap:anywhere}
+.commitment-row-main small,.commitment-row-actions small,.commitment-card-totals small{opacity:.78}
+.commitment-value{font-variant-numeric:tabular-nums}
+.commitment-status{font-weight:700;font-size:.84rem;padding:.35rem .6rem;border-radius:100px;white-space:nowrap}
+.commitment-status.is-paid{color:#076b43;background:#daf8e9}
+.commitment-status.is-late{color:#9f2a20;background:#ffe5e2}
+.commitment-status.is-upcoming{color:#625207;background:#fdf1ca}
+.commitment-row-actions{grid-column:1/-1;display:flex;gap:.55rem;flex-wrap:wrap}
+.commitment-row-actions button,.commitment-row>button{min-height:38px;padding:.5rem .75rem}
+.commitments-next{padding:.8rem 0}
+.commitments-next>summary{cursor:pointer;font-weight:650}
+.commitment-card-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.5rem 0}
+.commitment-card-totals>div{display:grid;gap:.35rem;padding:1rem;border-radius:12px;background:var(--background,#f4f6f8);min-width:0}
+.commitment-card-totals strong{font-size:1.1rem;font-variant-numeric:tabular-nums}
+.commitment-editor{margin-top:1rem;padding:1rem;border:1px solid var(--line,#d5dce2);border-radius:14px}
+.commitment-editor>summary{font-weight:700;cursor:pointer}
+.commitment-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem;margin-top:1rem}
+.commitment-form label{display:grid;gap:.4rem;min-width:0}
+.commitment-form input,.commitment-form select{min-width:0;width:100%;padding:.8rem;border-radius:9px;border:1px solid var(--line,#aab7bc);background:var(--surface,#fff);color:inherit}
+.commitment-form>button{grid-column:1/-1}
+@media(max-width:640px){.commitment-row{grid-template-columns:1fr auto}.commitment-status{grid-column:1/-1;justify-self:start}.commitment-form{grid-template-columns:1fr}.commitment-card-totals{grid-template-columns:1fr 1fr}.commitment-row-actions{gap:.4rem}.commitment-row-actions button{flex:1 1 auto}}
+@media(max-width:360px){.commitment-card-totals{grid-template-columns:1fr}}

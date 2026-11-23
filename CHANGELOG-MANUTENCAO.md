@@ -1,5 +1,12 @@
 # Mudanças propostas — roadmap de manutenção
 
+## v62 — P2: contas, parcelas, categorias e alertas preventivos
+
+- Cadastro de contas fixas e cartão parcelado com baixa confirmada, sem lançamento automático ou duplicidade na projeção.
+- Categorias personalizadas com ícone, renomeação e ocultação, preservando o histórico e backups antigos.
+- Avisos locais para pagamentos, limites, backup e bloqueios; diagnóstico distingue falhas detectadas de riscos futuros sem expor nomes/valores.
+- v62 está na branch de revisão, aguardando CI Chromium e inspeção física do PWA.
+
 ## P0.1 — Branch de homologação
 
 - Criada camada isolada de replicação financeira para IndexedDB, com transações ordenadas.

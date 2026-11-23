@@ -10,6 +10,7 @@ export function verificarIntegridade(dados, categorias) {
   const lancamentos = Array.isArray(dados?.transactions) ? dados.transactions : [];
   const metas = Array.isArray(dados?.goals) ? dados.goals : [];
   const aplicacoes = Array.isArray(dados?.allocations) ? dados.allocations : [];
+  const compromissos = Array.isArray(dados?.commitments) ? dados.commitments : [];
   const ids = [...lancamentos,...aplicacoes].map(item=>item?.id);
   const idMetas = metas.map(item=>item?.id);
   const duplicados = new Set(ids).size !== ids.length || new Set(idMetas).size !== idMetas.length;
@@ -33,6 +34,7 @@ export function verificarIntegridade(dados, categorias) {
   conferir('LISTA_METAS',array(dados?.goals),'Lista de metas disponível','Lista de metas ausente');
   conferir('LISTA_APLICACOES',array(dados?.allocations),'Lista de aplicações disponível','Lista de aplicações inválida');
   conferir('LISTA_LEMBRETES',array(dados?.completedAportes),'Lista de lembretes disponível','Lista de lembretes inválida');
+  conferir('LISTA_COMPROMISSOS',dados?.commitments===undefined||array(dados.commitments),'Lista de compromissos disponível ou compatível com versão antiga','Lista de compromissos inválida');
   conferir('TIPOS_LANCAMENTOS',lancamentos.every(t=>t&&['income','expense'].includes(t.type)),'Tipos de lançamentos válidos','Há tipos de lançamento desconhecidos');
   conferir('VALORES_LANCAMENTOS',lancamentos.every(t=>t&&Number.isFinite(t.amount)&&t.amount>0&&t.amount<=999999999),'Valores de lançamentos válidos','Há lançamentos com valores inválidos');
   conferir('DATAS_LANCAMENTOS',lancamentos.every(t=>t&&validarDataISO(t.date)),'Datas de lançamentos válidas','Há datas impossíveis em lançamentos');
@@ -55,5 +57,29 @@ export function verificarIntegridade(dados, categorias) {
   conferir('LIMITE_LANCAMENTOS',lancamentos.length<=20000,'Volume de lançamentos compatível com backup','Lançamentos acima do limite do backup','aviso');
   conferir('LIMITE_METAS',metas.length<=2000,'Volume de metas compatível com backup','Metas acima do limite do backup','aviso');
   conferir('LIMITE_APLICACOES',aplicacoes.length<=20000,'Volume de aplicações compatível com backup','Aplicações acima do limite do backup','aviso');
+  conferir('LIMITE_COMPROMISSOS',compromissos.length<=1000,'Volume de compromissos compatível com backup','Compromissos acima do limite do backup','aviso');
+  const pagamentos=lancamentos.filter(t=>t?.commitmentId!==undefined);
+  conferir('PAGAMENTOS_COMPROMISSOS',new Set(pagamentos.map(t=>`${t.commitmentId}@${t.commitmentMonth}`)).size===pagamentos.length,
+    'Pagamentos de compromissos sem duplicidade','Pagamentos de compromissos duplicados');
+  const mesesPlanoValidos=pagamentos.every(t=>{
+    const plano=compromissos.find(p=>p?.id===t.commitmentId);
+    if(!plano)return true; // Excluir o planejamento não remove nem invalida o histórico.
+    const [anoInicial,mesInicial]=plano.startMonth.split('-').map(Number);
+    const [anoPago,mesPago]=String(t.commitmentMonth).split('-').map(Number);
+    const posicao=(anoPago-anoInicial)*12+mesPago-mesInicial;
+    return posicao>=0&&(plano.monthsCount===null||posicao<plano.monthsCount);
+  });
+  conferir('PAGAMENTOS_FORA_DO_PLANO',mesesPlanoValidos,
+    'Pagamentos se referem a meses válidos de seus planos','Há pagamento em mês fora do intervalo cadastrado');
+  // Riscos preventivos, separados de erros reais. Verificações não criam nem alteram lançamentos.
+  const sobreposicao=compromissos.some(plano=>lancamentos.some(t=>t?.type==='expense'&&t.recurring===true&&
+    t.description?.toLocaleLowerCase('pt-BR')===plano.name?.toLocaleLowerCase('pt-BR')&&
+    Math.round(t.amount*100)===Math.round(plano.amount*100)));
+  conferir('RISCO_PREVISAO_DUPLICADA',!sobreposicao,
+    'Nenhuma possível sobreposição entre lançamento mensal e compromisso com mesmo nome e valor',
+    'Risco preventivo: lançamento mensal e compromisso com mesmo nome e valor podem duplicar previsão','aviso');
+  conferir('RISCO_LIMITE_COMPROMISSOS',compromissos.length<900,
+    'Quantidade de compromissos abaixo de 90% do limite técnico',
+    'Risco futuro: próximo do limite de 1000 compromissos; exporte um backup e revise cadastros','aviso');
   return {itens, erros:itens.filter(item=>item.estado==='erro').length, avisos:itens.filter(item=>item.estado==='aviso').length};
 }

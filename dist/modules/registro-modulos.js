@@ -23,12 +23,22 @@ import {calcularOrcamentoDia} from './orcamento.js';
 import {criarModuloPrevisoes,projetarDozeMeses,proximasDespesasPrevistas} from './previsoes.js';
 import {resumirAno} from './relatorio-anual.js';
 import {resumirDesafio52,valorSemana52,renderDesafio52} from './desafio-52.js';
+import {ocorrenciaCompromisso,registrarPagamentoCompromisso,resumirCartao} from './compromissos.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
-    atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho,repositorio} = api;
+    atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloSaude,regras,logger,diagnostico,espelho,repositorio,moduloCompromissos} = api;
   const registrar=(nome,teste)=>registrarModuloDiagnostico(nome,teste);
+  registrar('compromissos',()=>{
+    const plano={id:'diag-plan',kind:'card',name:'Teste',category:'Cartão de crédito',amount:10,day:31,startMonth:'2026-01',monthsCount:2};
+    const base={transactions:[],goals:[],allocations:[],completedAportes:[],commitments:[plano]};
+    const next=registrarPagamentoCompromisso(base,'diag-plan','2026-01',{id:'diag-pago',date:'2026-01-31'});
+    return ocorrenciaCompromisso(plano,'2026-02')?.date==='2026-02-28'&&
+      next.transactions.length===1&&base.transactions.length===0&&resumirCartao(next,'2026-01').restante===10;
+  });
+  registrar('compromissos-interface',()=>typeof moduloCompromissos?.render==='function'&&
+    typeof moduloCompromissos?.novo==='function'&&Boolean(document.getElementById('commitment-form')));
   registrar('resumo',()=>typeof moduloResumo.renderSummary==='function'&&
     calcularSaldoDisponivelHoje([{type:'income',amount:100,date:'2026-02-01'},
       {type:'expense',amount:40,date:'2026-02-02'},

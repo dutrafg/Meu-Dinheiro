@@ -382,7 +382,66 @@ async function verificar(){
       .transactions?.length===2);
     await aguardarEspelho(paginaConflito);
     await contextoConflito.close();
-    console.log('E2E desktop, smartphone, tombstone, recuperação, OFX e backup JSON: validados.');
+
+    // P2 completo: dados fictícios em perfil isolado. Cadastro, aviso, pagamento,
+    // edição do catálogo, cópia restaurável, privacidade e 4 larguras.
+    const contextoP2=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block',acceptDownloads:true});
+    await contextoP2.addInitScript(entrada=>{if(!localStorage.getItem('meu-dinheiro-essencial:v1'))localStorage.setItem('meu-dinheiro-essencial:v1',JSON.stringify(entrada));},dados);
+    const paginaP2=await contextoP2.newPage(),falhasP2=[];
+    paginaP2.on('pageerror',err=>falhasP2.push(err.message));
+    await paginaP2.goto(`http://127.0.0.1:${servidor.address().port}/`);
+    await paginaP2.locator('#desktop-create-trigger').waitFor();
+    await aguardarEspelho(paginaP2);
+    await paginaP2.locator('.desktop-nav [data-view="relatorios"]').click();
+    const hojeP2=await paginaP2.evaluate(()=>{const d=new Date();return {mes:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,dia:d.getDate()};});
+    const cadastrarCompromisso=async(tipo,nome,valor,quantidade)=>{
+      await paginaP2.locator('#commitment-new').click();
+      const form=paginaP2.locator('#commitment-form');
+      await form.locator('[name="kind"]').selectOption(tipo);
+      await form.locator('[name="name"]').fill(nome);
+      await form.locator('[name="amount"]').fill(String(valor));
+      await form.locator('[name="day"]').fill(String(hojeP2.dia));
+      await form.locator('[name="startMonth"]').fill(hojeP2.mes);
+      if(quantidade)await form.locator('[name="monthsCount"]').fill(String(quantidade));
+      await form.locator('button[type="submit"]').click();
+      await paginaP2.waitForFunction(t=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')||'{}').commitments?.some(c=>c.name===t),nome);
+    };
+    await cadastrarCompromisso('bill','Luz fictícia',160,null);
+    await cadastrarCompromisso('card','Geladeira fictícia',189.90,7);
+    assert.equal(await paginaP2.locator('#commitments-content .commitment-row').count()>=2,true);
+    await paginaP2.locator('#reminder-button').click();
+    assert.match(await paginaP2.locator('#reminder-list').innerText(),/Luz fictícia|Geladeira fictícia/);
+    await paginaP2.locator('#reminder-dialog .close-dialog').first().click();
+    await paginaP2.locator('#commitments-content [data-commitment-pay]').first().click();
+    await paginaP2.locator('#confirmation-accept').click();
+    await paginaP2.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')||'{}').transactions?.some(t=>t.commitmentId));
+    const estadoP2=await paginaP2.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')));
+    assert.equal(estadoP2.commitments.length,2);
+    assert.equal(estadoP2.transactions.filter(t=>t.commitmentId).length,1);
+    assert.equal(estadoP2.transactions.find(t=>t.commitmentId).recurring,false);
+    await paginaP2.locator('.desktop-nav [data-view="ajustes"]').click();
+    await paginaP2.locator('#category-manager-name').fill('Mercado fictício');
+    await paginaP2.locator('#category-manager-icon').selectOption('🛒');
+    await paginaP2.locator('#category-manager-save').click();
+    await paginaP2.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').categoriasExtras?.expense?.includes('Mercado fictício'));
+    assert.equal(await paginaP2.locator('#category-manager-list').getByText(/Mercado fictício/).count(),1);
+    assert.equal(await paginaP2.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')).transactions.length),3,
+      'Alterar categoria não reclassifica lançamentos antigos');
+    for(const largura of [320,390,768,1440]){
+      await paginaP2.setViewportSize({width:largura,height:850});
+      assert.equal(await paginaP2.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),true,
+        `Overflow horizontal na área Ajustes em ${largura}px`);
+    }
+    await paginaP2.setViewportSize({width:1440,height:900});
+    await paginaP2.locator('.desktop-nav [data-view="relatorios"]').click();
+    assert.match(await paginaP2.locator('#forecast-content').innerText(),/Próximos 12 meses/);
+    await aguardarEspelho(paginaP2);
+    await paginaP2.reload();
+    await paginaP2.locator('.desktop-nav [data-view="relatorios"]').click();
+    assert.match(await paginaP2.locator('#commitments-content').innerText(),/Geladeira fictícia/);
+    assert.equal(falhasP2.length,0,`Erros JavaScript durante P2: ${falhasP2.join('; ')}`);
+    await contextoP2.close();
+    console.log('E2E desktop, smartphone, P2 compromissos, notificações, categorias, tombstone, recuperação, OFX e backup JSON: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

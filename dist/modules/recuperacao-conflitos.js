@@ -10,7 +10,8 @@ export function avaliarCopiasDeRecuperacao({localRaw,idb,validar}){
         lancamentos:dados.transactions.length,
         objetivos:dados.goals.length,
         investimentos:(dados.allocations||[]).length,
-        lembretes:(dados.completedAportes||[]).length
+        lembretes:(dados.completedAportes||[]).length,
+        compromissos:(dados.commitments||[]).length
       }};
     }catch{return {estado:'invalida',contagens:null};}
   }
@@ -31,7 +32,7 @@ export function montarBackupRecuperacao(raw,validar){
   const dados=validar(JSON.parse(raw));
   return {app:'meu-dinheiro-essencial',version:1,exportedAt:new Date().toISOString(),
     transactions:dados.transactions,goals:dados.goals,
-    allocations:dados.allocations||[],completedAportes:dados.completedAportes||[]};
+    allocations:dados.allocations||[],completedAportes:dados.completedAportes||[],commitments:dados.commitments||[]};
 }
 
 function downloadLocal(arquivo,nome,documento){
@@ -78,7 +79,7 @@ export function iniciarRecuperacaoConflitos({espelho,storage,chave,validar,docum
       invalida:'Formato não validado; preserve o armazenamento sem substituí-lo.'
     })[copia.estado]||'Cópia não verificada.';
     const c=copia.contagens;
-    return `Cópia válida: ${c.lancamentos} lançamentos, ${c.objetivos} objetivos, ${c.investimentos} investimentos e ${c.lembretes} lembretes.`;
+    return `Cópia válida: ${c.lancamentos} lançamentos, ${c.objetivos} objetivos, ${c.investimentos} investimentos, ${c.compromissos} compromissos e ${c.lembretes} lembretes.`;
   }
 
   async function inspecionar(){

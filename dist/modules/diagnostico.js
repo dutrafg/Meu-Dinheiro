@@ -38,7 +38,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,
   getPersistenciaState=()=>null,getPersistenciaCheck=async()=>null,obterLogs=()=>[]}) {
   const dados = getData();
-  const integridade = verificarIntegridade(dados,CATEGORIES);
+  const prefsAtuais=getPreferences();
+  const categoriasDiagnostico={income:[...(CATEGORIES?.income||[]),...(prefsAtuais?.categoriasExtras?.income||[])],
+    expense:[...(CATEGORIES?.expense||[]),...(prefsAtuais?.categoriasExtras?.expense||[])]};
+  const integridade = verificarIntegridade(dados,categoriasDiagnostico);
   const transactions = Array.isArray(dados?.transactions) ? dados.transactions : [];
   const dates = transactions.map(item=>item?.date).filter(value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)).sort();
   let tamanhoBytes = null;
@@ -75,6 +78,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   const update = getUpdateStatus() || {};
   const resumo = {
     lancamentos: transactions.length,
+    compromissos:Array.isArray(dados?.commitments)?dados.commitments.length:0,
     metas: Array.isArray(dados?.goals)?dados.goals.length:0,
     aplicacoes: Array.isArray(dados?.allocations)?dados.allocations.length:0,
     lembretesConcluidos: Array.isArray(dados?.completedAportes)?dados.completedAportes.length:0,
@@ -147,6 +151,18 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     'Aplicação sem vínculo preservada','Aplicação legítima sem vínculo foi rejeitada','validacao');
   const backupAmostra={app:'meu-dinheiro-essencial',version:1,transactions:amostra.transactions.map(t=>({...t,recurring:false,createdAt:'2026-11-19T12:00:00.000Z'})),goals:amostra.goals};
   const rejeitaBackup=entrada=>{try{validarBackup(entrada,CATEGORIES);return false;}catch{return true;}};
+  const planoTeste={id:'diag-c',kind:'card',name:'Parcela exemplo',category:'Cartão de crédito',amount:25,day:31,startMonth:'2026-11',monthsCount:2};
+  const pagamentoTeste={id:'diag-p',description:'Parcela exemplo',type:'expense',category:'Cartão de crédito',amount:25,date:'2026-11-30',
+    recurring:false,commitmentId:'diag-c',commitmentMonth:'2026-11'};
+  conferir('PREVENTIVO_BACKUP_PARCELAS',!rejeitaBackup({...backupAmostra,commitments:[planoTeste],transactions:[...backupAmostra.transactions,pagamentoTeste]}),
+    'Backup sintético preserva compromissos e pagamentos vinculados',
+    'Risco de perda de parcelas ao restaurar backup completo','backup');
+  conferir('PREVENTIVO_PAGAMENTO_DUPLICADO',rejeitaBackup({...backupAmostra,commitments:[planoTeste],transactions:[...backupAmostra.transactions,pagamentoTeste,{...pagamentoTeste,id:'diag-p2'}]}),
+    'Backup bloqueia duas baixas da mesma parcela',
+    'Risco: uma mesma parcela poderia ser paga duas vezes','backup');
+  conferir('PREVENTIVO_BACKUP_ANTIGO',!rejeitaBackup({...backupAmostra,commitments:undefined}),
+    'Backup antigo sem compromissos continua legível',
+    'Risco: versões antigas de backup poderiam deixar de ser restauradas','backup');
   conferir('BACKUP_VINCULO_TIPO',rejeitaBackup({...backupAmostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
     'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
   const legado={...backupAmostra,transactions:[{...amostra.transactions[0],category:'Categoria histórica'}]};
@@ -274,6 +290,11 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');
   conferir('TAMANHO_DADOS',tamanhoBytes===null||tamanhoBytes<4*1024*1024,'Espaço local ainda abaixo do alerta de 4 MB','Dados locais próximos do limite de 4 MB','armazenamento','aviso');
+  const usoQuota=usoEstimado&&Number.isFinite(usoEstimado.usoAproximado)&&Number.isFinite(usoEstimado.quotaAproximada)&&usoEstimado.quotaAproximada>0?
+    usoEstimado.usoAproximado/usoEstimado.quotaAproximada:null;
+  conferir('RISCO_COTA_ARMAZENAMENTO',usoQuota===null||usoQuota<.8,
+    'Uso estimado inferior a 80% da cota do navegador ou quota indisponível',
+    'Risco futuro: armazenamento perto de esgotar; gere backup e libere espaço com segurança','armazenamento','aviso');
   conferir('API_INDEXED_DB',typeof indexedDB!=='undefined','IndexedDB disponível','IndexedDB indisponível (pasta automática opcional)','armazenamento','aviso');
   conferir('API_BLOB',typeof Blob==='function','API de arquivos Blob disponível','API de arquivos indisponível','armazenamento');
   conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
@@ -294,6 +315,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   if(pasta.state==='paused')adicionar('BACKUP_PASTA','aviso','Backup automático pausado após exclusão local; arquivo externo preservado');
   else if(['conflict','permission','error'].includes(pasta.state))adicionar('BACKUP_PASTA','aviso','Backup em pasta requer atenção e não está sincronizado');
   else adicionar('BACKUP_PASTA','ok',['saved','ready','saving'].includes(pasta.state)?'Backup em pasta conectado':'Backup em pasta opcional, sem falha ativa');
+  if(transactions.length>0||resumo.compromissos>0)
+    conferir('RISCO_SEM_BACKUP_EXTERNO',['saved','ready','saving'].includes(pasta.state),
+      'Cópia em pasta disponível para preservar os dados',
+      'Risco preventivo: não há cópia externa em pasta confirmada; exporte um JSON regularmente','backup','aviso');
   adicionar('ATUALIZADOR','ok',swEmEspera?'Nova versão disponível para instalar':'Estado da atualização consultado');
   conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','paused','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
@@ -311,6 +336,12 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   }
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
+  const errosRecentes=obterLogs().filter(l=>l?.nivel==='erro');
+  const reincidencias=new Map();
+  for(const log of errosRecentes)reincidencias.set(log.codigo,(reincidencias.get(log.codigo)||0)+1);
+  conferir('RISCO_ERROS_REPETIDOS',![...reincidencias.values()].some(qtd=>qtd>=3),
+    'Nenhuma mesma falha repetida três vezes nos últimos eventos desta sessão',
+    'Risco preventivo: uma falha técnica se repetiu ao menos três vezes nesta sessão; exporte diagnóstico e revise','log','aviso');
   const notificacoes=getNotificationStatus();
   if(notificacoes){
     conferir('NOTIFICACOES_PERSISTENCIA',notificacoes.armazenamentoOk,'Avisos podem ser dispensados e restaurados','Não foi possível gravar ou ler os avisos dispensados','notificacoes','aviso');
@@ -523,6 +554,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   integridade.erros=integridade.itens.filter(item=>item.estado==='erro').length;
   integridade.avisos=integridade.itens.filter(item=>item.estado==='aviso').length;
   integridade.naoAvaliados=integridade.itens.filter(item=>item.estado==='nao_avaliado').length;
+  integridade.riscosPreventivos=integridade.itens.filter(item=>item.codigo.startsWith('RISCO_')&&item.estado==='aviso').length;
   return {
     aplicativo:'meu-dinheiro-essencial',formatoRelatorio:3,geradoEm:new Date().toISOString(),
     duracaoPrevistaMs:calcularDuracaoDiagnostico(integridade.itens.length),
@@ -592,6 +624,7 @@ export function unificarResultadosDiagnosticos(relatorio,complementos=[]) {
   return {...relatorio,formatoRelatorio:4,duracaoPrevistaMs:calcularDuracaoDiagnostico(itens.length),
     integridade:{...relatorio.integridade,itens,erros:itens.filter(item=>item.estado==='erro').length,
       avisos:itens.filter(item=>item.estado==='aviso').length,
+      riscosPreventivos:itens.filter(item=>item.codigo.startsWith('RISCO_')&&item.estado==='aviso').length,
       naoAvaliados:itens.filter(item=>item.estado==='nao_avaliado').length},
     complementos:{total:extras.length,modulos}};
 }
@@ -686,7 +719,7 @@ export function iniciarDiagnostico(ctx) {
       });
       if(atual!==rodada)return null;
       ultimoRelatorio=relatorio;
-      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${integridade.naoAvaliados?` · ${integridade.naoAvaliados} não avaliadas`:''}${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
+      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${integridade.riscosPreventivos?` (${integridade.riscosPreventivos} riscos preventivos)`:''}${integridade.naoAvaliados?` · ${integridade.naoAvaliados} não avaliadas`:''}${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
       if(integridade.erros)registrar('erro','INTEGRIDADE_FALHOU','integridade');
       else if(integridade.avisos)registrar('aviso','INTEGRIDADE_ALERTA','integridade');
       return relatorio;

@@ -49,7 +49,7 @@
     <header class="header">
       <div class="prototype-heading"><span id="header-label">Resumo</span><strong id="header-balance">R$ 0,00</strong></div>
       <div class="proto-header-actions">
-        <button type="button" id="reminder-button" class="icon-button quiet proto-reminder-button" aria-label="Lembretes de aporte" title="Lembretes de aporte"><svg><use href="#i-bell"/></svg><span id="reminder-count" class="proto-reminder-count hidden" aria-hidden="true"></span></button>
+        <button type="button" id="reminder-button" class="icon-button quiet proto-reminder-button" aria-label="Notificações" title="Notificações"><svg><use href="#i-bell"/></svg><span id="reminder-count" class="proto-reminder-count hidden" aria-hidden="true"></span></button>
         <span class="nav-alert-sources" aria-hidden="true"><span id="folder-backup-alert" class="folder-backup-alert hidden"></span><span id="app-update-alert" class="app-update-alert hidden"></span></span>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
@@ -72,6 +72,24 @@
       <section id="reports-page" class="settings-page hidden" aria-labelledby="reports-title">
         <div class="settings-heading"><div><span class="eyebrow">ARQUIVOS E ANÁLISES</span><h2 id="reports-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-folder"/></svg> Relatórios</h2></div><p>Gere relatórios, importe extratos e gerencie cópias dos seus dados.</p></div>
         <section id="forecast-panel" class="settings-section" aria-labelledby="forecast-panel-title"><h3 id="forecast-panel-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-calendar"/></svg> Agenda e previsão financeira</h3><div id="forecast-content"></div></section>
+        <section id="commitments-panel" class="settings-section" aria-labelledby="commitments-panel-title">
+          <h3 id="commitments-panel-title">Contas a pagar, fixos e cartão</h3>
+          <div id="commitments-content" aria-live="polite"></div>
+          <button id="commitment-new" type="button" class="button button-secondary">+ Cadastrar conta ou parcela</button>
+          <details id="commitment-form-details" class="commitment-editor"><summary>Dados do compromisso</summary>
+            <form id="commitment-form" class="commitment-form">
+              <input name="id" type="hidden" />
+              <label>Tipo<select name="kind"><option value="bill">Conta a pagar / fixo mensal</option><option value="card">Compra no cartão parcelada</option></select></label>
+              <label>Nome<input name="name" required maxlength="80" placeholder="Ex.: Luz, geladeira" /></label>
+              <label>Valor de cada pagamento (R$)<input name="amount" type="number" inputmode="decimal" min="0.01" max="999999999" step="0.01" required /></label>
+              <label>Dia do vencimento<input name="day" type="number" min="1" max="31" required /></label>
+              <label>Primeiro mês<input name="startMonth" type="month" required min="2000-01" max="2100-12" /></label>
+              <label>Quantidade de meses / parcelas<input name="monthsCount" type="number" min="1" max="120" placeholder="Vazio = todo mês" /></label>
+              <label>Categoria<input name="category" maxlength="120" required value="Contas" /></label>
+              <button type="submit">Salvar compromisso</button>
+            </form>
+          </details>
+        </section>
         <details id="annual-panel" class="settings-section annual-panel"><summary>Resumo do ano (lançamentos realizados)</summary><div id="annual-content"></div></details>
         <section class="settings-section settings-tools reports-tools" aria-labelledby="reports-tools-title"><h3 id="reports-tools-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-folder"/></svg> Exportar, importar e compartilhar</h3>
           <div class="settings-report-options"><label for="pdf-report-type">Conteúdo do relatório PDF</label><select id="pdf-report-type" name="tipoRelatorio"><option value="resumo" selected>Resumo completo do mês (inclui metas e aplicações)</option><option value="renda">Somente receitas do mês</option><option value="despesas">Somente despesas do mês</option><option value="metas">Metas e reserva</option><option value="sonho">Meus sonhos</option></select><p class="field-hint">O PDF usa a opção escolhida acima, independentemente da última área visitada. As movimentações consideram o mês selecionado no aplicativo.</p></div>
@@ -100,6 +118,19 @@
             <p class="field-hint">Valores opcionais. A tela Resumo usa o limite para estimar quanto ainda pode gastar por dia; a meta é uma referência e não registra aportes.</p>
           </section>
         </form>
+        <section class="settings-section" aria-labelledby="categories-manager-title">
+          <h3 id="categories-manager-title">Minhas categorias</h3>
+          <p class="field-hint">Crie, mude o nome ou o ícone e tire categorias da lista de novos lançamentos. O histórico antigo não muda.</p>
+          <div class="settings-row"><label for="category-manager-kind">Lista</label><select id="category-manager-kind"><option value="expense">Despesas</option><option value="income">Entradas</option></select></div>
+          <div id="category-manager-list" class="category-manager-list"></div>
+          <form id="category-manager-form" class="category-manager-form">
+            <input name="oldName" type="hidden" />
+            <label for="category-manager-name">Nome da categoria</label><input id="category-manager-name" name="name" required maxlength="50" placeholder="Ex.: Mercado" />
+            <label for="category-manager-icon">Ícone</label><select id="category-manager-icon" name="icon"></select>
+            <button type="submit" id="category-manager-save">+ Criar categoria</button>
+            <button type="button" id="category-manager-cancel" class="button button-secondary">Cancelar edição</button>
+          </form>
+        </section>
         <details class="settings-section settings-tools" aria-labelledby="settings-update-title"><summary id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e diagnóstico</summary>
           <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>
           <div class="settings-tool-buttons"><button type="button" id="check-update">Verificar atualizações</button><button type="button" id="install-update" class="hidden">Atualizar agora</button></div>
@@ -224,8 +255,8 @@
     <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Cancelar</button><button type="button" id="csv-confirm-import" class="button button-primary">Importar</button></div>
   </dialog>
   <dialog id="reminder-dialog" class="form-dialog reminder-dialog">
-    <div class="dialog-heading"><div><span class="eyebrow">LEMBRETES</span><h2><svg class="settings-section-icon" aria-hidden="true"><use href="#i-bell"/></svg> Hora de guardar</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
-    <p class="field-hint">Ao receber uma renda, lembre-se de fazer o aporte. Marcar como feito só confirma o lembrete; não movimenta dinheiro.</p>
+    <div class="dialog-heading"><div><span class="eyebrow">AVISOS LOCAIS</span><h2><svg class="settings-section-icon" aria-hidden="true"><use href="#i-bell"/></svg> Notificações</h2></div><button type="button" class="icon-button close-dialog" aria-label="Fechar"><svg><use href="#i-close"/></svg></button></div>
+    <p class="field-hint">Avisos de aportes, vencimentos próximos e atrasados, parcelas, limite mensal, backup e conflitos de armazenamento. Aparecem quando você usa o aplicativo, sem enviar dados para servidores. Dispensar não registra pagamento.</p>
     <div class="reminder-actions"><button type="button" id="notifications-clear" class="button button-secondary">Limpar notificações</button><button type="button" id="notifications-restore" class="button button-secondary hidden">Restaurar avisos ocultos</button></div>
     <div id="reminder-list" class="proto-reminder-list"></div>
     <div class="dialog-actions"><button type="button" class="button button-secondary close-dialog">Fechar</button></div>

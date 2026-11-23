@@ -45,6 +45,23 @@ test('Datas e limites inválidos não produzem previsões',async()=>{
   assert.equal(deslocarMesPrevisao('2026-12',1),'2027-01');
 });
 
+test('Compromissos não pagos entram na previsão e parcelas pagas não duplicam despesas',async()=>{
+  const {projetarDozeMeses,proximasDespesasPrevistas}=await importar();
+  const plano={id:'conta',kind:'bill',name:'Conta exemplo',category:'Contas',amount:150,day:30,startMonth:'2026-11',monthsCount:2};
+  const pagos=[{id:'p',type:'expense',description:'Conta exemplo',amount:155,date:'2026-11-30',category:'Contas',
+    commitmentId:'conta',commitmentMonth:'2026-11',recurring:false}];
+  const original=JSON.stringify({pagos,plano});
+  const meses=projetarDozeMeses(pagos,'2026-11',[plano]);
+  assert.equal(meses[0].despesas,155);
+  assert.equal(meses[1].despesas,150);
+  assert.equal(meses[2].despesas,0);
+  const agenda=proximasDespesasPrevistas(pagos,'2026-11-28',35,[plano]);
+  assert.equal(agenda.length,1);
+  assert.equal(agenda[0].vencimento,'2026-12-30');
+  assert.equal(agenda[0].planejado,true);
+  assert.equal(JSON.stringify({pagos,plano}),original);
+});
+
 test('Relatórios têm tabela rolável com descrições escapadas e sem baixa automática',async()=>{
   const html=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');
   const js=fs.readFileSync(path.join(__dirname,'../dist/modules/previsoes.js'),'utf8');

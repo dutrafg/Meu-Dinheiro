@@ -28,6 +28,8 @@ dist/
     calendario-financeiro.js # Cálculo diário, intensidade, renderização e detalhes
     saude.js               # Poupança, fôlego e temperatura: regras puras e card
     notificacoes.js        # Dispensar/restaurar lembretes sem concluir aportes
+    compromissos.js        # P2: ocorrência pura de contas, parcelas e pagamento idempotente
+    compromissos-interface.js # P2: painel de contas/cartão, cadastro e confirmação do pagamento
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
@@ -73,6 +75,8 @@ dist/
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
 8. `concorrencia-dados.js` compara a versão local do JSON antes de cada gravação. Alterações de outra aba são sincronizadas se não houver edição em diálogo; caso contrário, a gravação antiga é bloqueada até o usuário resolver o conflito. Não cria chaves novas nem muda o formato financeiro.
+9. `compromissos.js` projeta contas e parcelas; `compromissos-interface.js` faz as confirmações por `persist()`, registrando uma despesa vinculada a cada ocorrência mensal. A exclusão do plano não apaga lançamentos históricos. Os cálculos evitam contar uma baixa duas vezes.
+10. Preferências de categorias personalizadas, ocultas e respectivos ícones não alteram o esquema financeiro e conservam nomes de categorias antigas nos lançamentos. `notificacoes.js` somente observa fatos locais, sem push, nem baixar pagamentos.
 9. `ciclo-periodo.js` atualiza o mês corrente e a data atual após retorno à aba, `pageshow` ou passagem do tempo, mantendo a navegação histórica intocada.
 
 ## Regras de manutenção

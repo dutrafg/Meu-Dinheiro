@@ -21,6 +21,7 @@ import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
 import { criarModuloPrevisoes } from './modules/previsoes.js';
+import { iniciarCompromissos } from './modules/compromissos-interface.js';
 import { criarModuloRelatorioAnual } from './modules/relatorio-anual.js';
 import {NOME_DESAFIO_52,CATEGORIA_DESAFIO_52,valorSemana52,descricaoSemana52,resumirDesafio52} from './modules/desafio-52.js';
 import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
@@ -31,7 +32,7 @@ import {iniciarRecuperacaoConflitos} from './modules/recuperacao-conflitos.js';
 import {criarRepositorioFinanceiro} from './modules/repositorio-financeiro.js';
 import {transacoesNoMes,totaisDoMes,principalReserva,aportesPendentes,estimarRendimentoCdi} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
-import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
+import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,GRUPOS_DESPESA} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
 (async() => {
@@ -60,6 +61,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     'Saúde':'🩺', 'Educação':'📖', 'Lazer':'🎉', 'Compras':'🛍️', 'Outros':'📦',
     ...ICONES_DESPESA
   };
+  Object.assign(CATEGORY_ICONS,preferencias.obter().categoriaIcones);
   const EXPENSE_COLORS = {
     'Outros':'#8998a9', 'Moradia':'#6b86a9', 'Alimentação':'#e5a270', 'Contas':'#7b9eac',
     'Internet':'#61a9d1', 'Telefone':'#77bfd7', 'Cartão de crédito':'#91a5c0',
@@ -112,14 +114,14 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   function readData() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return { transactions: [], goals: [], allocations: [], completedAportes: [] };
+      if (!raw) return { transactions: [], goals: [], allocations: [], completedAportes: [], commitments: [] };
       return normalizarDadosLocais(JSON.parse(raw));
     } catch (error) {
       storageLocked = true;
       registrar('erro','DADOS_LEITURA_FALHOU','dados');
       console.error('Não foi possível ler os dados locais:', error);
       void dialogos.informar('Dados locais protegidos','Os dados locais parecem inconsistentes. A gravação foi bloqueada para preservar o arquivo original. Restaure um backup JSON válido para recuperar o aplicativo.');
-      return { transactions: [], goals: [], allocations: [], completedAportes: [] };
+      return { transactions: [], goals: [], allocations: [], completedAportes: [], commitments: [] };
     }
   }
   let gravando=false;
@@ -206,13 +208,27 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   function shiftMonth(ym, diff) { const [y,m] = ym.split('-').map(Number); const d = new Date(Date.UTC(y,m-1+diff,1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`; }
   function monthLabel(ym) { return fmtMonth.format(parseDate(`${ym}-01`)); }
   function shortMonth(ym) { return fmtShort.format(parseDate(`${ym}-01`)).replace('.', ''); }
-  function categorySet(type) { return CATEGORIES[type] || []; }
+  function categorySet(type) {
+    if(!CATEGORIES[type])return [];
+    const prefs=preferencias.obter();
+    const ocultas=new Set(prefs.categoriasOcultas[type]);
+    return [...new Set([...CATEGORIES[type],...prefs.categoriasExtras[type]])].filter(nome=>!ocultas.has(nome));
+  }
+  function renderizarOpcoesDespesas(escape){
+    const ativas=new Set(categorySet('expense'));
+    const grupos=GRUPOS_DESPESA.map(grupo=>{
+      const opcoes=grupo.categorias.filter(nome=>ativas.has(nome));
+      return opcoes.length?`<optgroup label="${escape(grupo.titulo)}">${opcoes.map(nome=>`<option value="${escape(nome)}">${escape(nome)}</option>`).join('')}</optgroup>`:'';
+    }).join('');
+    const extras=categorySet('expense').filter(nome=>!CATEGORIES.expense.includes(nome));
+    return grupos+(extras.length?`<optgroup label="Minhas categorias">${extras.map(nome=>`<option value="${escape(nome)}">${escape(nome)}</option>`).join('')}</optgroup>`:'');
+  }
   function uniqueId() { return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`; }
   function notify(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2700); }
   const guardaConcorrencia=criarProtecaoConcorrencia({storage:localStorage,chave:KEY,
     aoAlterar:raw=>{
       if(storageLocked||[...document.querySelectorAll('dialog[open]')].length)return false;
-      const nova=raw?normalizarDadosLocais(JSON.parse(raw)):{transactions:[],goals:[],allocations:[],completedAportes:[]};
+      const nova=raw?normalizarDadosLocais(JSON.parse(raw)):{transactions:[],goals:[],allocations:[],completedAportes:[],commitments:[]};
       data=nova;
       render();
       notify('Dados atualizados a partir de outra aba.');
@@ -294,6 +310,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     viewContent.classList.toggle('hidden',view==='ajustes'||view==='relatorios');
     if(view==='relatorios'){
       document.getElementById('forecast-content').innerHTML=moduloPrevisoes.renderPrevisoes();
+      moduloCompromissos.render();
       moduloRelatorioAnual.render();
     }
     if(view==='ajustes'||view==='relatorios')return;
@@ -328,9 +345,12 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
   const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,dialogoCalendario:financeCalendarDialog,documento:document});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
-    fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
+    getData:()=>data,getHoje:()=>isoDate(new Date()),getStorageLocked:()=>storageLocked,
+    getBackupState:()=>folderBackup?.getState(),fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
   const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
   const moduloPrevisoes=criarModuloPrevisoes(common);
+  const moduloCompromissos=iniciarCompromissos(common);
+  document.getElementById('commitment-new').addEventListener('click',()=>moduloCompromissos.novo());
   const moduloRelatorioAnual=criarModuloRelatorioAnual(common);
   const {renderSummary} = moduloResumo;
 
@@ -384,6 +404,10 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       const completedAportes=[...(data.completedAportes||[]),id];
       if(await persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
     }
+    else if(button.dataset.action==='dismiss-notification'){
+      if(notificacoes.dispensar(id))notify('Aviso dispensado; nenhum dado financeiro foi alterado.');
+      else notify('Não foi possível dispensar a notificação.');
+    }
     else if(button.dataset.action==='link-allocation'){
       const allocation=(data.allocations||[]).find(a=>a.id===id);
       const goalId=document.querySelector(`[data-allocation-goal="${CSS.escape(id)}"]`)?.value;
@@ -434,10 +458,12 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const description=f.namedItem('description').value.trim();
     const date=f.namedItem('date').value;
     const category=f.namedItem('category').value;
-    if(!description||!(amount>0&&amount<=999999999)||!validarDataISO(date)||!categorySet(type).includes(category)){notify('Confira os dados do lançamento.');return;}
     const id=f.namedItem('id').value;
     const previous=data.transactions.find(t=>t.id===id);
-    const entry={id:id||uniqueId(),type,description,amount,date,category,recurring:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
+    if(!description||!(amount>0&&amount<=999999999)||!validarDataISO(date)||
+      !(categorySet(type).includes(category)||(previous?.category===category&&previous.type===type))){notify('Confira os dados do lançamento.');return;}
+    const entry={...previous,id:id||uniqueId(),type,description,amount,date,category,
+      recurring:previous?.commitmentId?false:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
     const next={...data,transactions:id?data.transactions.map(t=>t.id===id?entry:t):[...data.transactions,entry]};
     const vinculos=validarVinculosSalariais(next);
     if(!vinculos.ok){notify(`${vinculos.motivo} Corrija os investimentos antes de alterar o salário.`);return;}
@@ -474,7 +500,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     }});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
-    onSave:()=>folderBackup?.schedule()});
+    onSave:()=>{Object.assign(CATEGORY_ICONS,preferencias.obter().categoriaIcones);folderBackup?.schedule();}});
   const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
     apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
       pausarBackup:()=>folderBackup?.pause(),
@@ -483,7 +509,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
         if(!await espelho.apagar())throw new Error('Espelho indisponível');
       },
       aposLimpeza:()=>{
-        data={transactions:[],goals:[],allocations:[],completedAportes:[]};
+        data={transactions:[],goals:[],allocations:[],completedAportes:[],commitments:[]};
         storageLocked=false;
         repositorio.sincronizadoAposExclusao();
         backup.retomarAposRecuperacao();
@@ -504,7 +530,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     getPersistenciaCheck:()=>espelho.conferir(localStorage.getItem(KEY)),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloCompromissos,
     regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho,repositorio});
   await inicioPersistencia;
   renderNav();render();

@@ -28,7 +28,7 @@ export function criarModuloLancamentos(ctx) {
     const normalized=search.toLocaleLowerCase('pt-BR');
     const list=all.filter(t=>(!filterCategory||t.category===filterCategory)&&(!normalized||`${t.description} ${t.category}`.toLocaleLowerCase('pt-BR').includes(normalized)));
     const total=n2(all.reduce((sum,t)=>sum+t.amount,0));
-    const categories=categorySet(type);
+    const categories=[...new Set([...categorySet(type),...all.map(item=>item.category)])];
     return `${header('',true)}
       <section class="card proto-total-card"><div class="proto-total-heading">${isIncome?'💵':'🧾'} ${isIncome?'Renda do mês':'Despesas do mês'}</div><div class="proto-big-total" style="color:${isIncome?'var(--green-text)':'var(--red-text)'}">${money(total)}</div></section>
       ${all.length?`<div class="filter-panel"><input class="search-field" id="transaction-search" type="search" value="${esc(search)}" placeholder="Buscar lançamento" aria-label="Buscar lançamento"/><select id="transaction-category" aria-label="Filtrar categoria"><option value="">Todas as categorias</option>${categories.map(c=>`<option value="${esc(c)}" ${filterCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>`:''}
@@ -65,7 +65,10 @@ export function criarModuloLancamentos(ctx) {
     cat.innerHTML=type==='expense'&&typeof renderizarOpcoesDespesas==='function'
       ?renderizarOpcoesDespesas(esc)
       :categorySet(type).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-    cat.value=categorySet(type).includes(choice)?choice:categorySet(type)[0];
+    // Categorias ocultas continuam editáveis quando presentes no registro histórico.
+    if(selectedCategory&&!categorySet(type).includes(selectedCategory))
+      cat.insertAdjacentHTML('beforeend',`<option value="${esc(selectedCategory)}">${esc(selectedCategory)} (histórica)</option>`);
+    cat.value=categorySet(type).includes(choice)||choice===selectedCategory?choice:categorySet(type)[0]||'';
     teclado.atualizar(type);
     document.querySelectorAll('[data-trans-type]').forEach(button=>button.classList.toggle('on',button.dataset.transType===type));
     document.getElementById('transaction-title').textContent=`Adicionar ${type==='income'?'renda':'despesa'}`;
