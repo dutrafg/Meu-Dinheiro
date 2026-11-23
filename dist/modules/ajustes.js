@@ -67,7 +67,10 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
       // Renomear não reclassifica registros já salvos; o nome antigo é ocultado.
       if(!prefs.categoriasOcultas[tipo].includes(anterior))prefs.categoriasOcultas[tipo].push(anterior);
     }
-    if(!nomes.includes(nome))prefs.categoriasExtras[tipo].push(nome);
+    if(!nomes.includes(nome)){
+      if(prefs.categoriasExtras[tipo].length>=50){notify('Limite de 50 categorias personalizadas. Oculte ou reutilize uma categoria.');return;}
+      prefs.categoriasExtras[tipo].push(nome);
+    }
     prefs.categoriasOcultas[tipo]=prefs.categoriasOcultas[tipo].filter(n=>n!==nome);
     prefs.categoriaIcones[nome]=campo.namedItem('icon').value;
     if(salvarCategoria(prefs))resetarCategoria();

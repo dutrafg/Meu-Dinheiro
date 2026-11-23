@@ -409,6 +409,8 @@ async function verificar(){
     await cadastrarCompromisso('bill','Luz fictícia',160,null);
     await cadastrarCompromisso('card','Geladeira fictícia',189.90,7);
     assert.equal(await paginaP2.locator('#commitments-content .commitment-row').count()>=2,true);
+    assert.match(await paginaP2.locator('#commitments-content').innerText(),/1\.329,30|1.329,30/,
+      'O cartão calcula o total de sete parcelas ainda pendentes');
     await paginaP2.locator('#reminder-button').click();
     assert.match(await paginaP2.locator('#reminder-list').innerText(),/Luz fictícia|Geladeira fictícia/);
     await paginaP2.locator('#reminder-dialog .close-dialog').first().click();
@@ -419,12 +421,22 @@ async function verificar(){
     assert.equal(estadoP2.commitments.length,2);
     assert.equal(estadoP2.transactions.filter(t=>t.commitmentId).length,1);
     assert.equal(estadoP2.transactions.find(t=>t.commitmentId).recurring,false);
+    assert.match(await paginaP2.locator('#commitments-content').innerText(),/Paga ✓/);
     await paginaP2.locator('.desktop-nav [data-view="ajustes"]').click();
     await paginaP2.locator('#category-manager-name').fill('Mercado fictício');
     await paginaP2.locator('#category-manager-icon').selectOption('🛒');
     await paginaP2.locator('#category-manager-save').click();
     await paginaP2.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').categoriasExtras?.expense?.includes('Mercado fictício'));
     assert.equal(await paginaP2.locator('#category-manager-list').getByText(/Mercado fictício/).count(),1);
+    await paginaP2.locator('.category-manager-item').filter({hasText:'Mercado fictício'}).locator('[data-category-edit]').click();
+    await paginaP2.locator('#category-manager-name').fill('Compras fictícias');
+    await paginaP2.locator('#category-manager-save').click();
+    await paginaP2.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').categoriasExtras?.expense?.includes('Compras fictícias'));
+    const renamed=paginaP2.locator('.category-manager-item').filter({hasText:'Compras fictícias'});
+    await renamed.locator('[data-category-toggle]').click();
+    await paginaP2.waitForFunction(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').categoriasOcultas?.expense?.includes('Compras fictícias'));
+    await renamed.locator('[data-category-toggle]').click();
+    await paginaP2.waitForFunction(()=>!JSON.parse(localStorage.getItem('meu-dinheiro-essencial:preferencias:v1')||'{}').categoriasOcultas?.expense?.includes('Compras fictícias'));
     assert.equal(await paginaP2.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1')).transactions.length),3,
       'Alterar categoria não reclassifica lançamentos antigos');
     for(const largura of [320,390,768,1440]){
@@ -435,6 +447,10 @@ async function verificar(){
     await paginaP2.setViewportSize({width:1440,height:900});
     await paginaP2.locator('.desktop-nav [data-view="relatorios"]').click();
     assert.match(await paginaP2.locator('#forecast-content').innerText(),/Próximos 12 meses/);
+    const [copiaP2]=await Promise.all([paginaP2.waitForEvent('download'),paginaP2.locator('#export-data').click()]);
+    const jsonP2=JSON.parse(fs.readFileSync(await copiaP2.path(),'utf8'));
+    assert.equal(jsonP2.commitments.length,2,'Backup JSON inclui contas e cartão');
+    assert.equal(jsonP2.preferences.categoriasExtras.expense.includes('Compras fictícias'),true,'Backup inclui categorias personalizadas');
     await aguardarEspelho(paginaP2);
     await paginaP2.reload();
     await paginaP2.locator('.desktop-nav [data-view="relatorios"]').click();
