@@ -1,5 +1,11 @@
 # Mudanças propostas — roadmap de manutenção
 
+## 23/11/2026 — Auditoria v67 e publicação em main (P4.1)
+
+- Diagnóstico do HTML independente enviado pelo Samsung: **228 verificações, zero erros, um aviso preventivo de limpeza do armazenamento, nove verificações não avaliadas e uma proposta de atalho de Diagnóstico ainda pendente**. Fonte primária IndexedDB sincronizada; backup externo desligado no aparelho.
+- **374/374 testes Node locais e CI verde**, além de QA Chromium móvel, desktop e offline nos runs 45141406828 e 45141406838. Nenhuma alteração de lógica financeira se mostrou necessária.
+- Publicação autorizada e realizada pelo PR #1 em `main` (`ad231274d15493205f0e2b57557569f2a2b504db`). **A homologação física do PWA/backup (P0.5/P2.6/P4.2) ainda está pendente.**
+
 ## v67 — Minhas categorias sem voltar ao topo ao ocultar/exibir
 
 - Ao clicar em **Tirar/Mostrar**, atualiza somente a categoria clicada após salvar com sucesso, preservando o botão, o foco e a posição na lista. Não desmonta e recria todas as categorias.
