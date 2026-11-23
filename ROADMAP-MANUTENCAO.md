@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v64: correções do diagnóstico enviado em 23/11 em homologação**, na branch `refactor/roadmap-manutencao-p0-20261122`. A v63 teve CI Node/Chromium offline aprovados; **371/371 testes Node locais aprovados na v64**, aguardando confirmação do CI Chromium. P2.1–P2.5 e P2.7 seguem concluídas tecnicamente, P2.6 aguarda inspeção em dispositivo físico; **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v64: alarmes falsos do diagnóstico de 23/11 corrigidos, CI Node/Chromium aprovados**, na branch `refactor/roadmap-manutencao-p0-20261122`. **371/371 testes Node e Chromium offline aprovados** (runs 45094976803 e 45094976827). P2.1–P2.5 e P2.7 concluídas tecnicamente, P2.6 aguarda inspeção em dispositivo físico; **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Automação v63 aprovada; correções v64 em CI** | Funções de referência e diagnósticos integrados; nova regressão do módulo Orçamento e identificação das ferramentas em Relatórios. Falta validar PWA no celular real antes de declarar homologação irrestrita |
+| **P2 — Qualidade, interface e funções de referência** | **Automação v64 aprovada; homologação física pendente** | Funções de referência e diagnósticos integrados; regressão do módulo Orçamento e localização das ferramentas em Relatórios aprovadas. Falta validar PWA no celular real antes de declarar homologação irrestrita |
 | P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
@@ -27,7 +27,7 @@
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | 🟡 Em homologação | Orçamento do dia prioritário, responsividade de compromissos e categorias no celular/PC; falta inspeção manual em aparelhos reais; modo demonstrativo permanece fora do escopo publicado para não arriscar dados do usuário |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
-| **P3 — Logs e observabilidade** | **Correção de alarmes falsos v64 em validação** | Diagnóstico distingue erros reais de riscos preventivos, verifica arquivos offline e agora testa a cota matemática correta e a localização atual das ferramentas, sem inventar avisos em Ajustes |
+| **P3 — Logs e observabilidade** | **Correção v64 concluída no CI** | Diagnóstico distingue erros reais de riscos preventivos, verifica arquivos offline e testa a cota matemática correta e a localização atual das ferramentas, sem inventar avisos em Ajustes |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 
 ## Regras de avanço
@@ -53,7 +53,7 @@
 - O JSON de Samsung Internet/HTML independente apresentou **222 verificações, 1 erro, 2 avisos e 7 não avaliadas**. A única falha `MOD_ORCAMENTO` era um **erro do teste**, pois R$ 280 divididos por 29 dias resultam em **R$ 9,65**, não R$ 10,00; a fórmula de orçamento permanece correta.
 - O aviso `AJUSTES_RELATORIOS_DESCOBERTA` procurava PDF/backup no lugar antigo. O teste foi substituído por verificações de controles em **Relatórios** e ausência de duplicação em **Ajustes**, com casos de regressão para botão ausente ou duplicado.
 - O aviso `RISCO_OFFLINE_EVICCAO_DADOS` é legítimo e continua como risco preventivo de limpeza de armazenamento pelo navegador; `nao_avaliado` em Service Worker no HTML `file://` é comportamento correto.
-- Testes locais: **371/371 Node aprovados**; novo Chromium E2E confere essas duas correções dentro do HTML único desconectado. Aguardando CI e ensaio em aparelho físico.
+- **371/371 Node e Chromium offline aprovados no CI da v64**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45094976803 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45094976827. Novo E2E confirma que as duas verificações aparecem aprovadas dentro do HTML desconectado. Ensaio em aparelho físico ainda pendente.
 
 ## Verificação da P2 até v60
 
