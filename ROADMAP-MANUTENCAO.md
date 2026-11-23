@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67: rolagem de Minhas categorias corrigida; 374/374 testes Node e QA Chromium aprovados no CI**, na branch `refactor/roadmap-manutencao-p0-20261122` (runs 45141050370 e 45141050207). O diagnóstico v64 do Samsung passou em 225 verificações sem erros, com um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente; P2.6 aguarda inspeção física no Samsung. **P1 concluída**, **P0.5 em homologação física** e `main` não alterada.
+**Situação:** **v67 publicada em `main` em 23/11/2026 pelo PR #1** (commit `ad231274d15493205f0e2b57557569f2a2b504db`). **374/374 testes Node e QA Chromium aprovados** (runs 45141406828 e 45141406838). Diagnóstico v67 enviado do Samsung/HTML independente: **228 verificações, zero erros, um aviso preventivo, nove não avaliadas e uma proposta de navegação pendente**. IndexedDB primário sincronizado; backup externo desligado. **P1 concluída**, **P2 implementada com P2.6 em homologação física**, **P0.5 em homologação física** e **P4.1 publicação em `main` concluída**.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -13,27 +13,27 @@
 | P0.3c2 | ✅ Concluída | Escolha explícita após exportar ambas as cópias, dupla confirmação, restauração transacional e proteção contra falhas/conflitos |
 | P0.4 | ✅ Implementada | Backup/restauração, CSV e OFX usam gravação confirmada pelo repositório; limpeza e diagnóstico integrados; testes de 1 mil e 10 mil registros |
 | **P0.5** | **🧪 Em homologação** | IndexedDB é fonte primária transacional; localStorage é espelho de compatibilidade. Necessário teste manual no PWA instalado e backup real antes de encerrar P0 |
-| **P1 — Modularização financeira** | **✅ Concluída tecnicamente (v55)** | Núcleo financeiro, metas, investimentos, saldo e aportes isolados; contratos, diagnóstico, PWA e prévia integrados. Acompanhar CI da branch |
+| **P1 — Modularização financeira** | **✅ Concluída e publicada em `main`** | Núcleo financeiro, metas, investimentos, saldo e aportes isolados; contratos, diagnóstico, PWA e prévia integrados |
 | P1.1 | ✅ Implementada | Motor puro de recorrências, totais mensais e reserva, coberto por testes com 10 mil transações |
 | P1.2 | ✅ Concluída | Motor puro de lembretes de aporte (janela de seis meses, dia 31, concluídos) e estimativa CDI bruta; adaptadores finos no app |
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
 | **P2 — Qualidade, interface e funções de referência** | **v67 CI aprovado; inspeção física pendente** | Visual aprovado mantido; correção de continuidade da lista de categorias após Tirar/Mostrar, mantendo botão + e teclado monetário nativo |
-| P2.1 | ✅ Concluída em branch; teclado simplificado em v66 | Celular: valor via teclado do sistema, categorias por ícones e cadastros no +, sem barra fixa. PC: ações do Resumo. Histórico agrupado por dia |
-| P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
+| P2.1 | ✅ Publicada em `main`; teclado simplificado em v66 | Celular: valor via teclado do sistema, categorias por ícones e cadastros no +, sem barra fixa. PC: ações do Resumo. Histórico agrupado por dia |
+| P2.2 | ✅ Publicada em `main` (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
 | P2.4 | ✅ Concluída (CI v62) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
-| **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
+| **P2.5** | **✅ Publicada em `main`; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | 🟡 v67 CI aprovado; homologação física pendente | Orçamento do dia prioritário, seis abas sem sobreposição, botão + único, valor nativo e preservação de posição ao ocultar/reexibir categorias. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
-| **P3 — Logs e observabilidade** | **v66 CI aprovado** | Diagnóstico distingue erros reais e riscos preventivos; v66 detecta campo nativo bloqueado ou retorno acidental de teclado customizado |
-| **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
+| **P3 — Logs e observabilidade** | **✅ Publicada em `main`** | Diagnóstico distingue erros reais e riscos preventivos; v67 confirmou 228 verificações sem erros, com limitação do HTML independente |
+| **P4 — Homologação e publicação** | **🟡 Publicação feita; homologação física pendente** | P4.1: PR #1 integrado em `main`. P4.2: validar PWA instalado no Samsung, backup externo e restauração com dados fictícios antes de encerrar P0.5/P2.6/P4 |
 
 ## Regras de avanço
 
 1. Nunca usar dados financeiros reais nos testes de CI.
-2. Nenhuma resolução automática de conflito, migração destrutiva ou alteração da `main`.
+2. Nenhuma resolução automática de conflito ou migração destrutiva; publicar na `main` somente com autorização expressa e testes aprovados.
 3. Só declarar uma etapa concluída quando código, testes automatizados e, quando pertinente, navegador real estiverem aprovados.
 4. A cada etapa, atualizar este roadmap, `DATABASE.md`, o changelog e o resumo de testes do PR.
 5. `P0` somente estará concluída quando IndexedDB for a fonte primária **com backup, restauração e recuperação validados também em dispositivo real**.
@@ -80,6 +80,14 @@
 - Nenhum esquema, categoria histórica ou dado financeiro foi alterado. **P0.5 e homologação física da P2.6 continuam pendentes.**
 - **CI v67 aprovado:** 374/374 testes Node (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141050370) e Chromium desktop/móvel + offline (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141050207), com teste de Tirar/Mostrar e rolagem no smartphone.
 
+## P4.1 — Publicação em main e auditoria do diagnóstico v67 (23/11/2026)
+
+- Relatório enviado pelo usuário, executado no Samsung com o HTML independente: **228 verificações, zero erros, um aviso de risco preventivo de limpeza do armazenamento pelo navegador, nove não avaliadas e uma proposta de navegação pendente** (`PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO`). A ação de diagnóstico existe dentro do painel de atualização em Ajustes; acesso em um toque permanece uma melhoria futura, não uma falha de integridade.
+- Persistência IndexedDB em modo primário e estado sincronizado, sem falhas relatadas. **Backup em pasta estava desligado**; orientar exportação JSON externa antes de qualquer homologação de restauração.
+- Nenhuma correção de código necessária a partir deste relatório. **374/374 testes Node locais e no CI**; dois workflows GitHub (código e Chromium desktop/móvel/offline) aprovados para a cabeça revisada da branch: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141406828 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141406838.
+- Após autorização explícita, PR https://github.com/dutrafg/Meu-Dinheiro/pull/1 integrado em `main` por squash, commit `ad231274d15493205f0e2b57557569f2a2b504db`. Não foi alterado o esquema de dados na publicação.
+- **Próxima etapa: P4.2** — ensaio físico do PWA instalado, funcionamento offline, exportação JSON e recuperação de teste com dados fictícios; P0.5 e P2.6 continuam em homologação, e as verificações não aplicáveis ao HTML único devem ser executadas no PWA.
+
 ## Verificação da P2 até v60
 
 - CI do código (354 testes Node): https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707674 — **aprovado**.
@@ -103,4 +111,4 @@
 - Controladores visuais consultam cálculos e encaminham alterações à persistência transacional; formatos de dados e APIs históricas continuam compatíveis.
 - Novos módulos presentes no catálogo de diagnóstico, no registro obrigatório, no cache PWA e no HTML independente.
 - 333 testes Node aprovados localmente, incluindo checagem de sintaxe de cada módulo, regressões e dados sintéticos de até 10 mil registros. Verificação de navegador pelo CI da branch antes de propor merge.
-- **P1 não depende da homologação física pendente da P0.5:** ambas são acompanhadas separadamente e `main` permanece protegida.
+- **P1 não depende da homologação física pendente da P0.5:** ambas são acompanhadas separadamente; a publicação em `main` foi aprovada expressamente em 23/11/2026.
