@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v55: P1 concluída tecnicamente na branch** `refactor/roadmap-manutencao-p0-20261122`, com módulos financeiros puros e 333 testes automatizados locais aprovados. **P0.5 continua em homologação física**. `main` não alterada.
+**Situação:** **v56: P2.1 implementada para celular e PC** na branch `refactor/roadmap-manutencao-p0-20261122`, com 337 testes automatizados locais aprovados. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,7 +19,14 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade e interface** | **Base implementada** | Chromium desktop/mobile no CI; correções de calendário e navegação; continuar auditorias |
+| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v56)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
+| P2.1 | ✅ Implementada; QA de branch em andamento | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
+| P2.2 | ⏳ Planejada | Limites e metas mensais, visão do gasto diário seguro e cards compactos de acompanhamento, sem apresentar estimativas como saldo bancário |
+| P2.3 | ⏳ Planejada | Contas a pagar, contas mensais e previsão dos 12 meses com vencimentos e recorrências; preservar registros históricos |
+| P2.4 | ⏳ Planejada | Gestão de categorias e parcelas de cartão com regras de integridade e importação compatíveis |
+| P2.5 | ⏳ Planejada | Relatório anual, desafio de 52 semanas e compartilhamento explícito do resumo, quando aplicável |
+| P2.6 | ⏳ Planejada | Refinamento de navegação, hierarquia, contrastes e espaçamento em celular, tablet e PC; proteção de dados e modo de exemplo somente isolado |
+| P2.7 | ⏳ Planejada | Auditoria funcional, acessibilidade, navegação, performance e responsividade desktop/mobile, com diagnóstico sanitizado |
 | **P3 — Logs e observabilidade** | **Parcial** | Log técnico de sessão automático e JSON sanitizado; ampliar verificações sem dados privados |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 

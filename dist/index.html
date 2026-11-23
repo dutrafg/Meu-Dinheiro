@@ -123,6 +123,10 @@
     </main>
     <section id="print-report" class="print-report" aria-hidden="true"></section>
     <button type="button" id="quick-add" class="fab" aria-label="Abrir opções de cadastro" aria-controls="mobile-create-dialog" aria-haspopup="dialog" aria-expanded="false">+</button>
+    <div id="mobile-quick-actions" class="mobile-quick-actions" role="group" aria-label="Lançamentos rápidos">
+      <button type="button" class="mobile-quick-expense" data-action="add" data-type="expense">− Gastei</button>
+      <button type="button" class="mobile-quick-income" data-action="add" data-type="income">+ Recebi</button>
+    </div>
     <nav class="mobile-nav" aria-label="Áreas do aplicativo" id="mobile-nav"></nav>
   </div>
 
@@ -147,6 +151,18 @@
       <div class="tipo-toggle" id="transaction-type-toggle"><button type="button" data-trans-type="income"><svg aria-hidden="true"><use href="#i-wallet"/></svg> Renda</button><button type="button" data-trans-type="expense"><svg aria-hidden="true"><use href="#i-receipt"/></svg> Despesa</button></div>
       <label>Descrição <input name="description" maxlength="80" placeholder="Ex.: Salário, mercado..." required /></label>
       <label>Valor (R$) <input name="amount" inputmode="decimal" type="number" min="0.01" max="999999999" step="0.01" placeholder="0,00" required /></label>
+      <div class="transaction-mobile-entry" aria-label="Entrada rápida de valor e categoria">
+        <output id="transaction-keypad-display" class="transaction-keypad-display" aria-live="polite">R$ 0,00</output>
+        <div class="transaction-keypad" role="group" aria-label="Teclado de valor em reais e centavos">
+          <button type="button" data-money-key="1">1</button><button type="button" data-money-key="2">2</button><button type="button" data-money-key="3">3</button>
+          <button type="button" data-money-key="4">4</button><button type="button" data-money-key="5">5</button><button type="button" data-money-key="6">6</button>
+          <button type="button" data-money-key="7">7</button><button type="button" data-money-key="8">8</button><button type="button" data-money-key="9">9</button>
+          <button type="button" data-money-key="00">00</button><button type="button" data-money-key="0">0</button><button type="button" data-money-key="backspace" aria-label="Apagar último dígito">⌫</button>
+        </div>
+        <p class="transaction-keypad-note">Cada número acrescenta um dígito aos centavos. Você também pode digitar no campo acima.</p>
+        <p class="transaction-category-title">Escolha uma categoria</p>
+        <div id="transaction-category-tiles" class="transaction-category-tiles" role="group" aria-label="Categorias rápidas"></div>
+      </div>
       <div class="two-col"><label>Data <input name="date" type="date" required /></label><label>Categoria <select name="category" required></select></label></div>
       <label class="check-row"><input name="recurring" type="checkbox" /><span>Repetir todo mês</span></label>
       <p class="field-hint">Itens mensais continuam nos meses seguintes até você excluí-los.</p>

@@ -18,6 +18,7 @@ export function iniciarAcaoRapida({getView,getObjectiveKind=()=> 'goal',openTran
   const grupoDesktop=documento.getElementById('desktop-create-wrap');
   const menu=documento.getElementById('desktop-create-menu');
   const dialogoMovel=documento.getElementById('mobile-create-dialog');
+  const atalhosMovel=documento.getElementById('mobile-quick-actions');
 
   function fecharMenu(){
     menu.classList.add('hidden');
@@ -49,9 +50,12 @@ export function iniciarAcaoRapida({getView,getObjectiveKind=()=> 'goal',openTran
     return true;
   }
   function atualizar(visao=getView()){
-    const indisponivel=visao==='ajustes';
+    const indisponivel=visao==='ajustes'||visao==='relatorios';
+    const mostrarAtalhos=['resumo','renda','despesas'].includes(visao);
     botaoMovel.classList.toggle('hidden',indisponivel);
     grupoDesktop.classList.toggle('hidden',indisponivel);
+    atalhosMovel?.classList.toggle('hidden',!mostrarAtalhos);
+    botaoMovel.classList.toggle('quick-actions-visible',mostrarAtalhos);
     botaoMovel.setAttribute('aria-label',`Abrir opções de cadastro; sugestão: ${acaoMovelParaVisao(visao,getObjectiveKind()).rotulo.toLowerCase()}`);
     fecharMenu();
     fecharMenuMovel();

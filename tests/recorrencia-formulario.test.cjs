@@ -2,9 +2,10 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
+const {pathToFileURL}=require('node:url');
 
 const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
-const load=async file=>import(`data:text/javascript;base64,${Buffer.from(read(file)).toString('base64')}`);
+const load=async file=>import(pathToFileURL(path.join(__dirname,'..',file)).href);
 
 test('Edição mensal mostra alerta sobre toda a série, sem alerta em lançamento novo',async()=>{
   const {criarModuloLancamentos}=await load('dist/modules/lancamentos.js');

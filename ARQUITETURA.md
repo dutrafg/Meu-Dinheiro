@@ -31,6 +31,7 @@ dist/
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
+    teclado-monetario.js   # P2.1: teclado de centavos e categorias rápidas móveis sem mudar o campo nativo
     objetivos.js           # Interface de metas e sonhos, sem fórmulas duplicadas
     dominio-objetivos.js   # P1.3: progresso, restante, totalização e vínculo de objetivos
     investimentos.js       # Interface de cadastro e edição; preserva exports históricos
@@ -136,6 +137,13 @@ Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI br
 - `motor-financeiro.js` também calcula o saldo disponível histórico até a data de referência. `resumo.js` faz a renderização e mantém o export antigo como encaminhamento.
 - Nenhum domínio puro lê DOM, IndexedDB, localStorage, rede ou relógio implicitamente (datas são argumentos). A interface continua usando `persist()` para submeter alterações; nenhum cálculo grava dados.
 - Dois novos módulos integram catálogo, registro de autoverificações, cache PWA e prévia HTML; testes validam dados imutáveis, sintaxe JS, valores em centavos e carga com 10 mil aplicações sintéticas.
+
+## P2.1 — Entrada rápida e histórico responsivo (v56)
+
+- A interface móvel tem dois atalhos de lançamento de renda/despesa acima da navegação, conservando o botão `+` com as cinco opções de cadastro. Eles são ocultados fora das telas financeiras correspondentes.
+- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. O teclado visual opcional edita esse mesmo campo em centavos; os botões de categoria usam a lista já existente, sem criar catálogo paralelo.
+- Os lançamentos em Renda/Despesas recebem cabeçalhos por dia, sem alterar a ordem ou os dados persistidos. No PC, o Resumo ganhou ações diretas de renda e despesa.
+- As fotos são referência de fluxo e composição, não componentes copiados. Nenhum esquema de dados, regra de saldo ou comportamento de backup foi modificado.
 
 ## P2.1 — Homologação no navegador
 

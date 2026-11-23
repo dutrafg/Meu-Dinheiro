@@ -131,3 +131,11 @@
 - Catálogo, autoverificações, cache PWA e gerador de HTML receberam os novos domínios, sem mudanças no banco, backups ou direitos de publicação.
 - Testes de contratos puros e de 10 mil aplicações sintéticas adicionados; após falha sintática detectada no CI da v54, a importação duplicada foi removida e adicionada checagem de sintaxe de **todos os módulos**. **333 testes Node locais aprovados**; o CI de Chromium é a verificação seguinte na branch.
 - **P1 concluída tecnicamente.** P0.5 segue pendente apenas da homologação real no PWA e de um backup real; a `main` não foi modificada.
+
+## P2.1 — Lançamento rápido celular/PC e histórico diário (v56)
+
+- Adicionados dois atalhos de cadastro de renda/despesa no celular e ações diretas no Resumo do PC, preservando o botão + e todas as opções originais.
+- Novo teclado monetário móvel, com valores em centavos, visor em reais, operação de apagar e limite de valor. Categorias rápidas reutilizam o catálogo oficial; formulário nativo continua disponível.
+- Listas de Renda/Despesas agora incluem agrupamento por dia, sem alterar saldos ou recorrências.
+- Incluídos testes de teclado, acessibilidade estrutural, catálogo único e agrupamento; **337 testes Node locais aprovados**, com Chromium no CI da branch a validar.
+- As demais ideias das referências foram organizadas em P2.2–P2.7. `main` permanece intacta; P0.5 continua pendente de validação física.

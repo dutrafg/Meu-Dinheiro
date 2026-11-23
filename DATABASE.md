@@ -88,6 +88,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - **Nenhum esquema, chave, identificador ou formato de backup mudou** nesta etapa; o fluxo de escrita transacional continua idêntico ao da v53. Os exports anteriores dos controladores permanecem acessíveis.
 - A validação física pendente da P0.5 **não foi substituída** pelos testes da P1. Não publicar na `main` sem autorização.
 
+## P2.1 — Atalhos de interface sem migração (v56)
+
+- Teclado em centavos, seleção visual de categorias, agrupamento de lista e botões rápidos usam as estruturas financeiras e `persist()` existentes. Nenhuma chave nova, migração ou modificação do formato do backup.
+- A homologação da P0.5 em dispositivo físico continua pendente e independente dos testes de layout da P2.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

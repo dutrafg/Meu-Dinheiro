@@ -97,6 +97,10 @@ export function criarModuloResumo(ctx) {
           </div>
         </div>
       </div>
+      <div class="summary-quick-actions" role="group" aria-label="Registrar movimentação rapidamente">
+        <button type="button" data-action="add" data-type="expense">− Registrar despesa</button>
+        <button type="button" data-action="add" data-type="income">+ Registrar renda</button>
+      </div>
       ${renderSaude()}
       <section class="card proto-list-card"><h3>Últimas transações</h3>${entryList(recent,'Nenhuma transação neste mês.')}</section>
       ${renderExpenseCharts()}
