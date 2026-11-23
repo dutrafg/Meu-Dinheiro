@@ -166,3 +166,9 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - `relatorio-anual.js` calcula somente valores vencidos em 12 meses com data de referência explícita, aproveitando `motor-financeiro.js`. Aportes são somados separadamente e **não** subtraídos novamente do saldo dos lançamentos.
 - Interface com barras para entradas/saídas, navegação de anos, melhor mês e compartilhamento iniciado por toque. Nomes de meses e valores são renderizados sem strings financeiras em logs. Se a API de compartilhar não estiver disponível, oferece cópia pelo navegador.
 - Regras puras, autodiagnóstico, cache PWA, HTML independente e Chromium integram a regressão. Não introduz transações ou campos persistentes.
+
+## P2.5b — Desafio de 52 semanas por aportes vinculados (v60)
+
+- `desafio-52.js` define os 52 valores, gera a grade e deriva o andamento somente da coleção financeira `allocations` ligada à meta nominal dedicada. Exige correspondência de semana, valor e categoria; duplicatas são sinalizadas.
+- `objetivos.js` renderiza o desafio com as outras metas. `app.js` apenas abre o diálogo de meta ou de investimento existente e preenche valores; a escolha da origem e o commit ficam nas validações e no repositório já testados. Sem novos formatos de backup ou migrações.
+- Testes de fórmulas e situações inconsistentes, E2E mobile, autodiagnóstico, HTML independente e SW fazem parte da revisão.

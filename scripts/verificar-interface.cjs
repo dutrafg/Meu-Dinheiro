@@ -198,6 +198,25 @@ async function verificar(){
     assert.equal(await page.locator('#mobile-create-dialog').evaluate(el=>el.open),false,
       'Esc encerra o diálogo nativo e o botão volta ao estado recolhido');
     await page.locator('.mobile-nav [data-view="metas"]').click();
+    await page.locator('[data-objective-tab="goal"]').click();
+    await page.locator('.proto-challenge summary').click();
+    await page.locator('[data-action="challenge-create"]').click();
+    assert.equal(await page.locator('#goal-form [name="target"]').inputValue(),'2756');
+    assert.equal(await page.locator('#goal-form [name="name"]').inputValue(),'Desafio das 52 semanas');
+    await page.locator('#goal-form [type="submit"]').click();
+    await page.waitForFunction(()=>!document.getElementById('goal-dialog').open);
+    await page.locator('.proto-challenge summary').click();
+    assert.equal(await page.locator('.challenge-grid button').count(),52);
+    await page.locator('[data-action="challenge-week"][data-week="1"]').click();
+    assert.equal(await form.locator('[name="amount"]').inputValue(),'2');
+    assert.equal(await form.locator('[name="category"]').inputValue(),'Desafio 52 semanas');
+    assert.equal(await form.locator('[name="origin"]').inputValue(),'','A origem do aporte semanal exige escolha');
+    await form.locator('[name="origin"]').selectOption('previous');
+    await form.getByRole('button',{name:'Salvar investimento'}).click();
+    await page.waitForFunction(()=>!document.getElementById('investment-dialog').open);
+    await page.locator('.proto-challenge summary').click();
+    assert.equal(await page.locator('[data-action="challenge-week"][data-week="1"]').isDisabled(),true);
+    assert.match(await page.locator('.challenge-summary').innerText(),/1 de 52 semanas confirmadas/);
     await page.locator('[data-objective-tab="dream"]').click();
     assert.equal(await page.locator('[data-objective-tab="dream"]').getAttribute('aria-pressed'),'true',
       'A aba Sonhos fica acessível dentro de Objetivos no celular');

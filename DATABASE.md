@@ -109,6 +109,12 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Agregações do ano derivam de transações existentes com ocorrências até a data atual. Aportes vinculados continuam na coleção já existente e entram somente como coluna informativa separada.
 - Nenhuma chave, formato de backup ou movimentação automática foi criada. O compartilhamento gera texto **somente** quando solicitado pelo usuário.
 
+## P2.5b — Desafio de 52 semanas usando contratos existentes (v60)
+
+- A meta do desafio é uma entrada normal de `goals` (`kind=goal`, nome "Desafio das 52 semanas", alvo R$ 2.756). A grade deriva o estado das 52 semanas de entradas normais em `allocations` vinculadas por `goalId`, com categoria "Desafio 52 semanas", descrição e valor exatos.
+- A confirmação usa o formulário atual de investimentos, com seleção obrigatória de origem, validação e gravação transacional. Nenhuma chave nova, coleção nova ou mecanismo paralelo de "semanas guardadas". Backup/restauração atuais já incluem essas entradas.
+- A interpretação visual de semana concluída exige um aporte correspondente; metas preexistentes com nomes semelhantes não são apagadas ou migradas.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

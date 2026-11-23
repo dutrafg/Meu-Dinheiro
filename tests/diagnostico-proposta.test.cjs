@@ -7,9 +7,10 @@ const read=relative=>fs.readFileSync(path.join(__dirname,'..',relative),'utf8');
 const semModulos=relative=>read(relative).replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'');
 const carregar=async()=>{
   const dominio=read('dist/modules/dominio-objetivos.js').replace(/^export /gm,'');
+  const desafio=read('dist/modules/desafio-52.js').replace(/^export /gm,'');
   const objetivos=read('dist/modules/objetivos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const diagnostico=read('dist/modules/diagnostico-proposta.js').replace(/^import .*$/gm,'');
-  return import(`data:text/javascript;base64,${Buffer.from(`${dominio}\n${objetivos}\n${diagnostico}`).toString('base64')}`);
+  return import(`data:text/javascript;base64,${Buffer.from(`${dominio}\n${desafio}\n${objetivos}\n${diagnostico}`).toString('base64')}`);
 };
 
 function elementoDeTeste(){

@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v59: P2.1 e P2.2 aprovadas, P2.3a aprovada e P2.5a (resumo anual) implementada em validação** na branch `refactor/roadmap-manutencao-p0-20261122`. v58 aprovada no CI Node/Chromium; v59 passou em 350 testes Node locais. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v60: P2.1/P2.2/P2.3a/P2.5a aprovadas; P2.5b (desafio de 52 semanas) implementada em validação** na branch `refactor/roadmap-manutencao-p0-20261122`. v59 aprovada no CI Node/Chromium; v60 passou em 354 testes Node locais. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,12 +19,12 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v59)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
+| **P2 — Qualidade, interface e funções de referência** | **Em andamento (v60)** | Fotos de referência analisadas; executar subetapas P2.1–P2.7 sem copiar paywall ou comprometer dados |
 | P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **🟡 Parcial: agenda e projeção aprovadas; contas a pagar pendentes** | Relatórios exibem despesas futuras previstas e tabela dos próximos 12 meses com receitas/despesas recorrentes; falta modelo independente de contas a pagar, confirmação de pagamento e cadastro de contas mensais sem dupla contagem |
 | P2.4 | ⏳ Planejada | Gestão de categorias e parcelas de cartão com regras de integridade e importação compatíveis |
-| **P2.5** | **🟡 Parcial: resumo anual e compartilhamento implementados (v59); QA pendente** | Relatório anual por mês com entradas, saídas, aportes separados, melhor mês e botão de compartilhamento por ação do usuário; desafio de 52 semanas ainda pendente |
+| **P2.5** | **✅ Implementada; desafio 52 semanas em QA no Chromium (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | ⏳ Planejada | Refinamento de navegação, hierarquia, contrastes e espaçamento em celular, tablet e PC; proteção de dados e modo de exemplo somente isolado |
 | P2.7 | ⏳ Planejada | Auditoria funcional, acessibilidade, navegação, performance e responsividade desktop/mobile, com diagnóstico sanitizado |
 | **P3 — Logs e observabilidade** | **Parcial** | Log técnico de sessão automático e JSON sanitizado; ampliar verificações sem dados privados |

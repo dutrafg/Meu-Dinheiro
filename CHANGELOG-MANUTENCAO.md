@@ -161,3 +161,10 @@
 - O cálculo considera apenas ocorrências vencidas até a data atual; projeções não são tratadas como fatos. Aportes não são descontados de novo das despesas.
 - Botão de compartilhamento exige ação explícita; usa API nativa quando disponível ou copia texto para envio manual, sem transmissão automática nem dados financeiros nos logs.
 - `relatorio-anual.js` é testado isoladamente, registrado em diagnóstico/cache/HTML; **350 testes Node locais aprovados**, com Chromium a revalidar. O desafio das 52 semanas permanece na P2.5b, sem simular depósitos reais.
+
+## P2.5b — Desafio das 52 semanas sem armazenamento paralelo (v60)
+
+- Em Objetivos, cartão do desafio cria uma meta convencional de R$ 2.756 sob confirmação do usuário. A grade de 52 semanas calcula R$ 2, R$ 4, ..., R$ 104 e indica semanas com aportes correspondentes já salvos.
+- Ao tocar numa semana, o formulário de investimento abre preenchido, mas **a origem do dinheiro permanece sem seleção**, exigindo escolha e confirmação. O registro utiliza o mesmo IndexedDB transacional, backup JSON, validações e histórico editável dos outros investimentos.
+- A grade detecta semanas duplicadas e mostra aviso; não soma duas vezes à contagem de semanas concluídas. Exclusões/correções seguem o histórico de investimentos existente, preservando integridade e proteção contra dupla contagem.
+- Novo módulo `desafio-52.js` registrado em autodiagnóstico, PWA e HTML único; E2E móvel testa criação e um aporte com dados fictícios. **354 testes Node locais aprovados**, com Chromium em validação na branch.

@@ -22,6 +22,7 @@ import {aplicarTeclaMonetaria} from './teclado-monetario.js';
 import {calcularOrcamentoDia} from './orcamento.js';
 import {criarModuloPrevisoes,projetarDozeMeses,proximasDespesasPrevistas} from './previsoes.js';
 import {resumirAno} from './relatorio-anual.js';
+import {resumirDesafio52,valorSemana52,renderDesafio52} from './desafio-52.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -52,6 +53,8 @@ export function registrarModulosDoApp(api) {
     return r?.receitas===100&&r.meses.length===12&&r.melhor?.mes==='2026-01'&&
       Boolean(document.getElementById('annual-panel'))&&Boolean(document.getElementById('annual-content'));
   });
+  registrar('desafio-52',()=>valorSemana52(52)===104&&resumirDesafio52({goals:[],allocations:[]}).meta===2756&&
+    renderDesafio52({goals:[],allocations:[]},{esc:valor=>String(valor),money:valor=>String(valor)}).includes('challenge-create'));
   registrar('categorias-brasileiras',()=>{
     const obrigatorias=['Aluguel','Água e esgoto','Energia elétrica','Supermercado','Combustível','IPVA',
       'Condomínio','IPTU','Farmácia','Cartão de crédito','Plano de saúde'];

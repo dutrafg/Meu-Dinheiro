@@ -22,6 +22,7 @@ import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
 import { criarModuloPrevisoes } from './modules/previsoes.js';
 import { criarModuloRelatorioAnual } from './modules/relatorio-anual.js';
+import {NOME_DESAFIO_52,CATEGORIA_DESAFIO_52,valorSemana52,descricaoSemana52,resumirDesafio52} from './modules/desafio-52.js';
 import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
@@ -353,6 +354,25 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const button=event.target.closest('[data-action]');
     if(!button)return;
     const id=button.dataset.id;
+    if(button.dataset.action==='challenge-create'){
+      if(resumirDesafio52(data).objetivo){notify('A meta do desafio já existe.');return;}
+      openGoal('goal');
+      goalForm.elements.namedItem('name').value=NOME_DESAFIO_52;
+      goalForm.elements.namedItem('target').value='2756';
+      goalForm.elements.namedItem('saved').value='0';
+      return;
+    }
+    if(button.dataset.action==='challenge-week'){
+      const semana=Number(button.dataset.week),valor=valorSemana52(semana);
+      const estado=resumirDesafio52(data);
+      if(!valor||!estado.objetivo||estado.objetivo.id!==id||estado.semanas[semana-1].registrado)return;
+      if(investimentos.abrir(id)){
+        investmentForm.elements.namedItem('description').value=descricaoSemana52(semana);
+        investmentForm.elements.namedItem('amount').value=String(valor);
+        investmentForm.elements.namedItem('category').value=CATEGORIA_DESAFIO_52;
+      }
+      return;
+    }
     if(button.dataset.action==='add')openTransaction(button.dataset.type);
     else if(button.dataset.action==='edit')openTransaction(null,id);
     else if(button.dataset.action==='add-goal')openGoal(button.dataset.type);

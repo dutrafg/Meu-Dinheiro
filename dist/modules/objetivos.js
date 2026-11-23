@@ -1,4 +1,5 @@
 import {percentualObjetivo,restanteObjetivo,resumirObjetivos,candidatosVinculo} from './dominio-objetivos.js';
+import {renderDesafio52} from './desafio-52.js';
 
 export function criarModuloObjetivos(ctx) {
   const {getData, esc, money, header, empty, savingPlan, currentMonth, getCurrentMonth,
@@ -23,6 +24,7 @@ export function criarModuloObjetivos(ctx) {
       </div>
       <section class="card proto-total-card"><h3>${icon(isDream?'sparkles':'target')} ${isDream?'Seu sonho':'Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
+      ${!isDream?renderDesafio52(data,{esc,money}):''}
       ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:
       `<div class="card proto-empty-card">${empty(isDream?'Qual sonho você quer realizar? Toque em + para criar.':'Crie sua reserva ou uma meta de economia pelo botão +.',isDream?'sparkles':'target')}</div>`}
       ${renderAllocations(kind)}

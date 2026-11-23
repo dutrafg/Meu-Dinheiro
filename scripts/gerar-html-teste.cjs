@@ -7,11 +7,11 @@ const root = path.resolve(__dirname, '..', 'dist');
 const output = path.resolve(process.argv[2] || path.join(__dirname,'..','meu-dinheiro-teste.html'));
 const read = filename => fs.readFileSync(path.join(root,filename),'utf8');
 
-const cssFiles = ['styles.css','css/estrutura.css','css/resumo.css','css/previsoes.css','css/relatorio-anual.css','css/calendario.css','css/saude.css','css/objetivos.css','css/investimentos.css','css/progresso.css','css/dialogos.css','css/acao-rapida-mobile.css','css/responsivo.css','css/ajustes.css','css/impressao.css'];
+const cssFiles = ['styles.css','css/estrutura.css','css/resumo.css','css/previsoes.css','css/relatorio-anual.css','css/desafio-52.css','css/calendario.css','css/saude.css','css/objetivos.css','css/investimentos.css','css/progresso.css','css/dialogos.css','css/acao-rapida-mobile.css','css/responsivo.css','css/ajustes.css','css/impressao.css'];
 const jsFiles = ['csv.js','analytics.js','folder-backup.js',
   'modules/log.js','modules/validacao.js','modules/preferencias.js','modules/regras-financeiras.js','modules/motor-financeiro.js','modules/dominio-objetivos.js','modules/dominio-investimentos.js','modules/categorias-brasileiras.js',
   'modules/integridade.js','modules/catalogo-diagnostico.js','modules/teclado-monetario.js','modules/lancamentos.js','modules/objetivos.js','modules/investimentos.js','modules/calendario-financeiro.js',
-  'modules/orcamento.js','modules/previsoes.js','modules/relatorio-anual.js','modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf-conteudo.js','modules/relatorio-pdf.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
+  'modules/desafio-52.js','modules/orcamento.js','modules/previsoes.js','modules/relatorio-anual.js','modules/resumo.js','modules/saude.js','modules/notificacoes.js','modules/relatorio-pdf-conteudo.js','modules/relatorio-pdf.js','modules/dialogos.js','modules/backup.js','modules/csv-interface.js','modules/atualizador.js',
   'modules/ajustes.js','modules/acao-rapida.js','modules/limpeza-dados.js','modules/concorrencia-dados.js','modules/espelho-indexeddb.js','modules/recuperacao-conflitos.js','modules/ofx.js','modules/repositorio-financeiro.js','modules/ciclo-periodo.js','modules/auditoria-codigo.js','modules/diagnostico-proposta.js','modules/diagnostico.js','modules/registro-modulos.js','app.js'];
 
 const css = cssFiles.map(filename=>`/* ${filename} */\n${read(filename)}`).join('\n');
