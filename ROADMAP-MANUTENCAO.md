@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v63: P2.1–P2.5 concluídas com CI v62; P2.7 ampliada com testes offline completos** na branch `refactor/roadmap-manutencao-p0-20261122`. **370/370 testes Node locais aprovados; aguardando CI Chromium v63 para os testes reais sem rede.** P2.6 aguarda inspeção em dispositivo físico. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v63: P2.1–P2.5 e P2.7 com CI Node/Chromium aprovados, incluindo testes offline completos**, na branch `refactor/roadmap-manutencao-p0-20261122`. **370/370 testes Node e CI Chromium offline aprovados** (runs 45093963590 e 45093963618). P2.6 aguarda inspeção em dispositivo físico. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,14 +19,14 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Implementação v63; homologação offline/física pendente** | Funções de referência e diagnósticos integrados; testes Node locais aprovados. Falta confirmar Chromium v63 e PWA no celular real antes de declarar homologação irrestrita |
+| **P2 — Qualidade, interface e funções de referência** | **Automação v63 aprovada; homologação física pendente** | Funções de referência e diagnósticos integrados; testes Node/Chromium offline aprovados. Falta validar PWA no celular real antes de declarar homologação irrestrita |
 | P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
 | P2.4 | ✅ Concluída (CI v62) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | 🟡 Em homologação | Orçamento do dia prioritário, responsividade de compromissos e categorias no celular/PC; falta inspeção manual em aparelhos reais; modo demonstrativo permanece fora do escopo publicado para não arriscar dados do usuário |
-| P2.7 | 🧪 Ampliação offline v63; CI pendente | 370 testes Node locais; novo E2E Chromium com instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; aguardando resultado do CI |
+| P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
 | **P3 — Logs e observabilidade** | **Ampliada em v63** | Diagnóstico distingue erros reais de riscos preventivos, inspeciona integridade dos recursos cacheados, detecta HTML servido por engano como JavaScript e sinaliza risco de limpeza do armazenamento; notificações locais de vencimentos, parcelas, limites e armazenamento |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 
@@ -42,10 +42,11 @@
 
 - PWA: valida bytes de entrada HTML, scripts JavaScript, CSS, manifesto, ícones PNG e módulos críticos dentro do Cache Storage, sem acesso à rede e sem ler dados financeiros; verifica correspondência com a versão v63 e detecta cache incompleto ou versão antiga.
 - Arquivo HTML único: valida scripts/estilos incorporados, ausência de dependências de rede (inclusive imagens) e bibliotecas internas; Service Worker é corretamente identificado como não aplicável nesse modo.
-- Navegador automatizado (aguardando CI): instala cache conectado, corta realmente a rede do contexto Chromium, recarrega, navega entre telas, roda diagnóstico, confere espelho IndexedDB e reconecta; o HTML único é aberto em `file://` com navegador offline.
+- Navegador automatizado (**CI aprovado**): instala cache conectado, corta realmente a rede do contexto Chromium, recarrega, navega entre telas, roda diagnóstico, confere espelho IndexedDB e reconecta; o HTML único é aberto em `file://` com navegador offline.
 - Risco preventivo `RISCO_OFFLINE_EVICCAO_DADOS`: sistema operacional/navegador pode remover armazenamento não persistente; manter backup JSON fora do aparelho.
 - Gerador entrega `Meu-Dinheiro-v63-Offline-Validacao.html` com instruções e botão para executar o diagnóstico. Guia manual em `VALIDACAO-OFFLINE.md`.
 - **Não concluímos P0.5 nem P2.6 sem ensaio físico** em Android/iOS e confirmação explícita de backup/restauração de dados fictícios.
+- CI v63 aprovado: código https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963590 e navegador offline https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963618.
 
 ## Verificação da P2 até v60
 

@@ -4,8 +4,8 @@
 
 - No PWA, o diagnóstico lê do cache a assinatura real de HTML, JavaScript, CSS, manifesto e PNG, informa arquivos ausentes/inválidos e versões divergentes, sem fazer requisições de rede nem expor valores pessoais.
 - Na prévia HTML independente, confirma CSS/JavaScript embutidos, bibliotecas carregadas e ausência de recursos externos obrigatórios; identifica Service Worker e Cache Storage como não aplicáveis à abertura `file://`.
-- Testes sintéticos cobrem ausência/corrupção de arquivos offline e geração do HTML; 370/370 testes Node aprovados localmente.
-- E2E Chromium ampliado para rede realmente desligada, recarga por Service Worker, conferência IndexedDB e HTML local sem rede; aprovação do CI ainda pendente.
+- Testes sintéticos cobrem ausência/corrupção de arquivos offline e geração do HTML; 370/370 testes Node aprovados no CI v63 (run 45093963590).
+- E2E Chromium aprovado no CI v63 (run 45093963618): rede realmente desligada, recarga por Service Worker, conferência IndexedDB e HTML local `file://` sem rede.
 - Pacote v63 e gerador com botão direto para executar diagnóstico; sem migração destrutiva e sem alteração da `main`.
 
 ## v62 — P2: contas, parcelas, categorias e alertas preventivos
