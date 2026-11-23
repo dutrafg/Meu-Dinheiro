@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v67 publicada em `main` em 23/11/2026 pelo PR #1** (commit `ad231274d15493205f0e2b57557569f2a2b504db`). **374/374 testes Node e QA Chromium aprovados** (runs 45141406828 e 45141406838). Diagnóstico v67 enviado do Samsung/HTML independente: **228 verificações, zero erros, um aviso preventivo, nove não avaliadas e uma proposta de navegação pendente**. IndexedDB primário sincronizado; backup externo desligado. **P1 concluída**, **P2 implementada com P2.6 em homologação física**, **P0.5 em homologação física** e **P4.1 publicação em `main` concluída**.
+**Situação:** **v67 publicada em `main`** pelo PR #1 em 23/11/2026. **v68 em branch `feature/p4-2-diagnostico-direto-v68`**, com **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI** (runs 45175055623 e 45175055621). Diagnóstico v68 no Samsung/HTML independente: **230 verificações, zero erros, um risco preventivo, dez não avaliadas e zero propostas pendentes**; `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` passou de pendente na v67 para aprovado na v68. **P4.1 e P4.2a automatizada concluídas**; **P4.2b PWA instalado/backup, P0.5 e P2.6 ainda em homologação física**. Não publicar v68 em `main` sem nova autorização.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -27,8 +27,8 @@
 | **P2.5** | **✅ Publicada em `main`; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | 🟡 v67 CI aprovado; homologação física pendente | Orçamento do dia prioritário, seis abas sem sobreposição, botão + único, valor nativo e preservação de posição ao ocultar/reexibir categorias. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
-| **P3 — Logs e observabilidade** | **✅ Publicada em `main`** | Diagnóstico distingue erros reais e riscos preventivos; v67 confirmou 228 verificações sem erros, com limitação do HTML independente |
-| **P4 — Homologação e publicação** | **🟡 Publicação feita; homologação física pendente** | P4.1: PR #1 integrado em `main`. P4.2: validar PWA instalado no Samsung, backup externo e restauração com dados fictícios antes de encerrar P0.5/P2.6/P4 |
+| **P3 — Logs e observabilidade** | **✅ Publicada em `main`; melhoria v68 em homologação** | Diagnóstico distingue erros reais e riscos preventivos; v68 torna o acesso direto sem duplicar botão e cobre regressão |
+| **P4 — Homologação e publicação** | **🟡 P4.1 concluída; P4.2 em andamento** | v67 publicada em `main`; v68 na branch. Próximo: ensaio físico do PWA instalado, backup externo e restauração fictícia antes de encerrar P0.5/P2.6/P4 |
 
 ## Regras de avanço
 
@@ -87,6 +87,23 @@
 - Nenhuma correção de código necessária a partir deste relatório. **374/374 testes Node locais e no CI**; dois workflows GitHub (código e Chromium desktop/móvel/offline) aprovados para a cabeça revisada da branch: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141406828 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45141406838.
 - Após autorização explícita, PR https://github.com/dutrafg/Meu-Dinheiro/pull/1 integrado em `main` por squash, commit `ad231274d15493205f0e2b57557569f2a2b504db`. Não foi alterado o esquema de dados na publicação.
 - **Próxima etapa: P4.2** — ensaio físico do PWA instalado, funcionamento offline, exportação JSON e recuperação de teste com dados fictícios; P0.5 e P2.6 continuam em homologação, e as verificações não aplicáveis ao HTML único devem ser executadas no PWA.
+
+## P4.2a — Diagnóstico direto e ensaio físico orientado (v68, em branch)
+
+- A proposta `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO`, que estava pendente no JSON v67, foi endereçada: o **único** botão para abrir Diagnóstico foi movido da seção fechada Atualizações para uma faixa compacta visível no início de Ajustes, em celular e PC.
+- A seção inferior foi renomeada **Atualizações do aplicativo**. O acionador continua o mesmo `#open-diagnostics`; não há dois botões nem mudanças em backup, IndexedDB, valores ou fórmulas.
+- Novos testes verificam acesso antes das seções recolhíveis, botão único, área de toque de 44 px, detecção de regressão caso volte a um `details` fechado e abertura offline em um toque.
+- **375/375 testes Node e QA Chromium desktop/celular/offline aprovados no CI remoto**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055623 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45175055621. Chromium local não iniciou por restrição do executor (`socket() failed: Operation not permitted`), contornada pelo CI remoto, sem modificar código nem dados.
+- Guia `VALIDACAO-OFFLINE.md` atualizado para v68: distingue HTML independente do PWA instalado e exige perfil de testes, backup JSON fora do navegador e restauração fictícia sem tocar nos dados reais.
+- **P4.2 ainda não concluída:** falta homologação física de Samsung/PWA, backup e restauração. Publicação de v68 em `main` depende de autorização explícita.
+
+## P4.2b1 — Novo diagnóstico Samsung recebido (v68, 23/11/2026)
+
+- JSON v68 enviado do HTML independente aberto no aparelho: **230 verificações, 0 erros, 1 aviso preventivo, 10 não avaliadas, 0 propostas pendentes**. O IndexedDB aparece primário/sincronizado e sem falhas, mas o backup externo está desligado.
+- Em relação à v67, dois checks adicionais `UI_ADICIONAR_RESUMO` e `UI_SALDO_PERIODO` passaram; **`PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` mudou de pendente para ok**. A prévia de cores caiu de `ok` para `nao_avaliado` por depender de componente visual presente no contexto de abertura; não foi registrada falha de interface ou dado.
+- `OFFLINE_HTML_JAVASCRIPT`, `OFFLINE_HTML_ESTILOS`, `OFFLINE_HTML_SEM_DEPENDENCIAS` e `OFFLINE_HTML_BIBLIOTECAS` passaram. `instalado:false`; Service Worker, controle e cache PWA **não** se aplicam ao HTML independente e não foram ensaiados fisicamente.
+- Prévia PWA da branch v68 está **READY** na Vercel, protegida por login do proprietário: https://meu-dinheiro-git-feature-p4-2-diagnostico-direto-v68-dutra8.vercel.app. Ela usa origem separada da versão em produção e permite testes com dados fictícios sem modificar os dados locais do domínio principal.
+- **Próxima etapa P4.2b2:** abrir a prévia no Samsung, instalar PWA, executar diagnóstico conectado/desconectado, verificar cache e IndexedDB após reabertura e exportar/restaurar backup JSON fictício em ambiente isolado. **P0.5/P2.6/P4.2 ainda não concluídas.**
 
 ## Verificação da P2 até v60
 

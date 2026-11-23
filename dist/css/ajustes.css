@@ -37,6 +37,12 @@
 .settings-page.hidden{display:none}
 .settings-page #settings-form{display:block}
 .settings-page>.settings-heading{position:sticky;top:122px;z-index:7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;background:var(--bg);padding:13px 0 12px;border-bottom:1px solid var(--border)}
+.settings-diagnostics-shortcut{display:flex;align-items:center;gap:12px;margin:12px 0 4px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.settings-diagnostics-shortcut button{flex:none;min-height:44px;padding:9px 12px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);color:var(--accent-text);font-weight:750;font-size:.87rem;cursor:pointer}
+.settings-diagnostics-shortcut button svg{width:18px;height:18px;vertical-align:middle;margin-right:6px}
+.settings-diagnostics-shortcut button:hover{filter:brightness(1.08)}
+.settings-diagnostics-shortcut button:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px}
+.settings-diagnostics-shortcut p{margin:0;font-size:.8rem;line-height:1.4;color:var(--sub)}
 .settings-heading h2{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:1.35rem}
 .settings-title-icon{width:23px;height:23px;color:var(--accent-text)}
 .settings-section-icon{width:20px;height:20px;vertical-align:middle;margin-right:7px;color:var(--accent-text)}
@@ -84,6 +90,7 @@
 .diagnostics-progress span{width:0%;background:var(--accent);transition:width .2s linear}
 .diagnostics-progress-area p{font-size:.8rem;color:var(--sub);margin:6px 0}
 @media(max-width:879px){.settings-page>.settings-heading{top:92px}}
+@media(max-width:540px){.settings-diagnostics-shortcut{align-items:stretch;flex-direction:column;gap:6px}.settings-diagnostics-shortcut button{width:100%}}
 @media(max-width:540px){.settings-colors{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tool-buttons{grid-template-columns:1fr}.settings-section{padding:13px}.settings-heading h2{font-size:1.15rem}.settings-row{align-items:flex-start;flex-direction:column;gap:7px}.settings-row>select,.settings-row>input{max-width:100%;width:100%}.settings-page>.settings-heading{top:92px}}
 
 .settings-recovery>p{font-size:.86rem;line-height:1.55;color:var(--sub);margin:12px 0}

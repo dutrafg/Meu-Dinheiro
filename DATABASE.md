@@ -123,6 +123,10 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - A preferência `categoriasOcultas` mantém exatamente o mesmo formato e processo de gravação. A mudança ocorre apenas depois de salvar: atualiza o texto do botão/linha em vez de refazer a lista inteira, conservando a posição do usuário.
 - Não elimina categorias do histórico financeiro nem modifica IndexedDB, importação/exportação ou backups. A P0.5 continua pendente de ensaio físico.
 
+## v68 — Atalho de diagnóstico sem alteração de dados
+
+- O botão de execução do diagnóstico apenas mudou de posição no HTML de Ajustes. Nenhuma leitura, escrita, exclusão, migração ou esquema de IndexedDB/localStorage/backup foi alterado. P0.5 permanece em homologação de PWA e restauração real com dados fictícios.
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.

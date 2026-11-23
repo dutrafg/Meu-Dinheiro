@@ -1,5 +1,18 @@
 # Mudanças propostas — roadmap de manutenção
 
+## 23/11/2026 — Diagnóstico v68 no Samsung: 230 verificações sem falhas
+
+- O HTML independente v68 executou **230 verificações, 0 erros, 1 aviso preventivo, 10 não avaliadas e nenhuma proposta pendente**. A pendência de acesso direto ao Diagnóstico da v67 virou `ok`, e duas verificações adicionais de Resumo foram aprovadas.
+- Persistência IndexedDB primária/sincronizada; backup externo não configurado. Os testes de Service Worker e Cache Storage continuam não avaliáveis no arquivo `content://`/`file://`, não sendo erros.
+- Prévia PWA v68 da branch **READY** na Vercel (protegida por login). Faltam testes físicos de instalação, retomada offline, backup/recuperação fictícios. `main` permanece na v67.
+
+## v68 — Diagnóstico em um toque nos Ajustes (branch de homologação)
+
+- O único botão **Executar diagnóstico completo** foi movido de Atualizações (seção normalmente fechada) para uma faixa compacta e visível no topo de Ajustes. A seção de versões agora se chama **Atualizações do aplicativo**.
+- Resolvida a proposta `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` indicada no JSON v67; teste de regressão garante que voltar a esconder o botão em um painel fechado será detectado. E2E offline abrirá o diagnóstico sem expandir Atualizações.
+- Versão e cache PWA passam a v68; CSS responsivo com alvo de 44 px; **375/375 testes Node e Chromium desktop/móvel/offline aprovados no CI** (runs 45175055623 e 45175055621). Navegador local permaneceu bloqueado pelo ambiente, mas o CI executou os fluxos reais.
+- Sem alterações em dados financeiros, preferências, IndexedDB, backup, categorias, CSV/OFX ou regras de cálculo. **v67 permanece em `main`**; P4.2/P0.5/P2.6 ainda exigem ensaio físico.
+
 ## 23/11/2026 — Auditoria v67 e publicação em main (P4.1)
 
 - Diagnóstico do HTML independente enviado pelo Samsung: **228 verificações, zero erros, um aviso preventivo de limpeza do armazenamento, nove verificações não avaliadas e uma proposta de atalho de Diagnóstico ainda pendente**. Fonte primária IndexedDB sincronizada; backup externo desligado no aparelho.

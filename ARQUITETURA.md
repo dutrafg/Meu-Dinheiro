@@ -72,6 +72,7 @@ dist/
 3. Cada tela devolve HTML, mas **não grava dados por conta própria**.
 4. Os controladores alteram os registros por `await persist(next)`: o repositório aguarda a confirmação do IndexedDB primário, espelha no `localStorage` compatível e só então atualiza a UI e agenda o backup em pasta.
 5. `render()` atualiza somente `#view-content`, preservando os formulários fixos em `#settings-page` para que controladores de backup, CSV e atualização não percam referências/eventos. Ajustes é a sexta view e fica oculta quando outra área está ativa.
+   - Na v68, `#open-diagnostics` é um único botão visível diretamente no início de Ajustes, fora dos painéis `details`. O mesmo controlador `diagnostico.js` permanece conectado sem duplicar ações; o teste `PROPOSTA_AJUSTES_DIAGNOSTICO_DIRETO` detecta regressão se o botão voltar a um painel fechado.
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
 8. `concorrencia-dados.js` compara a versão local do JSON antes de cada gravação. Alterações de outra aba são sincronizadas se não houver edição em diálogo; caso contrário, a gravação antiga é bloqueada até o usuário resolver o conflito. Não cria chaves novas nem muda o formato financeiro.

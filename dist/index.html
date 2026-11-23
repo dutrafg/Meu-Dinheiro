@@ -100,6 +100,10 @@
       </section>
       <section id="settings-page" class="settings-page hidden" aria-labelledby="settings-title">
         <div class="settings-heading"><div><span class="eyebrow">PREFERÊNCIAS LOCAIS</span><h2 id="settings-title"><svg class="settings-title-icon" aria-hidden="true"><use href="#i-settings"/></svg> Ajustes</h2></div><p id="settings-autosave-status" class="settings-autosave-status" role="status" aria-live="polite">Alterações salvas automaticamente.</p></div>
+        <div class="settings-diagnostics-shortcut">
+          <button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button>
+          <p>Verifica o aplicativo e o modo offline sem alterar seus dados financeiros.</p>
+        </div>
         <form id="settings-form">
           <section class="settings-section"><h3><svg class="settings-section-icon" aria-hidden="true"><use href="#i-settings"/></svg> Aparência</h3>
             <div class="settings-row"><label for="settings-theme">Tema</label><select id="settings-theme" name="tema"><option value="auto">Automático (sistema)</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></div>
@@ -131,11 +135,10 @@
             <button type="button" id="category-manager-cancel" class="button button-secondary">Cancelar edição</button>
           </form>
         </section>
-        <details class="settings-section settings-tools" aria-labelledby="settings-update-title"><summary id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações e diagnóstico</summary>
+        <details class="settings-section settings-tools" aria-labelledby="settings-update-title"><summary id="settings-update-title"><svg class="settings-section-icon" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizações do aplicativo</summary>
           <p class="app-current-version"><span>Versão em execução</span><strong id="app-running-version">Identificando…</strong></p>
           <div class="settings-tool-buttons"><button type="button" id="check-update">Verificar atualizações</button><button type="button" id="install-update" class="hidden">Atualizar agora</button></div>
           <p id="app-update-status" class="app-update-status" role="status" aria-live="polite">Preparando verificação de atualizações…</p>
-          <div class="settings-tool-buttons"><button type="button" id="open-diagnostics"><svg aria-hidden="true"><use href="#i-activity"/></svg> Executar diagnóstico completo</button></div>
         </details>
         <details class="settings-section settings-recovery" aria-labelledby="settings-recovery-title">
           <summary id="settings-recovery-title">Recuperação de cópias financeiras</summary>
