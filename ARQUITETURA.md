@@ -160,3 +160,9 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - `previsoes.js` é um módulo de leitura: recebe a lista de transações e datas de referência para listar as próximas despesas registradas ou recorrentes e totalizar os 12 meses seguintes via `motor-financeiro.js`.
 - `Relatórios` recebe a tabela responsiva de 12 meses e agenda próxima sem formulário nem ação de baixa. Conteúdo de lançamentos é escapado. O modelo atual não possui obrigação distinta de transação: por isso não apresenta etiquetas “paga” ou “atrasada”.
 - Contratos de backup, IndexedDB, importação e exclusão permanecem inalterados. O módulo foi registrado em catálogo/autodiagnóstico, SW, import do app e HTML único, com testes puros e inspeção de navegador.
+
+## P2.5a — Resumo anual sem dupla contagem (v59)
+
+- `relatorio-anual.js` calcula somente valores vencidos em 12 meses com data de referência explícita, aproveitando `motor-financeiro.js`. Aportes são somados separadamente e **não** subtraídos novamente do saldo dos lançamentos.
+- Interface com barras para entradas/saídas, navegação de anos, melhor mês e compartilhamento iniciado por toque. Nomes de meses e valores são renderizados sem strings financeiras em logs. Se a API de compartilhar não estiver disponível, oferece cópia pelo navegador.
+- Regras puras, autodiagnóstico, cache PWA, HTML independente e Chromium integram a regressão. Não introduz transações ou campos persistentes.

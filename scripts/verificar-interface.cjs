@@ -115,6 +115,10 @@ async function verificar(){
     await page.locator('.desktop-nav [data-view="relatorios"]').click();
     assert.equal(await page.locator('.forecast-table tbody tr').count(),12);
     assert.match(await page.locator('#forecast-content').innerText(),/Próximos 12 meses/);
+    await page.locator('#annual-panel summary').click();
+    assert.equal(await page.locator('#annual-content .annual-bar-month').count(),12);
+    assert.match(await page.locator('#annual-content').innerText(),/Aportes registrados/);
+    assert.equal(await page.locator('#annual-content [data-annual-share]').count(),1);
     await page.locator('.desktop-nav [data-view="resumo"]').click();
 
     await page.locator('#desktop-create-trigger').click();

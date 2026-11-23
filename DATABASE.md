@@ -104,6 +104,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - `previsoes.js` projeta somente transações existentes por data de ocorrência, reutilizando a regra de recorrência do motor financeiro. Não cadastra obrigação, não marca pagamento e não insere lançamento futuro: os resultados permanecem fora do snapshot e do backup.
 - Ausência de uma coleção de contas a pagar significa ausência de estado “paga/atrasada”; exibir esse estado sem registro verificável seria incorreto. O cadastro persistente de contas ainda depende de projeto de esquema, validação, recuperação e fluxo de backup antes de habilitar escrita.
 
+## P2.5a — Relatório anual somente leitura (v59)
+
+- Agregações do ano derivam de transações existentes com ocorrências até a data atual. Aportes vinculados continuam na coleção já existente e entram somente como coluna informativa separada.
+- Nenhuma chave, formato de backup ou movimentação automática foi criada. O compartilhamento gera texto **somente** quando solicitado pelo usuário.
+
 ## P0.3c2 — Recuperação transacional escolhida (v49)
 
 - A seleção só é habilitada após a inspeção de **duas cópias válidas e divergentes** e a solicitação de ambos os downloads JSON.

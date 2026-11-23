@@ -154,3 +154,10 @@
 - Módulo puro `previsoes.js`, tabela responsiva com rolagem horizontal, conteúdo acessível e texto escapado; catálogo, diagnóstico, cache offline e HTML independente atualizados.
 - Adicionados quatro testes de projeção, recorrência, dias 31 e integridade; **346 testes Node locais aprovados**. Corrigido no E2E um padrão de comparação do espaço não quebrável da moeda retornada pelo navegador.
 - **P2.3 continua parcialmente pendente:** cadastro real de contas e status de pagamento, recorrências com número limitado de vezes e cartão de crédito ainda requerem modelo de dados e validação de backup. Nenhum dado real foi utilizado.
+
+## P2.5a — Resumo anual e compartilhamento explícito (v59)
+
+- O painel de Relatórios passa a mostrar os meses do ano escolhido com barras de receitas e despesas, quatro totais (entradas, saídas, aportes registrados separadamente e diferença) e identificação do mês com maior saldo de lançamentos.
+- O cálculo considera apenas ocorrências vencidas até a data atual; projeções não são tratadas como fatos. Aportes não são descontados de novo das despesas.
+- Botão de compartilhamento exige ação explícita; usa API nativa quando disponível ou copia texto para envio manual, sem transmissão automática nem dados financeiros nos logs.
+- `relatorio-anual.js` é testado isoladamente, registrado em diagnóstico/cache/HTML; **350 testes Node locais aprovados**, com Chromium a revalidar. O desafio das 52 semanas permanece na P2.5b, sem simular depósitos reais.

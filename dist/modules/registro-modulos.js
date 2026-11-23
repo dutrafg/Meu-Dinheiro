@@ -21,6 +21,7 @@ import {converterOfxParaCsv,identificarOfx} from './ofx.js';
 import {aplicarTeclaMonetaria} from './teclado-monetario.js';
 import {calcularOrcamentoDia} from './orcamento.js';
 import {criarModuloPrevisoes,projetarDozeMeses,proximasDespesasPrevistas} from './previsoes.js';
+import {resumirAno} from './relatorio-anual.js';
 
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
@@ -45,6 +46,11 @@ export function registrarModulosDoApp(api) {
     return meses.length===12&&meses[0].livre===150&&meses[11].livre===150&&
       proximasDespesasPrevistas(teste,'2026-11-08').length===1&&
       typeof criarModuloPrevisoes==='function'&&Boolean(document.getElementById('forecast-panel'));
+  });
+  registrar('relatorio-anual',()=>{
+    const r=resumirAno([{type:'income',amount:100,date:'2026-01-05'}],[],2026,'2026-11-22');
+    return r?.receitas===100&&r.meses.length===12&&r.melhor?.mes==='2026-01'&&
+      Boolean(document.getElementById('annual-panel'))&&Boolean(document.getElementById('annual-content'));
   });
   registrar('categorias-brasileiras',()=>{
     const obrigatorias=['Aluguel','Água e esgoto','Energia elétrica','Supermercado','Combustível','IPVA',
