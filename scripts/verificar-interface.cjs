@@ -457,7 +457,90 @@ async function verificar(){
     assert.match(await paginaP2.locator('#commitments-content').innerText(),/Geladeira fictícia/);
     assert.equal(falhasP2.length,0,`Erros JavaScript durante P2: ${falhasP2.join('; ')}`);
     await contextoP2.close();
-    console.log('E2E desktop, smartphone, P2 compromissos, notificações, categorias, tombstone, recuperação, OFX e backup JSON: validados.');
+
+    // Offline real: primeiro popula o cache com internet, depois corta a conexão
+    // do navegador e recarrega o app do Service Worker, sem mock de fetch.
+    const contextoOffline=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});
+    await contextoOffline.addInitScript(entrada=>{
+      if(!localStorage.getItem('meu-dinheiro-essencial:v1'))
+        localStorage.setItem('meu-dinheiro-essencial:v1',JSON.stringify(entrada));
+    },dados);
+    const paginaOffline=await contextoOffline.newPage(),errosOffline=[];
+    paginaOffline.on('pageerror',erro=>errosOffline.push(erro.message));
+    await paginaOffline.goto(`http://127.0.0.1:${servidor.address().port}/`);
+    await paginaOffline.locator('#mobile-nav [data-view="resumo"]').waitFor();
+    await aguardarEspelho(paginaOffline);
+    await paginaOffline.evaluate(()=>navigator.serviceWorker.ready);
+    await paginaOffline.waitForFunction(async()=>{
+      const nomes=await caches.keys();
+      const atual=nomes.find(nome=>/^meu-dinheiro-essencial-v\d+$/.test(nome));
+      if(!atual)return false;
+      const cache=await caches.open(atual);
+      return Boolean(await cache.match('./index.html'))&&Boolean(await cache.match('./app.js'))&&
+        Boolean(await cache.match('./modules/diagnostico.js'));
+    },null,{timeout:20000});
+    // A primeira navegação pode preceder a ativação; uma visita online captura o controlador.
+    if(!await paginaOffline.evaluate(()=>Boolean(navigator.serviceWorker.controller)))
+      await paginaOffline.reload({waitUntil:'domcontentloaded'});
+    await paginaOffline.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
+    const integridadeCache=await paginaOffline.evaluate(async()=>{
+      const cache=await caches.open((await caches.keys()).find(nome=>nome.startsWith('meu-dinheiro-essencial-v')));
+      const arquivos=['./index.html','./app.js','./styles.css','./manifest.webmanifest','./icon-192.png',
+        './modules/repositorio-financeiro.js','./modules/notificacoes.js','./modules/diagnostico.js'];
+      return (await Promise.all(arquivos.map(arquivo=>cache.match(arquivo)))).every(Boolean);
+    });
+    assert.equal(integridadeCache,true,'PWA possui entrada, estilos, scripts, manifesto e ícone em cache');
+    await contextoOffline.setOffline(true);
+    await paginaOffline.reload({waitUntil:'domcontentloaded'});
+    await paginaOffline.locator('#mobile-nav [data-view="resumo"]').waitFor();
+    assert.match(await paginaOffline.locator('body').innerText(),/Resumo|Reserva|Salário/i);
+    await paginaOffline.locator('#mobile-nav [data-view="renda"]').click();
+    assert.match(await paginaOffline.locator('body').innerText(),/Salário fictício/);
+    await paginaOffline.locator('#mobile-nav [data-view="despesas"]').click();
+    assert.match(await paginaOffline.locator('body').innerText(),/Despesa fictícia/);
+    await paginaOffline.locator('#mobile-nav [data-view="ajustes"]').click();
+    await paginaOffline.locator('#settings-update-title').click();
+    await paginaOffline.locator('#open-diagnostics').click();
+    await paginaOffline.waitForFunction(()=>document.getElementById('diagnostics-dialog').open);
+    // O relatório usa caches.match, não fetch: deve inspecionar os arquivos desconectado.
+    await paginaOffline.waitForFunction(()=>document.getElementById('diagnostics-progress-label')?.textContent?.includes('Diagnóstico concluído'),null,{timeout:40000});
+    const statusOffline=await paginaOffline.evaluate(()=>{
+      const grupos=[...document.querySelectorAll('.diagnostics-group')];
+      const offline=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('offline'));
+      return {texto:offline?.innerText||'',erros:offline?.querySelectorAll('.diagnostics-erro').length||0,
+        encontrados:offline?.querySelectorAll('.diagnostics-ok').length||0};
+    });
+    assert.equal(statusOffline.erros,0,'Os recursos essenciais não podem falhar no diagnóstico offline');
+    assert.ok(statusOffline.encontrados>=14,'O diagnóstico offline precisa conferir os arquivos reais');
+    await paginaOffline.locator('#diagnostics-dialog .close-dialog').first().click();
+    const valorPreservado=await paginaOffline.evaluate(()=>JSON.parse(localStorage.getItem('meu-dinheiro-essencial:v1'))?.transactions?.length);
+    assert.equal(valorPreservado,2,'Dados locais permanecem acessíveis após recarga sem rede');
+    await aguardarEspelho(paginaOffline);
+    assert.equal(errosOffline.length,0,`Erros JavaScript offline: ${errosOffline.join('; ')}`);
+    await contextoOffline.setOffline(false);
+    await paginaOffline.reload({waitUntil:'domcontentloaded'});
+    await paginaOffline.locator('#mobile-nav [data-view="resumo"]').waitFor();
+    await contextoOffline.close();
+
+    // Validação do HTML portátil: abrir como arquivo local com o navegador offline.
+    const saidaOffline=path.join(__dirname,'../meu-dinheiro-teste.html');
+    require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'gerar-html-teste.cjs'),saidaOffline]);
+    const contextoHtml=await browser.newContext({viewport:{width:390,height:844},offline:true,serviceWorkers:'block'});
+    const paginaHtml=await contextoHtml.newPage(),errosHtml=[];
+    paginaHtml.on('pageerror',erro=>errosHtml.push(erro.message));
+    await paginaHtml.goto(`file://${saidaOffline}`);
+    await paginaHtml.locator('#offline-validation-run').click();
+    await paginaHtml.waitForFunction(()=>document.getElementById('diagnostics-dialog').open);
+    await paginaHtml.waitForFunction(()=>document.getElementById('diagnostics-progress-label')?.textContent?.includes('Diagnóstico concluído'),null,{timeout:40000});
+    const htmlTeste=await paginaHtml.evaluate(()=>[...document.querySelectorAll('.diagnostics-group')]
+      .flatMap(grupo=>[...grupo.querySelectorAll('.diagnostics-check')].map(item=>item.textContent)));
+    assert.ok(htmlTeste.some(texto=>texto.includes('Nenhum script, folha de estilos')),
+      'O HTML independente deve comprovar ausência de dependências de rede');
+    assert.ok(htmlTeste.some(texto=>texto.includes('Lógica do aplicativo incorporada')),
+      'O HTML independente deve comprovar scripts embutidos');
+    assert.equal(errosHtml.length,0,`Erros JavaScript no HTML independente: ${errosHtml.join('; ')}`);
+    await contextoHtml.close();
+    console.log('E2E desktop, smartphone, P2, PWA realmente offline (cache e recarga), HTML file:// sem rede, tombstone, OFX e backup JSON: validados.');
   }finally{
     if(browser)await browser.close();
     await new Promise(resolve=>servidor.close(resolve));

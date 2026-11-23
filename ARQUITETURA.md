@@ -153,6 +153,13 @@ Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI br
 
 Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e executa scripts/verificar-interface.cjs em um servidor efêmero com lançamentos fictícios. Nenhum dado real é carregado, e a distribuição PWA não inclui a dependência de teste.
 
+## P2.7b/P3.2 — Offline reproduzível (v63)
+
+- `diagnostico.js` possui verificadores puros de read-only para inspecionar o pacote essencial no Cache Storage, incluindo assinaturas/estruturas de HTML, scripts, folhas CSS, manifesto e PNG; nenhum teste grava no cache nem lê conteúdo financeiro.
+- O mesmo diagnóstico usa verificações separadas para a prévia HTML única: scripts e estilos incorporados e inexistência de dependências obrigatórias da internet, sem exigir Service Worker para `file://`.
+- `scripts/gerar-html-teste.cjs` gera um HTML completo portátil com indicador de homologação e botão que abre o diagnóstico; `tests/offline-completo.test.cjs` detecta recursos faltando, HTML servido como JS, PNG inválido, referências externas e sintaxe do arquivo único.
+- `scripts/verificar-interface.cjs` instala SW, coloca o navegador offline de verdade, recarrega e confirma navegação/IndexedDB/cache; também executa diagnóstico do arquivo local com conexão desligada. O CI Chromium é a validação da plataforma porque o Chromium local pode ser bloqueado pelo sandbox.
+
 ## P2.2 — Orçamento diário e preferência mensal (v57)
 
 - `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.

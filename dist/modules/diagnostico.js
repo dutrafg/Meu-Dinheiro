@@ -14,6 +14,68 @@ import {calcularViradaPeriodo} from './ciclo-periodo.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
+// O teste lê SOMENTE arquivos públicos do cache; não consulta nem modifica dados financeiros.
+const RECURSOS_OFFLINE = Object.freeze([
+  ['ENTRADA','./index.html','html'],['APLICACAO','./app.js','javascript'],
+  ['ESTILOS','./styles.css','css'],['ESTILOS_MODULARES','./prototype.css','css'],
+  ['MANIFESTO','./manifest.webmanifest','manifesto'],
+  ['ICONE_192','./icon-192.png','png'],['ICONE_512','./icon-512.png','png'],
+  ['IMPORTACAO_CSV','./csv.js','javascript'],['GRAFICOS','./analytics.js','javascript'],
+  ['COPIA_LOCAL','./folder-backup.js','javascript'],
+  ['PERSISTENCIA','./modules/repositorio-financeiro.js','javascript'],
+  ['VALIDACAO','./modules/validacao.js','javascript'],
+  ['NOTIFICACOES','./modules/notificacoes.js','javascript'],
+  ['DIAGNOSTICO','./modules/diagnostico.js','javascript']
+]);
+
+export async function verificarPacoteOffline(cache){
+  const resultados=[];
+  for(const [nome,caminho,tipo] of RECURSOS_OFFLINE){
+    let valido=false;
+    try{
+      const resposta=await cache.match(caminho);
+      if(resposta?.ok&&typeof resposta.clone==='function'){
+        const copia=resposta.clone();
+        if(tipo==='png'){
+          const bytes=new Uint8Array(await copia.arrayBuffer());
+          valido=bytes.length>24&&[137,80,78,71,13,10,26,10].every((valor,i)=>bytes[i]===valor);
+        }else{
+          const corpo=await copia.text();
+          if(tipo==='html')valido=/<!doctype\s+html/i.test(corpo)&&/<script/i.test(corpo);
+          if(tipo==='javascript')valido=!/^\s*(?:<!doctype|<html)/i.test(corpo)&&/\b(?:import|export|function|const|let|var)\b/.test(corpo);
+          if(tipo==='css')valido=!/^\s*(?:<!doctype|<html)/i.test(corpo)&&
+            ((corpo.includes('{')&&corpo.includes('}'))||/^\s*@import\s+url\(/m.test(corpo));
+          if(tipo==='manifesto'){
+            const manifesto=JSON.parse(corpo);
+            valido=manifesto.start_url==='./'&&Array.isArray(manifesto.icons)&&manifesto.icons.length>=2;
+          }
+        }
+      }
+    }catch{/* Arquivo ausente, corrompido ou API de cache indisponível. */}
+    resultados.push({codigo:`OFFLINE_CACHE_${nome}`,estado:valido?'ok':'aviso',
+      descricao:valido?`Recurso ${nome.toLowerCase().replaceAll('_',' ')} íntegro para uso offline`:
+        `Recurso ${nome.toLowerCase().replaceAll('_',' ')} ausente/inválido no cache: reconecte, atualize e execute o teste novamente`,modulo:'offline'});
+  }
+  return resultados;
+}
+
+export function verificarHtmlIndependenteOffline(documento){
+  if(typeof documento?.querySelectorAll!=='function')return [{codigo:'OFFLINE_HTML_VERIFICACAO',estado:'nao_avaliado',
+    descricao:'HTML único: verificação do documento indisponível neste ambiente',modulo:'offline'}];
+  const scripts=[...documento.querySelectorAll('script')];
+  const estilos=[...documento.querySelectorAll('style')];
+  const externos=[...documento.querySelectorAll('script[src],link[rel="stylesheet"][href],link[rel="manifest"][href],img[src]')]
+    .filter(elemento=>!String(elemento.getAttribute?.('src')||elemento.getAttribute?.('href')||'').startsWith('data:'));
+  return [
+    {codigo:'OFFLINE_HTML_JAVASCRIPT',estado:scripts.some(e=>!e.getAttribute?.('src')&&String(e.textContent||'').includes('criarRelatorioDiagnostico'))?'ok':'erro',
+      descricao:'Lógica do aplicativo incorporada no próprio HTML',modulo:'offline'},
+    {codigo:'OFFLINE_HTML_ESTILOS',estado:estilos.some(e=>String(e.textContent||'').includes('--bg')&&String(e.textContent||'').includes('.proto'))?'ok':'erro',
+      descricao:'Aparência e estilos incorporados no próprio HTML',modulo:'offline'},
+    {codigo:'OFFLINE_HTML_SEM_DEPENDENCIAS',estado:externos.length===0?'ok':'erro',
+      descricao:externos.length===0?'Nenhum script, folha de estilos, manifesto ou imagem externa obrigatória':
+        'Há recursos externos necessários: esta prévia pode falhar sem internet',modulo:'offline'}
+  ];
+}
 // Contraste WCAG de texto comum: razão mínima 4,5:1. Sem dependências ou DOM.
 export function calcularContrasteCSS(primeira,segunda){
   const canais=cor=>{
@@ -297,9 +359,18 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     'Risco futuro: armazenamento perto de esgotar; gere backup e libere espaço com segurança','armazenamento','aviso');
   conferir('API_INDEXED_DB',typeof indexedDB!=='undefined','IndexedDB disponível','IndexedDB indisponível (pasta automática opcional)','armazenamento','aviso');
   conferir('API_BLOB',typeof Blob==='function','API de arquivos Blob disponível','API de arquivos indisponível','armazenamento');
-  conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
-  conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
   const htmlIndependente=typeof location!=='undefined'&&!['https:','http:'].includes(location.protocol);
+  if(htmlIndependente){
+    adicionar('API_SERVICE_WORKER','nao_avaliado','Service Worker não é necessário no arquivo HTML independente','pwa');
+    adicionar('API_CACHE','nao_avaliado','Cache PWA não é necessário no arquivo HTML independente','pwa');
+    integridade.itens.push(...verificarHtmlIndependenteOffline(typeof document!=='undefined'?document:null));
+    conferir('OFFLINE_HTML_BIBLIOTECAS',Object.values(bibliotecas).every(Boolean),
+      'Importação, gráficos e cópias funcionam sem baixar bibliotecas',
+      'Há uma biblioteca interna não carregada no HTML independente','offline');
+  }else{
+    conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
+    conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
+  }
   if(htmlIndependente){
     adicionar('SW_ATIVO','nao_avaliado','Service Worker não se aplica ao HTML independente; testar no PWA publicado','pwa');
     adicionar('SW_CONTROLE','nao_avaliado','Controle offline não se aplica ao HTML independente; testar no PWA publicado','pwa');
@@ -308,7 +379,32 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     conferir('SW_ATIVO',swRegistrado,'Service Worker ativo','Service Worker ainda não está ativo','pwa','aviso');
     conferir('SW_CONTROLE',Boolean(navigator.serviceWorker?.controller),'Página sob controle do Service Worker','Página ainda sem controle offline','pwa','aviso');
     conferir('CACHE_PWA',cacheInstalado.length>0,'Cache PWA encontrado','Cache PWA ainda não encontrado','pwa','aviso');
+    if(swRegistrado&&cacheInstalado.length&&typeof caches?.open==='function'){
+      const ordem=nome=>Number(nome.slice(CACHE_PREFIXO.length))||0;
+      const ativo=[...cacheInstalado].sort((a,b)=>ordem(b)-ordem(a))[0];
+      try{
+        const cache=await caches.open(ativo);
+        const resultados=await verificarPacoteOffline(cache);
+        integridade.itens.push(...resultados);
+        conferir('OFFLINE_CACHE_INTEGRIDADE',resultados.every(item=>item.estado==='ok'),
+          'Pacote essencial íntegro e consultável sem rede',
+          'Cache offline incompleto ou inválido; reconecte e atualize antes de desconectar','offline','aviso');
+        if(/^v\d+$/.test(update.versaoEmExecucao||''))
+          conferir('OFFLINE_CACHE_VERSAO',ativo===`${CACHE_PREFIXO}${update.versaoEmExecucao.slice(1)}`,
+            'Cache corresponde ao código em execução',
+            'Versão do cache diferente do aplicativo; recarregue online após concluir a atualização','offline','aviso');
+      }catch{adicionar('OFFLINE_CACHE_LEITURA','aviso','Cache encontrado, mas a leitura dos arquivos essenciais falhou','offline');}
+    }else adicionar('OFFLINE_CACHE_INSPECAO','nao_avaliado',
+      'Instale/abra o PWA conectado, aguarde o Service Worker e repita para inspecionar o pacote offline','offline');
   }
+  if(navigator.storage?.persisted){
+    try{
+      const persistente=await navigator.storage.persisted();
+      adicionar('RISCO_OFFLINE_EVICCAO_DADOS',persistente?'ok':'aviso',
+        persistente?'Navegador confirmou armazenamento persistente':
+          'Risco futuro: navegador pode limpar dados locais por falta de espaço ou política do sistema; mantenha backup externo','offline');
+    }catch{adicionar('OFFLINE_PERSISTENCIA','nao_avaliado','Permissão de armazenamento persistente não pôde ser consultada','offline');}
+  }else adicionar('OFFLINE_PERSISTENCIA','nao_avaliado','Navegador não informa persistência do armazenamento','offline');
   conferir('CACHE_VERSAO',cacheInstalado.length<=1||swEmEspera,
     swEmEspera&&cacheInstalado.length>1?'Caches em transição: atualização aguarda sua autorização':'Versões de cache consistentes',
     'Mais de uma versão de cache sem atualização pendente','pwa','aviso');

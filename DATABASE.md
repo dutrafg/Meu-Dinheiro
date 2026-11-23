@@ -101,6 +101,13 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Categorias personalizadas (`categoriasExtras`, `categoriasOcultas`, `categoriaIcones`) continuam na chave de preferências, com tamanho máximo de 8192 caracteres, independente do snapshot financeiro. Renomear ou ocultar afeta a lista futura, não o histórico. Preferências antigas são normalizadas e preservadas.
 - Nenhum dado financeiro ou nome de compromisso é registrado no diagnóstico JSON. Avisos de contas/cartão/limite/armazenamento são apenas locais, com IDs de dispensa isolados. **P0.5 ainda precisa da homologação real do PWA.**
 
+## v63 — Inspeção offline sem mutação de dados
+
+- A auditoria de cache usa somente `caches.open` e `cache.match` para validar arquivos estáticos e não acessa `transactions`, `goals` ou os objetos IndexedDB; o relatório registra apenas códigos/estados técnicos.
+- `navigator.storage.persisted()` é somente leitura. Retorno falso significa risco de remoção futura pelo navegador, **não** corrupção detectada e **não** solicita autorização persistente.
+- O arquivo HTML único inclui a lógica e os estilos no documento. Quando aberto em `file://`, não registra Service Worker, não usa Cache Storage obrigatório e mantém o armazenamento sujeito às permissões do navegador; a exportação JSON continua necessária.
+- Testes de homologação offline com dados fictícios não substituem ensaios de backup/restauração e recuperação de conflito IndexedDB em aparelho real (P0.5 pendente).
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.

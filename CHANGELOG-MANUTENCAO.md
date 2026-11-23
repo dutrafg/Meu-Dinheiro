@@ -1,5 +1,13 @@
 # Mudanças propostas — roadmap de manutenção
 
+## v63 — Diagnóstico offline completo e HTML portátil
+
+- No PWA, o diagnóstico lê do cache a assinatura real de HTML, JavaScript, CSS, manifesto e PNG, informa arquivos ausentes/inválidos e versões divergentes, sem fazer requisições de rede nem expor valores pessoais.
+- Na prévia HTML independente, confirma CSS/JavaScript embutidos, bibliotecas carregadas e ausência de recursos externos obrigatórios; identifica Service Worker e Cache Storage como não aplicáveis à abertura `file://`.
+- Testes sintéticos cobrem ausência/corrupção de arquivos offline e geração do HTML; 370/370 testes Node aprovados localmente.
+- E2E Chromium ampliado para rede realmente desligada, recarga por Service Worker, conferência IndexedDB e HTML local sem rede; aprovação do CI ainda pendente.
+- Pacote v63 e gerador com botão direto para executar diagnóstico; sem migração destrutiva e sem alteração da `main`.
+
 ## v62 — P2: contas, parcelas, categorias e alertas preventivos
 
 - Cadastro de contas fixas e cartão parcelado com baixa confirmada, sem lançamento automático ou duplicidade na projeção.
