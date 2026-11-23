@@ -60,14 +60,55 @@ test('P2: histórico agrupa despesas por dia sem alterar registros',async()=>{
   assert.equal(JSON.stringify(entradas),original);
 });
 
-test('P2: atalhos financeiros estão no mobile e no resumo do PC',()=>{
+test('P2: somente o + cria no celular; ações do Resumo no PC permanecem disponíveis',()=>{
   const html=ler('dist/index.html');
   const resumo=ler('dist/modules/resumo.js');
   const css=ler('dist/css/acao-rapida-mobile.css');
+  const rapida=ler('dist/modules/acao-rapida.js');
+  assert.match(html,/id="quick-add"/);
+  assert.match(html,/data-create-kind="investment"/);
+  assert.doesNotMatch(html,/id="mobile-quick-actions"|− Gastei|\+ Recebi/);
+  assert.doesNotMatch(rapida,/mobile-quick-actions|quick-actions-visible/);
   for(const tipo of ['expense','income']){
-    assert.match(html,new RegExp(`data-action="add" data-type="${tipo}"`));
     assert.match(resumo,new RegExp(`data-action="add" data-type="${tipo}"`));
   }
   assert.match(css,/\.transaction-category-tiles/);
-  assert.match(css,/\.mobile-quick-actions:not\(\.hidden\)/);
+  assert.doesNotMatch(css,/\.mobile-quick-actions/);
+});
+
+test('P2: teclado de centavos não convoca Gboard; teclado nativo somente por opção',async()=>{
+  const {iniciarTecladoMonetario}=await carregar('teclado-monetario.js');
+  const janelaOriginal=global.window;
+  const eventos={};
+  const campo={value:'',readOnly:false,inputMode:'decimal',addEventListener:()=>{},focus(){this.focos=(this.focos||0)+1;},blur(){this.desfocos=(this.desfocos||0)+1;}};
+  const categoria={value:'Mercado',addEventListener:()=>{}};
+  const modo={textContent:'',setAttribute:(nome,valor)=>eventos[nome]=valor,addEventListener:(nome,fn)=>eventos['modo-'+nome]=fn};
+  const visor={textContent:''};
+  const tiles={innerHTML:'',querySelectorAll:()=>[]};
+  const estilos=new Set();
+  const dialog={addEventListener:()=>{},contains:()=>true,
+    classList:{toggle:(nome,ativo)=>{if(ativo)estilos.add(nome);else estilos.delete(nome);}},
+    querySelector:seletor=>seletor==='#transaction-keypad-display'?visor:
+      seletor==='#transaction-keyboard-mode'?modo:tiles};
+  global.window={matchMedia:()=>({matches:true})};
+  try{
+    const teclado=iniciarTecladoMonetario({dialog,form:{elements:{namedItem:nome=>nome==='amount'?campo:categoria}},
+      categorySet:()=>['Mercado'],icones:{},esc:valor=>valor});
+    teclado.prepararEntrada();
+    assert.equal(campo.readOnly,true);
+    assert.equal(campo.inputMode,'none');
+    assert.equal(modo.textContent,'Usar teclado do celular');
+    assert.equal(campo.focos||0,0);
+    eventos['modo-click']();
+    assert.equal(campo.readOnly,false);
+    assert.equal(campo.inputMode,'decimal');
+    assert.equal(campo.focos,1);
+    assert.ok(estilos.has('transaction-native-keyboard'));
+    assert.equal(eventos['aria-pressed'],'true');
+    eventos['modo-click']();
+    assert.equal(campo.readOnly,true);
+    assert.equal(campo.inputMode,'none');
+    assert.equal(campo.desfocos>=1,true);
+    assert.ok(!estilos.has('transaction-native-keyboard'));
+  }finally{global.window=janelaOriginal;}
 });

@@ -1,4 +1,4 @@
-// Entrada móvel opcional. O campo number continua editável pelo teclado físico.
+// Entrada móvel com teclado em centavos; teclado físico continua opcional.
 const LIMITE_CENTAVOS=99999999900;
 const formato=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 
@@ -21,6 +21,22 @@ export function iniciarTecladoMonetario({dialog,form,categorySet,icones,esc}){
   if(!dialog?.addEventListener||!campo||!categoria)return {atualizar:()=>{}};
   const visor=dialog.querySelector?.('#transaction-keypad-display');
   const tiles=dialog.querySelector?.('#transaction-category-tiles');
+  const alternarTeclado=dialog.querySelector?.('#transaction-keyboard-mode');
+  const tecladoMovel=()=>Boolean(visor)&&typeof window!=='undefined'&&
+    Boolean(window.matchMedia?.('(max-width:879px)')?.matches);
+  let modoNativo=false;
+  function mudarModoTeclado(nativo=false){
+    modoNativo=Boolean(nativo&&tecladoMovel());
+    dialog.classList?.toggle('transaction-native-keyboard',modoNativo);
+    campo.readOnly=tecladoMovel()&&!modoNativo;
+    campo.inputMode=campo.readOnly?'none':'decimal';
+    if(alternarTeclado){
+      alternarTeclado.textContent=modoNativo?'Usar teclado do aplicativo':'Usar teclado do celular';
+      alternarTeclado.setAttribute?.('aria-pressed',String(modoNativo));
+    }
+    if(modoNativo)campo.focus?.();
+    else campo.blur?.();
+  }
   const atualizarVisor=()=>{if(visor)visor.textContent=formato.format(Number(campo.value)||0);};
   const atualizarSelecao=()=>{
     tiles?.querySelectorAll?.('[data-mobile-category]').forEach(button=>{
@@ -42,6 +58,8 @@ export function iniciarTecladoMonetario({dialog,form,categorySet,icones,esc}){
   dialog.addEventListener('click',event=>{
     const tecla=event.target.closest?.('[data-money-key]');
     if(tecla&&dialog.contains(tecla)){
+      // Se o usuário digitou a descrição, fecha o teclado textual antes do numérico.
+      if(tecladoMovel())dialog.ownerDocument?.activeElement?.blur?.();
       const novo=aplicarTeclaMonetaria(campo.value||'0',tecla.dataset.moneyKey);
       if(novo!==null){campo.value=novo;campo.dispatchEvent(new Event('input',{bubbles:true}));atualizarVisor();}
       return;
@@ -53,7 +71,8 @@ export function iniciarTecladoMonetario({dialog,form,categorySet,icones,esc}){
       atualizarSelecao();
     }
   });
+  alternarTeclado?.addEventListener?.('click',()=>mudarModoTeclado(!modoNativo));
   campo.addEventListener('input',atualizarVisor);
   categoria.addEventListener('change',atualizarSelecao);
-  return {atualizar};
+  return {atualizar,prepararEntrada:()=>mudarModoTeclado(false)};
 }

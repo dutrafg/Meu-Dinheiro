@@ -173,6 +173,8 @@ async function verificar(){
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.locator('#desktop-toolbar').isVisible(),false);
     assert.equal(await page.locator('#quick-add').isVisible(),true);
+    assert.equal(await page.locator('#mobile-quick-actions').count(),0,
+      'A barra fixa Gastei/Recebi foi removida; o botão + continua disponível');
     await page.locator('.mobile-nav [data-view="resumo"]').click();
     assert.equal(await page.locator('[aria-label="Resumo da reserva"]').count(),1);
     assert.equal(await page.locator('[aria-label="Resumo dos sonhos"]').count(),1);
@@ -190,6 +192,21 @@ async function verificar(){
       await page.locator(`#mobile-create-dialog [data-create-kind="${tipo}"]`).click();
       assert.equal(await page.locator('#mobile-create-dialog').evaluate(el=>el.open),false);
       assert.equal(await page.locator(`#${dialogo}`).evaluate(el=>el.open),true,`Cadastro móvel de ${tipo}`);
+      if(tipo==='expense'){
+        const valor=page.locator('#transaction-form [name="amount"]');
+        assert.equal(await valor.evaluate(el=>el.readOnly&&el.inputMode==='none'),true,
+          'No celular o campo não abre teclado nativo ao usar centavos');
+        assert.equal(await page.locator('#transaction-dialog .transaction-amount-field').isVisible(),false);
+        await page.locator('#transaction-dialog [data-money-key="1"]').click();
+        assert.equal(await valor.inputValue(),'0.01');
+        await page.locator('#transaction-keyboard-mode').click();
+        assert.equal(await valor.evaluate(el=>!el.readOnly&&el.inputMode==='decimal'),true);
+        await valor.fill('12.34');
+        await page.locator('#transaction-keyboard-mode').click();
+        assert.equal(await valor.inputValue(),'12.34',
+          'Alternar teclados não apaga o valor digitado');
+        assert.equal(await valor.evaluate(el=>el.readOnly&&el.inputMode==='none'),true);
+      }
       await page.locator(`#${dialogo} .close-dialog`).first().click();
     }
     await page.locator('#quick-add').click();
@@ -217,11 +234,22 @@ async function verificar(){
     await page.locator('.proto-challenge summary').click();
     assert.equal(await page.locator('[data-action="challenge-week"][data-week="1"]').isDisabled(),true);
     assert.match(await page.locator('.challenge-summary').innerText(),/1 de 52 semanas confirmadas/);
-    for(const largura of [320,390,768]){
+    for(const largura of [320,384,390,768]){
       await page.setViewportSize({width:largura,height:844});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,
         `Sem rolagem horizontal da página em ${largura}px`);
       assert.equal(await page.locator('.mobile-nav .nav-button').count(),6);
+      const medidasNav=await page.evaluate(()=>[...document.querySelectorAll('#mobile-nav .nav-button')]
+        .map(botao=>{
+          const b=botao.getBoundingClientRect();
+          const rotulo=botao.querySelector('span')?.getBoundingClientRect();
+          const icone=botao.querySelector('svg')?.getBoundingClientRect();
+          return {rotuloDentro:!!rotulo&&rotulo.left>=b.left-1&&rotulo.right<=b.right+1,
+            empilhado:!!rotulo&&!!icone&&rotulo.top>=icone.bottom-1,
+            largura:b.width};
+        }));
+      assert.equal(medidasNav.every(b=>b.rotuloDentro&&b.empilhado&&b.largura>0),true,
+        `Ícones e nomes das seis abas não podem se sobrepor em ${largura}px`);
     }
     await page.setViewportSize({width:390,height:844});
     await page.locator('[data-objective-tab="dream"]').click();

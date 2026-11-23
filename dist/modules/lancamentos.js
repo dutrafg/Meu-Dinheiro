@@ -55,7 +55,10 @@ export function criarModuloLancamentos(ctx) {
     document.getElementById('transaction-type-toggle').classList.toggle('hidden',!!existing);
     document.getElementById('transaction-title').textContent=`${existing?'Editar':'Adicionar'} ${effectiveType==='income'?'renda':'despesa'}`;
     transactionDialog.showModal();
-    form.namedItem('description').focus();
+    teclado.prepararEntrada?.();
+    // Não força teclado nativo na abertura móvel: o teclado em centavos já está visível.
+    if(typeof window==='undefined'||!window.matchMedia?.('(max-width:879px)')?.matches)
+      form.namedItem('description').focus();
   }
   function setTransactionType(type,selectedCategory) {
     const form=transactionForm.elements;

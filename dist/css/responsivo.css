@@ -6,9 +6,10 @@
   .prototype-heading strong{font-size:1.8rem}
   .desktop-toolbar{display:none}
   main{padding-bottom:calc(115px + env(safe-area-inset-bottom))}
-  .mobile-nav{position:fixed;display:flex;bottom:0;left:0;right:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--card);padding:5px max(8px,env(safe-area-inset-right),calc((100vw - 500px)/2)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left),calc((100vw - 500px)/2));box-shadow:0 -4px 20px #0000000a;backdrop-filter:none;z-index:9;gap:0}
-  .mobile-nav .nav-button{flex:1;min-width:0;font-size:.72rem;font-weight:650;border-radius:11px;min-height:57px;padding:7px 3px 5px;gap:3px;color:var(--sub)}
-  .mobile-nav .nav-button svg{width:23px;height:23px;stroke-width:1.9}
+  .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));bottom:0;left:0;right:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--card);padding:6px max(8px,env(safe-area-inset-right),calc((100vw - 500px)/2)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left),calc((100vw - 500px)/2));box-shadow:0 -4px 20px #0000000a;backdrop-filter:none;z-index:9;gap:0}
+  .mobile-nav .nav-button{display:flex;flex-direction:column;min-width:0;white-space:normal;text-align:center;line-height:1.15;font-size:clamp(.59rem,2.75vw,.72rem);font-weight:650;border-radius:11px;min-height:62px;padding:7px 1px 5px;gap:4px;color:var(--sub)}
+  .mobile-nav .nav-button span{display:block;max-width:100%;overflow-wrap:anywhere}
+  .mobile-nav .nav-button svg{width:22px;height:22px;flex:none;stroke-width:1.9}
   .mobile-nav .nav-button.active{background:transparent;box-shadow:none;color:var(--green-text)}
   .mobile-nav .nav-button:focus-visible{outline:3px solid var(--accent-text);outline-offset:-3px}
   /* A prioridade móvel é o limite do dia, antes dos gráficos completos. */
@@ -58,8 +59,8 @@
   .csv-investment-info small{margin-top:5px}
 }
 @media(max-width:360px){
-  .mobile-nav .nav-button{font-size:.68rem}
-  .mobile-nav .nav-button svg{width:21px;height:21px}
+  .mobile-nav .nav-button{font-size:.6rem}
+  .mobile-nav .nav-button svg{width:20px;height:20px}
   .proto-item-value{font-size:.76rem}
   .proto-item-label strong{font-size:.82rem}
 }

@@ -588,6 +588,28 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       conferir('NAVEGACAO_MOBILE_SEIS_ABAS',botoes.length===6,
         'As seis áreas estão na navegação do smartphone',
         'A navegação móvel não apresenta todas as áreas','interface');
+      if(typeof window!=='undefined'&&window.innerWidth<880&&botoes.length===6&&
+        botoes.every(botao=>typeof botao.getBoundingClientRect==='function')){
+        const semSobreposicao=botoes.every(botao=>{
+          const area=botao.getBoundingClientRect();
+          const icone=botao.querySelector('svg')?.getBoundingClientRect();
+          const rotulo=botao.querySelector('span')?.getBoundingClientRect();
+          return area.width>0&&Boolean(icone&&rotulo)&&rotulo.left>=area.left-1&&
+            rotulo.right<=area.right+1&&rotulo.top>=icone.bottom-1;
+        });
+        conferir('NAVEGACAO_MOBILE_SEM_SOBREPOSICAO',semSobreposicao,
+          'Ícones e rótulos das seis abas cabem sem sobreposição',
+          'Navegação móvel: ícones e textos se sobrepõem ou extrapolam seus botões','interface','aviso');
+      }
+      if(typeof document.getElementById==='function'&&document.getElementById('quick-add')){
+        conferir('ACAO_RAPIDA_UNICA_MOBILE',!document.querySelector?.('#mobile-quick-actions'),
+          'Botão + reúne cadastros sem barra fixa Gastei/Recebi',
+          'Há barra de lançamentos rápidos duplicada com o botão +','interface','aviso');
+        const entrada=document.getElementById('transaction-keyboard-mode');
+        if(entrada)conferir('TECLADO_MONETARIO_ALTERNANCIA',Boolean(document.getElementById('transaction-keypad-display')),
+          'Entrada monetária oferece teclado em centavos e opção de teclado do celular',
+          'Opção de teclado monetário sem visor de valor','interface','aviso');
+      }
     }
     // Desde a P2 as ferramentas financeiras ficam em Relatórios, sem cópia em Ajustes.
     const relatorios=document.getElementById('reports-page');

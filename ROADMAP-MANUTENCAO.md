@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v64: alarmes falsos do diagnóstico de 23/11 corrigidos, CI Node/Chromium aprovados**, na branch `refactor/roadmap-manutencao-p0-20261122`. **371/371 testes Node e Chromium offline aprovados** (runs 45094976803 e 45094976827). P2.1–P2.5 e P2.7 concluídas tecnicamente, P2.6 aguarda inspeção em dispositivo físico; **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v65: simplificação dos botões móveis e correções do teclado e da navegação, em homologação na branch** `refactor/roadmap-manutencao-p0-20261122`. O diagnóstico v64 enviado em 23/11 passou em 225 verificações, sem erros; resta um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente, P2.6 em testes e aguardando inspeção física; **P1 concluída**, **P0.5 ainda em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,15 +19,15 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **Automação v64 aprovada; homologação física pendente** | Funções de referência e diagnósticos integrados; regressão do módulo Orçamento e localização das ferramentas em Relatórios aprovadas. Falta validar PWA no celular real antes de declarar homologação irrestrita |
-| P2.1 | ✅ Concluída em branch; CI Node + Chromium aprovados | Celular: teclado em centavos, categorias por ícones e botões − Gastei/+ Recebi. PC: ações de cadastro no Resumo. Histórico agrupado por dia nas telas de renda/despesas |
+| **P2 — Qualidade, interface e funções de referência** | **v65 em homologação; inspeção física pendente** | Funções de referência e diagnósticos integrados; v65 melhora o fluxo de lançamento no celular mantendo o estilo novo e o botão + como acionador único |
+| P2.1 | ✅ Concluída em branch; ajuste de experiência em v65 | Celular: teclado em centavos, categorias por ícones e cadastros no botão +, sem barra fixa de dois botões. PC: ações de cadastro no Resumo. Histórico agrupado por dia |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
 | P2.4 | ✅ Concluída (CI v62) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
-| P2.6 | 🟡 Em homologação | Orçamento do dia prioritário, responsividade de compromissos e categorias no celular/PC; falta inspeção manual em aparelhos reais; modo demonstrativo permanece fora do escopo publicado para não arriscar dados do usuário |
+| P2.6 | 🟡 Em homologação (v65) | Orçamento do dia prioritário, barra inferior de seis abas reorganizada, sem sobreposição de rótulos; botão + único e alternância entre teclado de centavos e teclado nativo. Falta ensaio real no smartphone/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
-| **P3 — Logs e observabilidade** | **Correção v64 concluída no CI** | Diagnóstico distingue erros reais de riscos preventivos, verifica arquivos offline e testa a cota matemática correta e a localização atual das ferramentas, sem inventar avisos em Ajustes |
+| **P3 — Logs e observabilidade** | **v64 aprovada; verificações visuais v65 adicionadas** | Diagnóstico distingue erros reais e riscos preventivos; v65 também confere colisão de abas, ausência de barra duplicada e estrutura da alternância de teclado |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 
 ## Regras de avanço
@@ -44,7 +44,7 @@
 - Arquivo HTML único: valida scripts/estilos incorporados, ausência de dependências de rede (inclusive imagens) e bibliotecas internas; Service Worker é corretamente identificado como não aplicável nesse modo.
 - Navegador automatizado (**CI aprovado**): instala cache conectado, corta realmente a rede do contexto Chromium, recarrega, navega entre telas, roda diagnóstico, confere espelho IndexedDB e reconecta; o HTML único é aberto em `file://` com navegador offline.
 - Risco preventivo `RISCO_OFFLINE_EVICCAO_DADOS`: sistema operacional/navegador pode remover armazenamento não persistente; manter backup JSON fora do aparelho.
-- Gerador entrega `Meu-Dinheiro-v64-Offline-Validacao.html` com instruções e botão para executar o diagnóstico. Guia manual em `VALIDACAO-OFFLINE.md`.
+- Gerador entrega `Meu-Dinheiro-v65-Mobile-Offline.html` com instruções e botão para executar o diagnóstico. Guia manual em `VALIDACAO-OFFLINE.md`.
 - **Não concluímos P0.5 nem P2.6 sem ensaio físico** em Android/iOS e confirmação explícita de backup/restauração de dados fictícios.
 - CI v63 aprovado: código https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963590 e navegador offline https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963618.
 
@@ -54,6 +54,14 @@
 - O aviso `AJUSTES_RELATORIOS_DESCOBERTA` procurava PDF/backup no lugar antigo. O teste foi substituído por verificações de controles em **Relatórios** e ausência de duplicação em **Ajustes**, com casos de regressão para botão ausente ou duplicado.
 - O aviso `RISCO_OFFLINE_EVICCAO_DADOS` é legítimo e continua como risco preventivo de limpeza de armazenamento pelo navegador; `nao_avaliado` em Service Worker no HTML `file://` é comportamento correto.
 - **371/371 Node e Chromium offline aprovados no CI da v64**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45094976803 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45094976827. Novo E2E confirma que as duas verificações aparecem aprovadas dentro do HTML desconectado. Ensaio em aparelho físico ainda pendente.
+
+## P2.6b/P3.4 — Correção da experiência móvel (v65)
+
+- Diagnóstico novo de Samsung Internet/HTML v64: **225 verificações, zero erros, um aviso legítimo de risco de limpeza pelo navegador e sete não avaliadas em contexto local**. Os dois erros de regra anteriores não reapareceram.
+- A barra flutuante de dois cadastros foi retirada do celular a pedido do usuário. O **+** abre todos os cinco cadastros (renda, despesa, meta, sonho e investimento) e funciona sem duplicidade.
+- Rótulos das seis abas passam a ficar abaixo de seus ícones, com seis colunas proporcionais e teste de largura em **320, 384, 390 e 768 px**. Inspeção automática das caixas visíveis evita sobreposição de rótulos.
+- No diálogo de lançamento, teclado de centavos é padrão sem convocar o teclado do sistema; botão acessível permite optar pelo teclado numérico nativo. Abertura no celular não foca descrição à força.
+- A v65 adiciona regressões Node e Chromium e autoverificações de layout/atalho/teclado; não modifica dados financeiros existentes, armazenamento, saldos nem fórmulas. **Homologação física de P0.5/P2.6 ainda é necessária.**
 
 ## Verificação da P2 até v60
 

@@ -33,7 +33,7 @@ dist/
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
-    teclado-monetario.js   # P2.1: teclado de centavos e categorias rápidas móveis sem mudar o campo nativo
+    teclado-monetario.js   # P2.6b: teclado de centavos padrão no móvel, com alternância explícita para campo nativo
     objetivos.js           # Interface de metas e sonhos, sem fórmulas duplicadas
     dominio-objetivos.js   # P1.3: progresso, restante, totalização e vínculo de objetivos
     investimentos.js       # Interface de cadastro e edição; preserva exports históricos
@@ -144,8 +144,8 @@ Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI br
 
 ## P2.1 — Entrada rápida e histórico responsivo (v56)
 
-- A interface móvel tem dois atalhos de lançamento de renda/despesa acima da navegação, conservando o botão `+` com as cinco opções de cadastro. Eles são ocultados fora das telas financeiras correspondentes.
-- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. O teclado visual opcional edita esse mesmo campo em centavos; os botões de categoria usam a lista já existente, sem criar catálogo paralelo.
+- A versão v65 simplifica a interface móvel: **somente o botão `+`** abre renda, despesa, meta, sonho e investimento; a barra fixa com dois botões de lançamento foi retirada conforme a preferência do usuário. O PC mantém os atalhos do Resumo.
+- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. No smartphone, começa em `readOnly/inputMode=none` com teclado visual de centavos, sem teclado do sistema em paralelo. Há botão explícito para alternar ao teclado numérico nativo e voltar. Os botões de categoria usam a lista existente.
 - Os lançamentos em Renda/Despesas recebem cabeçalhos por dia, sem alterar a ordem ou os dados persistidos. No PC, o Resumo ganhou ações diretas de renda e despesa.
 - As fotos são referência de fluxo e composição, não componentes copiados. Nenhum esquema de dados, regra de saldo ou comportamento de backup foi modificado.
 
@@ -164,6 +164,12 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 
 - `registro-modulos.js` usa `verificarOrcamentoSintetico()` para calcular a cota real (9,65) e confirmar em centavos o orçamento restante (280,00), sem assumir valor arredondado incorretamente; `tests/orcamento.test.cjs` cobre o cenário e uma implementação propositalmente errada.
 - `diagnostico.js` inspeciona a presença real de botões em `#reports-page` e a ausência de duplicação em `#settings-page`, substituindo a heurística antiga de procurar os termos “PDF” e “backup” no título de Ajustes. `tests/diagnostico.test.cjs` cobre ausência e duplicação, e o Chromium valida o resultado no HTML offline.
+
+## P2.6b/P3.4 — Revisão visual móvel (v65)
+
+- `responsivo.css` apresenta as seis áreas em grade proporcional, com ícones sobre os rótulos. `scripts/verificar-interface.cjs` mede limites de cada botão/ícone/rótulo nas larguras 320, 384, 390 e 768 px.
+- `acao-rapida.js` conserva o menu `+` como única entrada rápida flutuante do smartphone. `lancamentos.js` evita chamar o teclado do celular ao abrir o formulário; `teclado-monetario.js` alterna conscientemente os modos de entrada sem alterar as validações financeiras.
+- `diagnostico.js` faz checagens somente de leitura para grade sem sobreposição, ausência da barra duplicada e alternativa de entrada monetária. Nenhum dado persistido, esquema ou regra de cálculo muda.
 
 ## P2.2 — Orçamento diário e preferência mensal (v57)
 

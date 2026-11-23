@@ -15,6 +15,8 @@ test('Navegação de seis módulos mantém foco visível e testes cobrem três l
   const css=ler('dist/css/responsivo.css');
   const e2e=ler('scripts/verificar-interface.cjs');
   assert.match(css,/\.mobile-nav \.nav-button:focus-visible/);
-  assert.match(e2e,/\[320,390,768\]/);
+  assert.match(css,/grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.mobile-nav \.nav-button\{display:flex;flex-direction:column/);
+  assert.match(e2e,/\[320,384,390,768\]/);
   assert.match(e2e,/document\.documentElement\.scrollWidth<=window\.innerWidth/);
 });

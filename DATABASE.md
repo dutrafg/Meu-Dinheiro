@@ -108,6 +108,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - O arquivo HTML único inclui a lógica e os estilos no documento. Quando aberto em `file://`, não registra Service Worker, não usa Cache Storage obrigatório e mantém o armazenamento sujeito às permissões do navegador; a exportação JSON continua necessária.
 - Testes de homologação offline com dados fictícios não substituem ensaios de backup/restauração e recuperação de conflito IndexedDB em aparelho real (P0.5 pendente).
 
+## v65 — Ajustes de interface sem migração
+
+- O botão `+` único, o teclado monetário alternável e a grade inferior de seis abas não escrevem preferências adicionais nem transformam registros ou backups.
+- `input type=number` e armazenamento de valores numéricos permanecem inalterados; o teclado em centavos apenas apresenta a entrada de modo diferente no celular. A homologação física da P0.5 continua pendente.
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.
