@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v60: P2.1/P2.2/P2.3a/P2.5a aprovadas; P2.5b (desafio de 52 semanas) implementada em validação** na branch `refactor/roadmap-manutencao-p0-20261122`. v59 aprovada no CI Node/Chromium; v60 passou em 354 testes Node locais. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v60: P2.1, P2.2 e P2.5 concluídas; P2.3 parcialmente implementada; P2.4/P2.6/P2.7 pendentes** na branch `refactor/roadmap-manutencao-p0-20261122`. **354 testes Node e CI Chromium aprovados na v60**. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -24,7 +24,7 @@
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **🟡 Parcial: agenda e projeção aprovadas; contas a pagar pendentes** | Relatórios exibem despesas futuras previstas e tabela dos próximos 12 meses com receitas/despesas recorrentes; falta modelo independente de contas a pagar, confirmação de pagamento e cadastro de contas mensais sem dupla contagem |
 | P2.4 | ⏳ Planejada | Gestão de categorias e parcelas de cartão com regras de integridade e importação compatíveis |
-| **P2.5** | **✅ Implementada; desafio 52 semanas em QA no Chromium (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
+| **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
 | P2.6 | ⏳ Planejada | Refinamento de navegação, hierarquia, contrastes e espaçamento em celular, tablet e PC; proteção de dados e modo de exemplo somente isolado |
 | P2.7 | ⏳ Planejada | Auditoria funcional, acessibilidade, navegação, performance e responsividade desktop/mobile, com diagnóstico sanitizado |
 | **P3 — Logs e observabilidade** | **Parcial** | Log técnico de sessão automático e JSON sanitizado; ampliar verificações sem dados privados |
@@ -37,6 +37,13 @@
 3. Só declarar uma etapa concluída quando código, testes automatizados e, quando pertinente, navegador real estiverem aprovados.
 4. A cada etapa, atualizar este roadmap, `DATABASE.md`, o changelog e o resumo de testes do PR.
 5. `P0` somente estará concluída quando IndexedDB for a fonte primária **com backup, restauração e recuperação validados também em dispositivo real**.
+
+## Verificação da P2 até v60
+
+- CI do código (354 testes Node): https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707674 — **aprovado**.
+- QA Chromium desktop/celular: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707644 — **aprovado**, incluindo desafio 52 semanas e aportes fictícios.
+- Prévia isolada v60: https://meu-dinheiro-mt7bc81l7-dutra8.vercel.app — não equivale à publicação em produção.
+- Próximos blocos de implementação: P2.3b (contas com status de pagamento), P2.4 (categorias editáveis e parcelas), P2.6 (acabamento visual), P2.7 (auditoria final). **Não considerar P2 totalmente concluída** enquanto esses blocos e os testes reais necessários estiverem pendentes.
 
 ## Critérios de encerramento da P1 (v55)
 
