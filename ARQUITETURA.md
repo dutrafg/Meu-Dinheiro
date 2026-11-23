@@ -177,6 +177,11 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - O módulo antigo `teclado-monetario.js` foi substituído por `categorias-rapidas.js`, que só atualiza os ícones e o `<select>` de categorias. Catálogo do diagnóstico, autoverificação, cache SW, HTML único e testes cobrem a substituição.
 - O teste E2E confirma que o valor é editável no campo nativo, sem controles extras, e permanece idêntico após selecionar categoria. Diagnóstico sinaliza regressões de campo bloqueado ou reaparecimento de teclado próprio.
 
+## P2.6d — Atualização pontual de categorias (v67)
+
+- `ajustes.js` não usa `replaceChildren()` para Tirar/Mostrar após gravar a preferência: atualiza somente o rótulo e botão que já estão no DOM. Isso preserva foco e rolagem no smartphone ao processar várias categorias.
+- A lista ainda é reconstruída ao trocar entrada/despesa ou criar/renomear, quando seus itens realmente podem mudar. O repositório financeiro não participa dessa operação; teste E2E verifica rolagem e identidade do botão após Tirar/Mostrar.
+
 ## P2.2 — Orçamento diário e preferência mensal (v57)
 
 - `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.

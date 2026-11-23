@@ -262,6 +262,23 @@ async function verificar(){
     for(const id of ['export-pdf','export-csv','import-csv','export-data','import-data'])
       assert.equal(await page.locator('#'+id).count(),1,'Ferramenta disponível nos Ajustes: '+id);
     assert.match(await page.locator('.settings-tools summary').innerText(),/Atualizações e diagnóstico/);
+    // Ao tocar em Tirar/Mostrar no meio da lista, o mesmo botão e a rolagem permanecem.
+    const opcoesCategoria=page.locator('#category-manager-list [data-category-toggle]');
+    assert.ok(await opcoesCategoria.count()>10,'Categorias suficientes para testar rolagem móvel');
+    const botaoCategoria=opcoesCategoria.nth(10);
+    await botaoCategoria.scrollIntoViewIfNeeded();
+    const rolagemCategoria=await page.evaluate(()=>window.scrollY);
+    const nodoCategoria=await botaoCategoria.elementHandle();
+    await botaoCategoria.click();
+    assert.equal(await nodoCategoria.evaluate(el=>el.isConnected&&el.textContent==='Mostrar'),true,
+      'Ocultar categoria mantém o botão no lugar sem recriar a lista');
+    assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-rolagemCategoria)<=3,
+      'Tirar categoria não pode levar a página de volta ao topo');
+    await botaoCategoria.click();
+    assert.equal(await nodoCategoria.evaluate(el=>el.isConnected&&el.textContent==='Tirar'),true,
+      'Mostrar reutiliza o mesmo botão e preserva as outras categorias');
+    assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-rolagemCategoria)<=3,
+      'Mostrar categoria também preserva a rolagem');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Sem barra horizontal no celular');
     await aguardarEspelho(); // Mesmo após criar e editar lançamentos, as duas cópias coincidem.
     assert.deepEqual(erros,[],'Nenhuma exceção de JavaScript no navegador');

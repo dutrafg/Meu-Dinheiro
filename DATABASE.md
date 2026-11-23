@@ -118,6 +118,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - Removido o teclado de centavos customizado por preferência do usuário. O campo monetário original `type=number/inputmode=decimal` é usado em celular e PC; nenhuma transformação de valores ou esquema novo é introduzido.
 - As categorias rápidas alteram apenas o `<select>` antes de salvar. O repositório IndexedDB, o espelho local e os formatos de backup/CSV/OFX permanecem idênticos; P0.5 segue em homologação física.
 
+## v67 — Ocultação de categorias sem alteração de armazenamento
+
+- A preferência `categoriasOcultas` mantém exatamente o mesmo formato e processo de gravação. A mudança ocorre apenas depois de salvar: atualiza o texto do botão/linha em vez de refazer a lista inteira, conservando a posição do usuário.
+- Não elimina categorias do histórico financeiro nem modifica IndexedDB, importação/exportação ou backups. A P0.5 continua pendente de ensaio físico.
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.

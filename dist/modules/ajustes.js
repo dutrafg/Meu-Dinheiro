@@ -42,9 +42,10 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
       linha.append(titulo,mudar,tirar);listaCategorias.append(linha);
     }
   }
-  function salvarCategoria(next){
+  function salvarCategoria(next,{atualizarLista=true}={}){
     if(!gestor.salvar(next)){estado('Não foi possível salvar categorias.',true);notify('Falha ao salvar categorias.');return false;}
-    renderCategorias();render();onSave?.();estado('Categorias salvas. O histórico foi preservado.');return true;
+    if(atualizarLista)renderCategorias();
+    render();onSave?.();estado('Categorias salvas. O histórico foi preservado.');return true;
   }
   tipoCategoria?.addEventListener?.('change',()=>{resetarCategoria();renderCategorias();});
   listaCategorias?.addEventListener?.('click',event=>{
@@ -54,7 +55,14 @@ export function iniciarAjustes({gestor,getData,CATEGORIES,notify,render,onSave,h
     if(editar){formCategoria.elements.namedItem('oldName').value=nome;formCategoria.elements.namedItem('name').value=nome;iconeCategoria.value=prefs.categoriaIcones[nome]||'🏷️';document.getElementById('category-manager-save').textContent='Salvar mudança';formCategoria.elements.namedItem('name').focus();return;}
     const ocultas=prefs.categoriasOcultas[tipo];
     prefs.categoriasOcultas[tipo]=ocultas.includes(nome)?ocultas.filter(v=>v!==nome):[...ocultas,nome];
-    salvarCategoria(prefs);
+    // Mantenha o botão tocado no DOM: recriar toda a lista perde foco e pode jogar
+    // o usuário para o início da tela ao ocultar várias categorias no celular.
+    if(salvarCategoria(prefs,{atualizarLista:false})){
+      const ocultaAgora=prefs.categoriasOcultas[tipo].includes(nome);
+      const rotulo=toggle.closest('.category-manager-item')?.querySelector('span');
+      if(rotulo)rotulo.textContent=`${prefs.categoriaIcones[nome]||'🏷️'} ${nome}${ocultaAgora?' (oculta)':''}`;
+      toggle.textContent=ocultaAgora?'Mostrar':'Tirar';
+    }
   });
   formCategoria?.addEventListener?.('submit',event=>{
     event.preventDefault();const prefs=atual(),tipo=categoriaTipo(),campo=formCategoria.elements;
