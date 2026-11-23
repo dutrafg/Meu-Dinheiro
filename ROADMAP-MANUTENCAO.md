@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v61: P2.1, P2.2 e P2.5 concluídas; P2.3 parcial; P2.6/P2.7 parcialmente iniciadas, P2.4 pendente** na branch `refactor/roadmap-manutencao-p0-20261122`. **356 testes Node locais aprovados na v61; CI Node/Chromium v60 aprovado; v61 em validação**. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
+**Situação:** **v61: P2.1, P2.2 e P2.5 concluídas; P2.3 parcial; P2.6/P2.7 parcialmente iniciadas, P2.4 pendente** na branch `refactor/roadmap-manutencao-p0-20261122`. **356 testes Node e CI Chromium aprovados na v61**. **P1 concluída**, **P0.5 continua em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -43,7 +43,7 @@
 - CI do código (354 testes Node): https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707674 — **aprovado**.
 - QA Chromium desktop/celular: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45090707644 — **aprovado**, incluindo desafio 52 semanas e aportes fictícios.
 - Prévia isolada v60: https://meu-dinheiro-mt7bc81l7-dutra8.vercel.app — não equivale à publicação em produção.
-- Na v61: cartão de limite do dia priorizado no celular e cobertura responsiva ampliada; **356 testes Node locais** aprovados, CI da revisão aguardado.
+- Na v61: cartão de limite do dia priorizado no celular e cobertura responsiva ampliada; **356 testes Node e Chromium aprovados**: https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45091040107 e https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45091040083.
 - Próximos blocos de implementação: P2.3b (contas com status de pagamento), P2.4 (categorias editáveis e parcelas), P2.6 (acabamento visual), P2.7 (auditoria final). **Não considerar P2 totalmente concluída** enquanto esses blocos e os testes reais necessários estiverem pendentes.
 
 ## Critérios de encerramento da P1 (v55)

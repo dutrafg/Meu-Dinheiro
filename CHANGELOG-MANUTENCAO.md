@@ -173,4 +173,4 @@
 
 - Em smartphone, o card “Hoje você pode gastar” tem prioridade visual sobre os gráficos completos; a tela desktop preserva a disposição anterior. Foco de teclado da navegação inferior foi explicitado.
 - QA E2E passa a conferir overflow da página em larguras de 320, 390 e 768 pixels, além do fluxo de meta/desafio. A navegação de seis módulos continua acessível.
-- Dois testes estruturais complementares; **356 testes Node locais aprovados** e CI Chromium v61 a validar. P2.6/P2.7 continuam parciais até inspeção final em dispositivos reais e encerramento de P2.3/P2.4.
+- Dois testes estruturais complementares; **356 testes Node e CI Chromium v61 aprovados** (runs 45091040107 e 45091040083). P2.6/P2.7 continuam parciais até inspeção final em dispositivos reais e encerramento de P2.3/P2.4.
