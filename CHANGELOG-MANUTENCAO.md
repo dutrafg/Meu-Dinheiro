@@ -6,7 +6,7 @@
 - Navegação inferior em seis colunas, ícones acima dos textos e rótulos responsivos; validação visual automatizada de 320 a 768 px e teste da ausência da barra duplicada.
 - Teclado interno de centavos vira padrão no smartphone sem abrir simultaneamente o teclado do sistema. O usuário pode alternar explicitamente para o teclado nativo; foco inicial não aciona Gboard inesperadamente.
 - Diagnóstico acrescenta checagens preventivas de colisão visual, acesso rápido único e alternância de teclado. JSON v64 recebido: 225 verificações, zero erros, um aviso real de armazenamento e sete não avaliadas por abrir arquivo local.
-- Versão do aplicativo e cache PWA passam a v65, mantendo todos os dados e sem alterações na `main`. Testes CI e validação física permanecem condicionantes da entrega.
+- Versão do aplicativo e cache PWA passam a v65, mantendo todos os dados e sem alterações na `main`. **372/372 testes Node e QA Chromium desktop/móvel + offline aprovados no CI** (runs 45137750414 e 45137750327). A validação física no Samsung/PWA permanece pendente.
 
 ## v64 — Correção dos falsos alarmes apontados pelo diagnóstico de 23/11
 
