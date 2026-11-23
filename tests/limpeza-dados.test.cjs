@@ -118,3 +118,42 @@ test('Falha do armazenamento mantém segunda etapa aberta para nova tentativa',a
   assert.equal(tela.pegar('delete-data-confirm').disabled,false);
   assert.match(avisos[0],/Não foi possível apagar/);
 });
+
+
+test('Falha ao apagar espelho IndexedDB mantém os dados legados intactos',async()=>{
+  const {apagarDadosLocais}=await modulo;
+  let removidos=0;
+  const storage={removeItem:()=>{removidos++;}};
+  const resultado=await apagarDadosLocais({storage,chave:'dados',
+    pausarBackup:async()=>{},
+    antesRemocao:async()=>{throw Error('IndexedDB temporariamente bloqueado');}});
+  assert.equal(resultado,false);
+  assert.equal(removidos,0);
+});
+
+test('Edição em outra aba durante o backup impede excluir dados atualizados',async()=>{
+  const {apagarDadosLocais}=await modulo;
+  const valores=new Map([['dados','arquivo-original']]);
+  let removidos=0,espelhoApagado=0;
+  const storage={getItem:key=>valores.get(key)||null,removeItem:key=>{removidos++;valores.delete(key);}};
+  const ok=await apagarDadosLocais({storage,chave:'dados',
+    pausarBackup:async()=>valores.set('dados','alteracao-concorrente'),
+    antesRemocao:async()=>{espelhoApagado++;}});
+  assert.equal(ok,false);
+  assert.equal(removidos,0);
+  assert.equal(espelhoApagado,0,'Não tocar no espelho após detectar alteração');
+  assert.equal(valores.get('dados'),'alteracao-concorrente');
+});
+
+test('Mudança enquanto o IndexedDB grava tombstone impede remover localStorage',async()=>{
+  const {apagarDadosLocais}=await modulo;
+  const valores=new Map([['dados','estado-original']]);
+  let removidos=0;
+  const storage={getItem:key=>valores.get(key)||null,removeItem:key=>{removidos++;valores.delete(key);}};
+  const ok=await apagarDadosLocais({storage,chave:'dados',
+    pausarBackup:async()=>{},
+    antesRemocao:async()=>valores.set('dados','editado-durante-tombstone')});
+  assert.equal(ok,false);
+  assert.equal(removidos,0);
+  assert.equal(valores.get('dados'),'editado-durante-tombstone');
+});

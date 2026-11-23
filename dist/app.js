@@ -20,15 +20,26 @@ import { criarModuloNotificacoes } from './modules/notificacoes.js';
 import { iniciarRelatorioPdf } from './modules/relatorio-pdf.js';
 import { iniciarLimpezaDados, apagarDadosLocais } from './modules/limpeza-dados.js';
 import { iniciarAcaoRapida } from './modules/acao-rapida.js';
+import { criarModuloPrevisoes } from './modules/previsoes.js';
+import { iniciarCompromissos } from './modules/compromissos-interface.js';
+import { criarModuloRelatorioAnual } from './modules/relatorio-anual.js';
+import {NOME_DESAFIO_52,CATEGORIA_DESAFIO_52,valorSemana52,descricaoSemana52,resumirDesafio52} from './modules/desafio-52.js';
 import { iniciarInvestimentos,validarVinculosSalariais } from './modules/investimentos.js';
 import { criarModuloCalendarioFinanceiro, renderBotaoCalendario } from './modules/calendario-financeiro.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './modules/concorrencia-dados.js';
+import {criarEspelhoIndexedDB} from './modules/espelho-indexeddb.js';
+import {iniciarRecuperacaoConflitos} from './modules/recuperacao-conflitos.js';
+import {criarRepositorioFinanceiro} from './modules/repositorio-financeiro.js';
+import {transacoesNoMes,totaisDoMes,principalReserva,aportesPendentes,estimarRendimentoCdi} from './modules/motor-financeiro.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './modules/ciclo-periodo.js';
-import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespesas} from './modules/categorias-brasileiras.js';
+import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,GRUPOS_DESPESA} from './modules/categorias-brasileiras.js';
 // Bibliotecas existentes continuam disponíveis para o PWA e para os testes Node.
 
-(() => {
+(async() => {
   'use strict';
+  // Ativado em cada inicialização: somente códigos técnicos, retidos na sessão.
+  configurarDetalhado(true);
+  registrarEvento('SESSAO_INICIADA','sistema');
   const KEY = 'meu-dinheiro-essencial:v1';
   const CDI_KEY = 'meu-dinheiro-essencial:cdi-oficial';
   const dialogos = iniciarDialogos();
@@ -50,6 +61,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     'Saúde':'🩺', 'Educação':'📖', 'Lazer':'🎉', 'Compras':'🛍️', 'Outros':'📦',
     ...ICONES_DESPESA
   };
+  Object.assign(CATEGORY_ICONS,preferencias.obter().categoriaIcones);
   const EXPENSE_COLORS = {
     'Outros':'#8998a9', 'Moradia':'#6b86a9', 'Alimentação':'#e5a270', 'Contas':'#7b9eac',
     'Internet':'#61a9d1', 'Telefone':'#77bfd7', 'Cartão de crédito':'#91a5c0',
@@ -66,6 +78,19 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   let diaAtual = `${currentMonth}-${String(today.getDate()).padStart(2,'0')}`;
   let storageLocked = false;
   let data = readData();
+  const espelho=criarEspelhoIndexedDB({api:typeof indexedDB==='undefined'?null:indexedDB,
+    aoFalhar:codigo=>registrar('aviso',codigo,'dados')});
+  const repositorio=criarRepositorioFinanceiro({espelho,storage:localStorage,chave:KEY,
+    validar:raw=>normalizarDadosLocais(JSON.parse(raw)),
+    aoAvisar:codigo=>registrar('aviso',codigo,'dados')});
+  const inicioPersistencia=repositorio.iniciar().then(estado=>{
+    // A fonte financeira precisa estar carregada antes de qualquer backup de pasta.
+    if(estado.modo==='primario'&&estado.dados){data=estado.dados;storageLocked=false;}
+    else if(estado.modo==='conflito'||estado.modo==='bloqueado'){
+      storageLocked=true;registrar('aviso','IDB_CONFLITO_INICIAL','dados');
+    }
+    return estado;
+  });
   let view = 'resumo';
   let objectiveKind = 'goal'; // Um módulo visual, duas abas de conteúdo: metas e sonhos.
   let month = currentMonth;
@@ -89,34 +114,43 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   function readData() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return { transactions: [], goals: [], allocations: [], completedAportes: [] };
+      if (!raw) return { transactions: [], goals: [], allocations: [], completedAportes: [], commitments: [] };
       return normalizarDadosLocais(JSON.parse(raw));
     } catch (error) {
       storageLocked = true;
       registrar('erro','DADOS_LEITURA_FALHOU','dados');
       console.error('Não foi possível ler os dados locais:', error);
       void dialogos.informar('Dados locais protegidos','Os dados locais parecem inconsistentes. A gravação foi bloqueada para preservar o arquivo original. Restaure um backup JSON válido para recuperar o aplicativo.');
-      return { transactions: [], goals: [], allocations: [], completedAportes: [] };
+      return { transactions: [], goals: [], allocations: [], completedAportes: [], commitments: [] };
     }
   }
-  function persist(next, {allowRecovery = false} = {}) {
+  let gravando=false;
+  async function persist(next, {allowRecovery = false} = {}) {
     if (storageLocked && !allowRecovery) {
       registrar('aviso','DADOS_GRAVACAO_BLOQUEADA','dados');
       void dialogos.informar('Gravação protegida','Os dados originais estão protegidos. Restaure um backup JSON válido antes de gravar novamente.');
       return false;
     }
+    if(gravando){notify('Aguarde a gravação anterior terminar.');return false;}
     if(!allowRecovery&&typeof guardaConcorrencia!=='undefined'&&!guardaConcorrencia.podeGravar()){
       registrar('aviso','DADOS_CONFLITO_ABAS','dados');
       void dialogos.informar('Outra aba modificou os dados','Há uma versão mais recente dos dados em outra aba. Para evitar perda, esta gravação foi bloqueada. Feche o formulário e recarregue o aplicativo antes de continuar.');
       return false;
     }
+    gravando=true;
     try {
       const serializado=JSON.stringify(next);
-      localStorage.setItem(KEY,serializado);
+      const resultado=await (allowRecovery?repositorio.restaurarBackup(serializado):repositorio.gravar(serializado));
+      if(!resultado.ok){
+        registrar('aviso','IDB_COMMIT_BLOQUEADO','dados');
+        void dialogos.informar('Gravação protegida','O banco de dados não confirmou a gravação. Nenhum lançamento novo foi aplicado. Confira a recuperação em Ajustes.');
+        return false;
+      }
       if(typeof guardaConcorrencia!=='undefined')guardaConcorrencia.registrarGravacao(serializado);
       data = next;
-      storageLocked = false;
+      storageLocked = resultado.modo==='espelho-pendente';
       folderBackup?.schedule();
+      if(storageLocked)void dialogos.informar('Cópia local pendente','O IndexedDB confirmou a gravação, mas o espelho local falhou. Exporte um backup JSON antes de recarregar a página.');
       if(typeof navigator!=='undefined'&&!persist.pediuPersistencia){
         persist.pediuPersistencia=true;
         void solicitarPersistenciaLocal(navigator);
@@ -127,6 +161,8 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       console.error('Falha ao salvar:', error);
       void dialogos.informar('Falha ao salvar','Não foi possível salvar. Verifique o espaço disponível e as permissões do navegador.');
       return false;
+    } finally {
+      gravando=false;
     }
   }
   function icon(name) { return `<svg aria-hidden="true"><use href="#i-${name}"></use></svg>`; }
@@ -172,13 +208,27 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   function shiftMonth(ym, diff) { const [y,m] = ym.split('-').map(Number); const d = new Date(Date.UTC(y,m-1+diff,1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`; }
   function monthLabel(ym) { return fmtMonth.format(parseDate(`${ym}-01`)); }
   function shortMonth(ym) { return fmtShort.format(parseDate(`${ym}-01`)).replace('.', ''); }
-  function categorySet(type) { return CATEGORIES[type] || []; }
+  function categorySet(type) {
+    if(!CATEGORIES[type])return [];
+    const prefs=preferencias.obter();
+    const ocultas=new Set(prefs.categoriasOcultas[type]);
+    return [...new Set([...CATEGORIES[type],...prefs.categoriasExtras[type]])].filter(nome=>!ocultas.has(nome));
+  }
+  function renderizarOpcoesDespesas(escape){
+    const ativas=new Set(categorySet('expense'));
+    const grupos=GRUPOS_DESPESA.map(grupo=>{
+      const opcoes=grupo.categorias.filter(nome=>ativas.has(nome));
+      return opcoes.length?`<optgroup label="${escape(grupo.titulo)}">${opcoes.map(nome=>`<option value="${escape(nome)}">${escape(nome)}</option>`).join('')}</optgroup>`:'';
+    }).join('');
+    const extras=categorySet('expense').filter(nome=>!CATEGORIES.expense.includes(nome));
+    return grupos+(extras.length?`<optgroup label="Minhas categorias">${extras.map(nome=>`<option value="${escape(nome)}">${escape(nome)}</option>`).join('')}</optgroup>`:'');
+  }
   function uniqueId() { return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`; }
   function notify(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2700); }
   const guardaConcorrencia=criarProtecaoConcorrencia({storage:localStorage,chave:KEY,
     aoAlterar:raw=>{
       if(storageLocked||[...document.querySelectorAll('dialog[open]')].length)return false;
-      const nova=raw?normalizarDadosLocais(JSON.parse(raw)):{transactions:[],goals:[],allocations:[],completedAportes:[]};
+      const nova=raw?normalizarDadosLocais(JSON.parse(raw)):{transactions:[],goals:[],allocations:[],completedAportes:[],commitments:[]};
       data=nova;
       render();
       notify('Dados atualizados a partir de outra aba.');
@@ -200,59 +250,23 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)verificarVirada();});
   window.addEventListener('pageshow',verificarVirada);
   window.setInterval(verificarVirada,60000);
-  function occurrenceDate(t, ym) {
-    if (!t.recurring) return t.date.slice(0, 7) === ym ? t.date : null;
-    if (t.date.slice(0, 7) > ym) return null;
-    const day = Number(t.date.slice(8, 10));
-    const [y,m] = ym.split('-').map(Number);
-    const lastDay = new Date(Date.UTC(y,m,0)).getUTCDate();
-    return `${ym}-${String(Math.min(day,lastDay)).padStart(2,'0')}`;
-  }
-  function transactionsInMonth(ym, type) {
-    return data.transactions.filter(t => (!type || t.type === type) && occurrenceDate(t,ym))
-      .map(t => ({ ...t, occurrence: occurrenceDate(t,ym) }))
-      .sort((a,b) => b.occurrence.localeCompare(a.occurrence) || b.createdAt.localeCompare(a.createdAt));
-  }
-  function sums(ym) {
-    const list = transactionsInMonth(ym);
-    const income = n2(list.filter(t=>t.type==='income').reduce((sum,t)=>sum+t.amount,0));
-    const expense = n2(list.filter(t=>t.type==='expense').reduce((sum,t)=>sum+t.amount,0));
-    return { income, expense, balance:n2(income-expense), count:list.length };
-  }
+  function transactionsInMonth(ym,type) { return transacoesNoMes(data.transactions,ym,type); }
+  function sums(ym) { return totaisDoMes(data.transactions,ym); }
   function savingPlan(ym) {
     return calcularPlanoAporte(transactionsInMonth(ym,'income'),preferencias.obter());
   }
-  function reservePrincipal() {
-    const goalId=preferencias.obter().reservaGoalId;
-    const fromGoals=data.goals.filter(g=>g.kind==='goal'&&(goalId?g.id===goalId:/reserva|emerg[eê]ncia/i.test(g.name))).reduce((sum,g)=>sum+g.saved,0);
-    const unlinked=(data.allocations||[]).filter(a=>a.kind==='reserve'&&!data.goals.some(g=>g.id===a.goalId)).reduce((sum,a)=>sum+a.amount,0);
-    return Math.max(0,n2(fromGoals+unlinked));
-  }
+  function reservePrincipal() { return principalReserva(data,preferencias.obter().reservaGoalId); }
   function reserveYieldEstimate() {
     const quote=validCdiQuote(),principal=reservePrincipal();
     if(!quote||!principal)return '';
     // Projeção ilustrativa de 21 dias úteis a 100% do CDI, antes de IR/IOF e taxas.
-    const estimated=n2(principal*(Math.pow(1+quote.dailyPercent/100,21)-1));
+    const estimated=estimarRendimentoCdi(principal,quote.dailyPercent);
+    if(estimated===null)return '';
     return `<p class="proto-cdi-estimate">CDB a 100% do CDI · rendimento bruto estimado em 21 dias úteis: <strong>${money(estimated)}</strong><small>Simulação sobre ${money(principal)}. Não é rendimento confirmado; sem impostos ou taxas.</small></p>`;
   }
   function dueAportes() {
-    const todayText=isoDate(new Date());
-    const threshold=shiftMonth(todayText.slice(0,7),-5)+'-01';
-    const done=new Set(data.completedAportes||[]);
-    const items=[];
-    for(const t of data.transactions){
-      if(t.type!=='income')continue;
-      const months=t.recurring?Array.from({length:6},(_,i)=>shiftMonth(todayText.slice(0,7),i-5)):[t.date.slice(0,7)];
-      for(const ym of months){
-        const date=occurrenceDate(t,ym);
-        if(!date||date>todayText||date<threshold)continue;
-        const key=`${t.id}@${date}`;
-        if(done.has(key))continue;
-        const tenPercent=calcularAporte(t,preferencias.obter());
-        items.push({key,date,description:t.description,category:t.category,tenPercent});
-      }
-    }
-    return items.sort((a,b)=>b.date.localeCompare(a.date));
+    const prefs=preferencias.obter();
+    return aportesPendentes(data.transactions,data.completedAportes,isoDate(new Date()),t=>calcularAporte(t,prefs));
   }
   function renderReminderCount() {
     notificacoes.renderBadge();
@@ -294,6 +308,11 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     settingsPage.classList.toggle('hidden',view!=='ajustes');
     document.getElementById('reports-page')?.classList.toggle('hidden',view!=='relatorios');
     viewContent.classList.toggle('hidden',view==='ajustes'||view==='relatorios');
+    if(view==='relatorios'){
+      document.getElementById('forecast-content').innerHTML=moduloPrevisoes.renderPrevisoes();
+      moduloCompromissos.render();
+      moduloRelatorioAnual.render();
+    }
     if(view==='ajustes'||view==='relatorios')return;
     if (view === 'resumo') viewContent.innerHTML = renderSummary();
     else if (view === 'renda' || view === 'despesas') viewContent.innerHTML = renderTransactions(view==='renda'?'income':'expense');
@@ -314,6 +333,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     sums, savingPlan, transactionsInMonth, reserveYieldEstimate,
     transactionDialog, transactionForm, goalDialog, goalForm,
     persist, render, renderNav, notify, uniqueId,
+    aguardarPersistencia:inicioPersistencia,
     confirmar:dialogos.confirmar,registrar,registrarEvento
   };
   const moduloLancamentos=criarModuloLancamentos(common);
@@ -325,8 +345,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const moduloSaude=criarModuloSaude({...common,reservePrincipal});
   const calendarioFinanceiro=criarModuloCalendarioFinanceiro({...common,dialog:calendarDayDialog,dialogoCalendario:financeCalendarDialog,documento:document});
   const notificacoes=criarModuloNotificacoes({getAportes:dueAportes,getPreferences:()=>preferencias.obter(),
-    fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
+    getData:()=>data,getHoje:()=>isoDate(new Date()),getStorageLocked:()=>storageLocked,
+    getBackupState:()=>folderBackup?.getState(),fmtDate,parseDate,money,esc,notify,confirmar:dialogos.confirmar,storage:localStorage,registrar});
   const moduloResumo=criarModuloResumo({...common, renderEntry, progressLine,renderSaude:moduloSaude.renderSaude});
+  const moduloPrevisoes=criarModuloPrevisoes(common);
+  const moduloCompromissos=iniciarCompromissos(common);
+  document.getElementById('commitment-new').addEventListener('click',()=>moduloCompromissos.novo());
+  const moduloRelatorioAnual=criarModuloRelatorioAnual(common);
   const {renderSummary} = moduloResumo;
 
   document.addEventListener('click',async event=>{
@@ -349,6 +374,25 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const button=event.target.closest('[data-action]');
     if(!button)return;
     const id=button.dataset.id;
+    if(button.dataset.action==='challenge-create'){
+      if(resumirDesafio52(data).objetivo){notify('A meta do desafio já existe.');return;}
+      openGoal('goal');
+      goalForm.elements.namedItem('name').value=NOME_DESAFIO_52;
+      goalForm.elements.namedItem('target').value='2756';
+      goalForm.elements.namedItem('saved').value='0';
+      return;
+    }
+    if(button.dataset.action==='challenge-week'){
+      const semana=Number(button.dataset.week),valor=valorSemana52(semana);
+      const estado=resumirDesafio52(data);
+      if(!valor||!estado.objetivo||estado.objetivo.id!==id||estado.semanas[semana-1].registrado)return;
+      if(investimentos.abrir(id)){
+        investmentForm.elements.namedItem('description').value=descricaoSemana52(semana);
+        investmentForm.elements.namedItem('amount').value=String(valor);
+        investmentForm.elements.namedItem('category').value=CATEGORIA_DESAFIO_52;
+      }
+      return;
+    }
     if(button.dataset.action==='add')openTransaction(button.dataset.type);
     else if(button.dataset.action==='edit')openTransaction(null,id);
     else if(button.dataset.action==='add-goal')openGoal(button.dataset.type);
@@ -358,7 +402,11 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     else if(button.dataset.action==='mark-aporte'){
       if(!notificacoes.pendentes().some(a=>a.key===id))return;
       const completedAportes=[...(data.completedAportes||[]),id];
-      if(persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
+      if(await persist({...data,completedAportes})){renderReminderCount();renderReminderDialog();notify('Lembrete concluído.');}
+    }
+    else if(button.dataset.action==='dismiss-notification'){
+      if(notificacoes.dispensar(id))notify('Aviso dispensado; nenhum dado financeiro foi alterado.');
+      else notify('Não foi possível dispensar a notificação.');
     }
     else if(button.dataset.action==='link-allocation'){
       const allocation=(data.allocations||[]).find(a=>a.id===id);
@@ -368,7 +416,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
       if(!podeAplicarNoObjetivo(goal.saved,allocation.amount)){notify('O resgate excede o valor guardado nesse objetivo.');return;}
       const goals=data.goals.map(g=>g.id===goalId?{...g,saved:n2(g.saved+allocation.amount)}:g);
       const allocations=data.allocations.map(a=>a.id===id?{...a,goalId}:a);
-      if(persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
+      if(await persist({...data,goals,allocations})){render();notify('Aplicação vinculada ao objetivo.');}
     }
     else if(button.dataset.action==='delete'){
       const t=data.transactions.find(v=>v.id===id);
@@ -376,13 +424,13 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
         notify('Este salário tem investimentos vinculados. Altere a origem deles antes de excluir.');return;
       }
       if(t&&await dialogos.confirmar({titulo:'Excluir lançamento',mensagem:`Excluir "${t.description}"${t.recurring?' de todos os meses':''}?`,acao:'Excluir lançamento',perigoso:true})){
-        if(persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
+        if(await persist({...data,transactions:data.transactions.filter(v=>v.id!==id)})){render();notify('Lançamento excluído.');}
       }
     } else if(button.dataset.action==='delete-goal'){
       const g=data.goals.find(v=>v.id===id);
       if(g&&await dialogos.confirmar({titulo:'Excluir meta',mensagem:`Excluir "${g.name}"? O valor registrado como guardado também será removido desta meta.`,acao:'Excluir meta',perigoso:true})){
         const allocations=(data.allocations||[]).map(a=>a.goalId===id?{...a,goalId:''}:a);
-        if(persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
+        if(await persist({...data,goals:data.goals.filter(v=>v.id!==id),allocations})){render();notify('Meta excluída. Aplicações preservadas sem vínculo.');}
       }
     }
   });
@@ -402,7 +450,7 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   });
   document.querySelectorAll('.close-dialog').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
   for(const dialog of [transactionDialog,goalDialog,reminderDialog])dialog.addEventListener('click',event=>{if(cliqueForaDoDialogo(event,dialog))dialog.close();});
-  transactionForm.addEventListener('submit',event=>{
+  transactionForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const f=transactionForm.elements;
     const type=f.namedItem('type').value;
@@ -410,16 +458,18 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const description=f.namedItem('description').value.trim();
     const date=f.namedItem('date').value;
     const category=f.namedItem('category').value;
-    if(!description||!(amount>0&&amount<=999999999)||!validarDataISO(date)||!categorySet(type).includes(category)){notify('Confira os dados do lançamento.');return;}
     const id=f.namedItem('id').value;
     const previous=data.transactions.find(t=>t.id===id);
-    const entry={id:id||uniqueId(),type,description,amount,date,category,recurring:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
+    if(!description||!(amount>0&&amount<=999999999)||!validarDataISO(date)||
+      !(categorySet(type).includes(category)||(previous?.category===category&&previous.type===type))){notify('Confira os dados do lançamento.');return;}
+    const entry={...previous,id:id||uniqueId(),type,description,amount,date,category,
+      recurring:previous?.commitmentId?false:f.namedItem('recurring').checked,createdAt:previous?.createdAt||new Date().toISOString()};
     const next={...data,transactions:id?data.transactions.map(t=>t.id===id?entry:t):[...data.transactions,entry]};
     const vinculos=validarVinculosSalariais(next);
     if(!vinculos.ok){notify(`${vinculos.motivo} Corrija os investimentos antes de alterar o salário.`);return;}
-    if(persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
+    if(await persist(next)){registrarEvento(id?'EDITAR_LANCAMENTO':'CRIAR_LANCAMENTO','dados');transactionDialog.close();month=date.slice(0,7);render();notify(id?'Lançamento atualizado.':type==='income'?'Renda salva. 🔔 Confira o aporte no sininho.':'Lançamento salvo.');}
   });
-  goalForm.addEventListener('submit',event=>{
+  goalForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const f=goalForm.elements;
     const name=f.namedItem('name').value.trim();
@@ -431,20 +481,38 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
     const id=f.namedItem('id').value;
     const entry={id:id||uniqueId(),kind,name,target,saved,deadline};
     const next={...data,goals:id?data.goals.map(g=>g.id===id?entry:g):[...data.goals,entry]};
-    if(persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();objectiveKind=kind;render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
+    if(await persist(next)){registrarEvento(id?'EDITAR_META':'CRIAR_META','dados');goalDialog.close();objectiveKind=kind;render();notify(id?'Valor atualizado.':'Objetivo salvo.');}
   });
   const backup = iniciarModuloBackup(common);
   folderBackup = backup.folderBackup;
   iniciarModuloCsv({...common, goalCandidates, hideBackupMenu: backup.hideBackupMenu});
+  const recuperacao=iniciarRecuperacaoConflitos({espelho,storage:localStorage,chave:KEY,
+    validar:arquivo=>validarBackup({...arquivo,app:'meu-dinheiro-essencial',version:1},CATEGORIES),
+    notificar:notify,registrarEvento,confirmar:dialogos.confirmar,
+    aoRecuperar:raw=>{
+      data=normalizarDadosLocais(JSON.parse(raw));
+      storageLocked=false;
+      repositorio.sincronizadoAposRecuperacao(raw);
+      guardaConcorrencia.registrarGravacao(raw);
+      backup.retomarAposRecuperacao();
+      folderBackup?.schedule();
+      render();
+    }});
   const atualizador=iniciarAtualizador({notify,registrar});
   const ajustes=iniciarAjustes({...common,gestor:preferencias,hideBackupMenu:backup.hideBackupMenu,
-    onSave:()=>folderBackup?.schedule()});
+    onSave:()=>{Object.assign(CATEGORY_ICONS,preferencias.obter().categoriaIcones);folderBackup?.schedule();}});
   const limpeza=iniciarLimpezaDados({confirmar:dialogos.confirmar,notify,
     apagarDados:()=>apagarDadosLocais({storage:localStorage,chave:KEY,
       pausarBackup:()=>folderBackup?.pause(),
+      antesRemocao:async()=>{
+        if(!guardaConcorrencia.podeGravar())throw new Error('Outra aba alterou os dados');
+        if(!await espelho.apagar())throw new Error('Espelho indisponível');
+      },
       aposLimpeza:()=>{
-        data={transactions:[],goals:[],allocations:[],completedAportes:[]};
+        data={transactions:[],goals:[],allocations:[],completedAportes:[],commitments:[]};
         storageLocked=false;
+        repositorio.sincronizadoAposExclusao();
+        backup.retomarAposRecuperacao();
         search='';filterCategory='';
         // A referência à meta excluída não deve ficar órfã nas preferências.
         const prefs=preferencias.obter();
@@ -458,11 +526,15 @@ import {CATEGORIAS_RENDA,CATEGORIAS_DESPESA,ICONES_DESPESA,renderizarOpcoesDespe
   const diagnostico=iniciarDiagnostico({...common,hideBackupMenu:backup.hideBackupMenu,
     getFolderState:()=>folderBackup?.getState(),getUpdateStatus:()=>atualizador.getStatus(),
     getStorageLocked:()=>storageLocked,getCdiStatus:()=>Boolean(validCdiQuote()),
+    getPersistenciaState:()=>({...espelho.obterEstado(),...repositorio.obterEstado()}),
+    getPersistenciaCheck:()=>espelho.conferir(localStorage.getItem(KEY)),
     getNotificationStatus:()=>notificacoes.getStatus(),obterLogs,configurarDetalhado,modoDetalhado});
   registrarModulosDoApp({dialogos,moduloSaude,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup:backup,
-    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,
-    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico});
+    moduloCsv:iniciarModuloCsv,atualizador,ajustes,limpeza,recuperacao,acaoRapida,investimentos,calendarioFinanceiro,preferencias,notificacoes,relatorioPdf,moduloCompromissos,
+    regras:{calcularAporte,calcularPlanoAporte},logger:{obterLogs},diagnostico,espelho,repositorio});
+  await inicioPersistencia;
   renderNav();render();
+  if(storageLocked)notify('Dados protegidos: confira Recuperação de cópias em Ajustes.');
   if(typeof MutationObserver==='function')
     new MutationObserver(sincronizarAlertasNav).observe(document.querySelector('.nav-alert-sources'),{attributes:true,attributeFilter:['class'],subtree:true});
   refreshCdiSilently();

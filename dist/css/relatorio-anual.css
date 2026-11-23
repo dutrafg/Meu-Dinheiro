@@ -1,0 +1,23 @@
+.annual-panel>summary{cursor:pointer;font-size:1.1rem;font-weight:750;color:var(--text);padding:2px 0}
+.annual-panel[open]>summary{margin-bottom:18px}
+.annual-controls{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:15px}
+.annual-controls strong{font-size:1.25rem}
+.annual-controls button{display:grid;place-items:center;width:43px;height:43px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--accent-text);font-size:1.5rem;cursor:pointer}
+.annual-bars-scroll{overflow-x:auto;width:100%}
+.annual-bars{min-width:440px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;height:192px;align-items:end;padding:12px 0}
+.annual-bar-month{height:100%;display:flex;flex-direction:column;justify-content:end;gap:8px;align-items:center}
+.annual-bar-month small{font-size:.69rem;color:var(--sub)}
+.annual-bar-pair{display:flex;align-items:end;gap:2px;width:100%;height:153px;justify-content:center;border-bottom:1px solid var(--border)}
+.annual-bar-pair i{display:block;width:44%;max-width:20px;min-height:2px;border-radius:5px 5px 0 0}
+.annual-bar-income{background:var(--green)}
+.annual-bar-expense{background:var(--red)}
+.annual-legend{display:flex;justify-content:center;gap:20px;color:var(--sub);font-size:.81rem}
+.annual-legend span:first-child{color:var(--green-text)}
+.annual-legend span:last-child{color:var(--red-text)}
+.annual-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0}
+.annual-summary-grid>div{display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);background:var(--bg);border-radius:13px;padding:13px;min-width:0}
+.annual-summary-grid span{color:var(--sub);font-size:.81rem}
+.annual-summary-grid strong{font-size:clamp(1rem,3vw,1.35rem);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.annual-best{padding:13px 14px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:9px;line-height:1.45}
+.annual-share{margin-top:14px;min-height:45px}
+@media(max-width:500px){.annual-summary-grid>div{padding:11px}.annual-summary-grid strong{font-size:1rem}}

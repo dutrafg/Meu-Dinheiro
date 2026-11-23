@@ -14,6 +14,18 @@
 .proto-today-balance-value{display:block;color:var(--green-text);font-size:clamp(1.5rem,3vw,2rem);font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:9px 0 5px;overflow-wrap:anywhere}
 .proto-today-balance.is-negative .proto-today-balance-value{color:var(--red-text)}
 .proto-today-balance p{color:var(--sub);font-size:.77rem;line-height:1.4;margin:0}
+.proto-budget-card{margin:13px 0 16px;border:1px solid var(--border);background:var(--card)}
+.proto-budget-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.proto-budget-heading h3{margin:0}
+.proto-budget-heading button{min-height:40px;font-size:.81rem}
+.proto-budget-value{display:block;margin:12px 0 3px;font-size:clamp(1.75rem,5vw,2.65rem);color:var(--green-text);font-variant-numeric:tabular-nums}
+.proto-budget-card p{font-size:.87rem;line-height:1.5;color:var(--sub);margin:8px 0}
+.proto-budget-track{margin:14px 0 7px}
+.proto-budget-track .progress-bar-fill{background:var(--green)}
+.proto-budget-labels{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.79rem;color:var(--sub);font-weight:680}
+.proto-budget-card .proto-budget-alert{margin:14px 0;padding:11px 13px;border-left:4px solid var(--red-text);border-radius:8px;background:var(--red-bg);color:var(--red-text);font-weight:750}
+.proto-budget-card .proto-budget-note{font-size:.77rem}
+.proto-budget-card .proto-budget-goal{margin-top:13px;padding-top:12px;border-top:1px solid var(--border);color:var(--text)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 15px}
 .minicard{border-radius:16px;padding:20px;min-width:0}
 .minicard .lbl{font-size:.85rem;opacity:.86;font-weight:650}

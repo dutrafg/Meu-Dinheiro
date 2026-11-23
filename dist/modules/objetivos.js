@@ -1,10 +1,12 @@
+import {percentualObjetivo,restanteObjetivo,resumirObjetivos,candidatosVinculo} from './dominio-objetivos.js';
+import {renderDesafio52} from './desafio-52.js';
+
 export function criarModuloObjetivos(ctx) {
-  const {getData, n2, esc, money, header, empty, savingPlan, currentMonth, getCurrentMonth,
+  const {getData, esc, money, header, empty, savingPlan, currentMonth, getCurrentMonth,
     monthLabel, reserveYieldEstimate, fmtDate, parseDate, icon, goalForm, goalDialog} = ctx;
 
   function goalProgressPercent(goal) {
-    const target=Number(goal.target),saved=Number(goal.saved);
-    return target>0&&Number.isFinite(target)&&Number.isFinite(saved)?Math.min(100,Math.max(0,Math.round(saved/target*100))):0;
+    return percentualObjetivo(goal);
   }
   function progressLine(goal) {
     const pct=goalProgressPercent(goal);
@@ -14,13 +16,15 @@ export function criarModuloObjetivos(ctx) {
   function renderGoals(kind) {
     const data = getData();
     const isDream=kind==='dream';
-    const goals=data.goals.filter(g=>g.kind===kind);
-    const looseAllocations=(data.allocations||[]).filter(a=>!(data.goals||[]).some(g=>g.id===a.goalId)&&(isDream?a.kind==='dream':['reserve','goal'].includes(a.kind)));
-    const sumSaved=Math.max(0,n2(goals.reduce((s,g)=>s+g.saved,0)+looseAllocations.reduce((s,a)=>s+a.amount,0)));
-    const sumTarget=n2(goals.reduce((s,g)=>s+g.target,0));
+    const {objetivos:goals,guardado:sumSaved,alvo:sumTarget}=resumirObjetivos(data,kind);
     return `${header('')}
+      <div class="objective-kind-switch" role="group" aria-label="Tipo de objetivo">
+        <button type="button" class="objective-kind-button ${!isDream?'active':''}" data-objective-tab="goal" aria-pressed="${!isDream}">${icon('target')} Metas e reserva</button>
+        <button type="button" class="objective-kind-button ${isDream?'active':''}" data-objective-tab="dream" aria-pressed="${isDream}">${icon('sparkles')} Sonhos</button>
+      </div>
       <section class="card proto-total-card"><h3>${icon(isDream?'sparkles':'target')} ${isDream?'Seu sonho':'Reserva e metas'}</h3><div class="proto-goal-total">${money(sumSaved)} <span>${sumTarget>0?`de ${money(sumTarget)}`:'registrados'}</span></div></section>
       ${!isDream?renderMonthlyReserve():''}
+      ${!isDream?renderDesafio52(data,{esc,money}):''}
       ${goals.length?`<div class="proto-goals-grid${goals.length===1?' single':''}">${goals.map(g=>renderGoal(g)).join('')}</div>`:
       `<div class="card proto-empty-card">${empty(isDream?'Qual sonho você quer realizar? Toque em + para criar.':'Crie sua reserva ou uma meta de economia pelo botão +.',isDream?'sparkles':'target')}</div>`}
       ${renderAllocations(kind)}
@@ -54,7 +58,7 @@ export function criarModuloObjetivos(ctx) {
   }
   function renderGoal(g) {
     const pct=goalProgressPercent(g);
-    const left=Math.max(0,n2(g.target-g.saved));
+    const left=restanteObjetivo(g);
     const deadline=g.deadline?fmtDate.format(parseDate(g.deadline)):'Sem prazo definido';
     const isDream=g.kind==='dream';
     return `<article class="card proto-goal-card ${isDream?'dream':''}">
@@ -85,8 +89,7 @@ export function criarModuloObjetivos(ctx) {
     form.namedItem('name').focus();
   }
   function goalCandidates(kind){
-    const data = getData();
-    return data.goals.filter(g=>kind==='dream'?g.kind==='dream':g.kind==='goal'&&(kind==='reserve'?/reserva|emerg[eê]ncia/i.test(g.name):!/reserva|emerg[eê]ncia/i.test(g.name)));
+    return candidatosVinculo(getData(),kind);
   }
   return {renderGoals, progressLine, goalProgressPercent, openGoal, goalCandidates};
 }

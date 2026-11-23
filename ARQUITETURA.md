@@ -24,18 +24,27 @@ dist/
     impressao.css          # Saída A4 sem controles, incluindo tema claro
   app.js                   # Orquestração, persistência e eventos legados
   modules/
-    resumo.js              # Tela Resumo e gráficos por categoria
+    resumo.js              # Tela Resumo e gráficos por categoria; consulta o motor financeiro
     calendario-financeiro.js # Cálculo diário, intensidade, renderização e detalhes
     saude.js               # Poupança, fôlego e temperatura: regras puras e card
     notificacoes.js        # Dispensar/restaurar lembretes sem concluir aportes
+    compromissos.js        # P2: ocorrência pura de contas, parcelas e pagamento idempotente
+    compromissos-interface.js # P2: painel de contas/cartão, cadastro e confirmação do pagamento
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
-    objetivos.js           # Metas/Sonho, progresso, reserva e formulário
-    investimentos.js       # Cadastro e edição de aportes vinculados a objetivos
+    categorias-rapidas.js  # P2.6c: seleção visual de categorias, sem teclado monetário duplicado
+    objetivos.js           # Interface de metas e sonhos, sem fórmulas duplicadas
+    dominio-objetivos.js   # P1.3: progresso, restante, totalização e vínculo de objetivos
+    investimentos.js       # Interface de cadastro e edição; preserva exports históricos
+    dominio-investimentos.js # P1.4: regras puras de aportes e vínculos salariais
     concorrencia-dados.js   # Conflitos entre abas e proteção opcional do armazenamento
     ciclo-periodo.js        # Dia/mês atual após retomar o PWA ou virar a data
     backup.js              # Backup completo JSON e cópias na pasta
+    espelho-indexeddb.js   # Espelho transacional e leitura de recuperação somente leitura
+    recuperacao-conflitos.js # Inspeção manual e duas exportações sem substituir origens
+    repositorio-financeiro.js # Fonte financeira primária assíncrona IndexedDB
+    ofx.js                  # Conversão local de extrato OFX para importação revisada
     csv-interface.js       # Visualização, classificação e importação CSV
     validacao.js           # Datas, integridade e restauração segura
     atualizador.js         # Detecção de versões e confirmação do usuário
@@ -61,11 +70,13 @@ dist/
 1. `index.html` importa `app.js` como módulo JavaScript nativo (`type="module"`).
 2. `app.js` carrega os utilitários existentes e inicia os módulos com dependências explícitas (funções e getters).
 3. Cada tela devolve HTML, mas **não grava dados por conta própria**.
-4. Os controladores alteram os registros por `persist(next)`, que atualiza `localStorage` e agenda o backup automático em pasta, quando habilitado.
+4. Os controladores alteram os registros por `await persist(next)`: o repositório aguarda a confirmação do IndexedDB primário, espelha no `localStorage` compatível e só então atualiza a UI e agenda o backup em pasta.
 5. `render()` atualiza somente `#view-content`, preservando os formulários fixos em `#settings-page` para que controladores de backup, CSV e atualização não percam referências/eventos. Ajustes é a sexta view e fica oculta quando outra área está ativa.
 6. `preferencias.js` usa a chave separada `meu-dinheiro-essencial:preferencias:v1`; ajustes de aparência e aporte não regravam lançamentos. Backups novos incluem preferências, com compatibilidade para JSON v1 antigo.
 7. `notificacoes.js` utiliza `meu-dinheiro-essencial:avisos-ocultos:v1`, isolada dos dados de aportes realizados. Dispensar um aviso não altera `completedAportes`; restaurar reexibe apenas o que ainda não foi concluído.
 8. `concorrencia-dados.js` compara a versão local do JSON antes de cada gravação. Alterações de outra aba são sincronizadas se não houver edição em diálogo; caso contrário, a gravação antiga é bloqueada até o usuário resolver o conflito. Não cria chaves novas nem muda o formato financeiro.
+9. `compromissos.js` projeta contas e parcelas; `compromissos-interface.js` faz as confirmações por `persist()`, registrando uma despesa vinculada a cada ocorrência mensal. A exclusão do plano não apaga lançamentos históricos. Os cálculos evitam contar uma baixa duas vezes.
+10. Preferências de categorias personalizadas, ocultas e respectivos ícones não alteram o esquema financeiro e conservam nomes de categorias antigas nos lançamentos. `notificacoes.js` somente observa fatos locais, sem push, nem baixar pagamentos.
 9. `ciclo-periodo.js` atualiza o mês corrente e a data atual após retorno à aba, `pageshow` ou passagem do tempo, mantendo a navegação histórica intocada.
 
 ## Regras de manutenção
@@ -83,6 +94,8 @@ dist/
 - Para modificar somente a interface, altere o arquivo da área em `dist/modules/` e/ou `dist/css/` correspondente.
 - Ao criar, renomear ou remover qualquer script/CSS/ícone, atualize `ASSETS` em `dist/sw.js` e incremente a versão de `CACHE`.
 - **Versão visível e sincronizada:** `VERSAO_EM_EXECUCAO` em `dist/modules/atualizador.js` representa o código atualmente aberto e deve ser atualizado junto com `CACHE` em `dist/sw.js` a cada publicação. O teste `tests/atualizador.test.cjs` impede a publicação caso os números não coincidam. O Diagnóstico confere se a versão aparece corretamente em Ajustes.
+- **Recuperação segura (P0.3c1):** `recuperacao-conflitos.js` só lê as duas origens quando o usuário solicita inspeção, exibe contagens sem registros financeiros e gera arquivos JSON independentes após revalidar que ambas não mudaram. Essa fase de inspeção não escreve e não contorna tombstones; a seleção só é liberada depois dos dois backups.
+- **P0.3c2/P0.4/P0.5:** recuperação agora exige as duas exportações, escolha e dupla confirmação. `repositorio-financeiro.js` confirma o commit indexado antes da gravação do espelho local. Operações CSV, OFX, backup, investimentos e formulários devem aguardar a Promise de `persist`. Um snapshot sem marcação primária nunca é restaurado automaticamente se a chave local sumir.
 - **Exclusão local protegida:** `modules/limpeza-dados.js` orquestra confirmação visual, frase `APAGAR` e exclusão somente da chave financeira; `folder-backup.js` pausa antes de apagar, aguarda gravações ativas e protege backups externos. `tests/limpeza-dados.test.cjs` e `tests/folder-backup.test.cjs` cobrem cancelamento, erros e recuperação.
 - **Relatório PDF explícito:** `modules/relatorio-pdf.js` consulta `#pdf-report-type` em Ajustes e não depende de uma aba visitada anteriormente; o modelo puro `modules/relatorio-pdf-conteudo.js` inclui movimentações do mês e, no resumo completo, aplicações e objetivos. O Diagnóstico confirma a presença e a validade do seletor; testes verificam os dados de exemplo.
 - **Largura responsiva:** `css/estrutura.css` libera a largura de desktop, `css/responsivo.css` organiza tablet/smartphone e `css/ajustes.css` mantém a página de configurações fluida. O CSS de impressão não herda as dimensões da interface.
@@ -114,3 +127,86 @@ O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão
 `tests/auditoria-codigo.test.cjs` verifica detecção de CSS/funções sem uso, preservação de classes dinâmicas, leitura dos módulos e catálogo e mantém a revisão estática ativa na integração contínua.
 `tests/estabilidade-v31.test.cjs` exercita colisão entre abas, armazenamento persistente opcional, mudança de dia/mês, restauração legada, limite salarial, CSV e contraste de temas. `scripts/verificar-interface.cjs` também confere a escolha explícita da origem em ambiente de navegador, quando disponível.
 `tests/diagnostico-proposta.test.cjs` valida os requisitos da proposta e sua integração sem falsear erros; `tests/navegacao.test.cjs` simula as seis abas, o descarte de prévias e os alertas de atualização/backup.
+
+## P1.1 e P1.2 — Motor financeiro único
+
+As regras puras para ocorrências de recorrências, listagem por mês, totais monetários e reserva principal passam a residir em dist/modules/motor-financeiro.js. O app.js oferece somente adaptadores finos para as telas; os testes do motor não dependem do DOM ou banco de dados.
+
+Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI bruto de 21 dias úteis também mora no motor. A data de referência é um argumento explícito; a função de percentual configurável é injetada a partir de `regras-financeiras.js`, preservando uma única origem para essa regra. O `app.js` apenas fornece estado e formata o texto. Simulações não alteram saldos, investimentos, conclusão de aportes nem armazenamento.
+
+## P1.3–P1.5 — Domínios puros e contratos de compatibilidade (v55)
+
+- `dominio-objetivos.js` contém o progresso, restante, soma de metas/sonhos sem contar aplicações vinculadas duas vezes, seleção de candidatos e cartões de destaque. `objetivos.js` controla apenas UI, formulários e formatação.
+- `dominio-investimentos.js` contém localização de salários, validação dos vínculos, inserção e edição imutável de investimentos. `investimentos.js` controla os diálogos e reexporta as APIs antigas para preservar consumidores existentes.
+- `motor-financeiro.js` também calcula o saldo disponível histórico até a data de referência. `resumo.js` faz a renderização e mantém o export antigo como encaminhamento.
+- Nenhum domínio puro lê DOM, IndexedDB, localStorage, rede ou relógio implicitamente (datas são argumentos). A interface continua usando `persist()` para submeter alterações; nenhum cálculo grava dados.
+- Dois novos módulos integram catálogo, registro de autoverificações, cache PWA e prévia HTML; testes validam dados imutáveis, sintaxe JS, valores em centavos e carga com 10 mil aplicações sintéticas.
+
+## P2.1 — Entrada rápida e histórico responsivo (v56)
+
+- A versão v65 simplifica a interface móvel: **somente o botão `+`** abre renda, despesa, meta, sonho e investimento; a barra fixa com dois botões de lançamento foi retirada conforme a preferência do usuário. O PC mantém os atalhos do Resumo.
+- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. **Desde a v66, também no smartphone o campo fica visível e editável com teclado nativo (`inputmode=decimal`), sem grade numérica interna nem alternância**. Os botões de categoria usam a lista existente.
+- Os lançamentos em Renda/Despesas recebem cabeçalhos por dia, sem alterar a ordem ou os dados persistidos. No PC, o Resumo ganhou ações diretas de renda e despesa.
+- As fotos são referência de fluxo e composição, não componentes copiados. Nenhum esquema de dados, regra de saldo ou comportamento de backup foi modificado.
+
+## P2.1 — Homologação no navegador
+
+Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e executa scripts/verificar-interface.cjs em um servidor efêmero com lançamentos fictícios. Nenhum dado real é carregado, e a distribuição PWA não inclui a dependência de teste.
+
+## P2.7b/P3.2 — Offline reproduzível (v63)
+
+- `diagnostico.js` possui verificadores puros de read-only para inspecionar o pacote essencial no Cache Storage, incluindo assinaturas/estruturas de HTML, scripts, folhas CSS, manifesto e PNG; nenhum teste grava no cache nem lê conteúdo financeiro.
+- O mesmo diagnóstico usa verificações separadas para a prévia HTML única: scripts e estilos incorporados e inexistência de dependências obrigatórias da internet, sem exigir Service Worker para `file://`.
+- `scripts/gerar-html-teste.cjs` gera um HTML completo portátil com indicador de homologação e botão que abre o diagnóstico; `tests/offline-completo.test.cjs` detecta recursos faltando, HTML servido como JS, PNG inválido, referências externas e sintaxe do arquivo único.
+- `scripts/verificar-interface.cjs` instala SW, coloca o navegador offline de verdade, recarrega e confirma navegação/IndexedDB/cache; também executa diagnóstico do arquivo local com conexão desligada. O CI Chromium é a validação da plataforma porque o Chromium local pode ser bloqueado pelo sandbox.
+
+## P3.3 — Diagnóstico baseado no layout atual (v64)
+
+- `registro-modulos.js` usa `verificarOrcamentoSintetico()` para calcular a cota real (9,65) e confirmar em centavos o orçamento restante (280,00), sem assumir valor arredondado incorretamente; `tests/orcamento.test.cjs` cobre o cenário e uma implementação propositalmente errada.
+- `diagnostico.js` inspeciona a presença real de botões em `#reports-page` e a ausência de duplicação em `#settings-page`, substituindo a heurística antiga de procurar os termos “PDF” e “backup” no título de Ajustes. `tests/diagnostico.test.cjs` cobre ausência e duplicação, e o Chromium valida o resultado no HTML offline.
+
+## P2.6b/P3.4 — Revisão visual móvel (v65)
+
+- `responsivo.css` apresenta as seis áreas em grade proporcional, com ícones sobre os rótulos. `scripts/verificar-interface.cjs` mede limites de cada botão/ícone/rótulo nas larguras 320, 384, 390 e 768 px.
+- `acao-rapida.js` conserva o menu `+` como única entrada rápida flutuante do smartphone. `lancamentos.js` não força foco ao abrir o formulário; desde a v66, `categorias-rapidas.js` se limita aos botões de categorias, sem controlar o campo monetário ou abrir teclado próprio.
+- `diagnostico.js` faz checagens somente de leitura para grade sem sobreposição, ausência da barra duplicada e alternativa de entrada monetária. Nenhum dado persistido, esquema ou regra de cálculo muda.
+
+## P2.6c — Entrada monetária nativa sem teclado interno (v66)
+
+- A pedido do usuário, o HTML/CSS do teclado de centavos e seu alternador foram removidos. Não ficam botões ocultos nem JavaScript de formatação paralelo ao campo numérico, reduzindo a altura do diálogo no smartphone.
+- O módulo antigo `teclado-monetario.js` foi substituído por `categorias-rapidas.js`, que só atualiza os ícones e o `<select>` de categorias. Catálogo do diagnóstico, autoverificação, cache SW, HTML único e testes cobrem a substituição.
+- O teste E2E confirma que o valor é editável no campo nativo, sem controles extras, e permanece idêntico após selecionar categoria. Diagnóstico sinaliza regressões de campo bloqueado ou reaparecimento de teclado próprio.
+
+## P2.6d — Atualização pontual de categorias (v67)
+
+- `ajustes.js` não usa `replaceChildren()` para Tirar/Mostrar após gravar a preferência: atualiza somente o rótulo e botão que já estão no DOM. Isso preserva foco e rolagem no smartphone ao processar várias categorias.
+- A lista ainda é reconstruída ao trocar entrada/despesa ou criar/renomear, quando seus itens realmente podem mudar. O repositório financeiro não participa dessa operação; teste E2E verifica rolagem e identidade do botão após Tirar/Mostrar.
+
+## P2.2 — Orçamento diário e preferência mensal (v57)
+
+- `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.
+- `resumo.js` apenas apresenta a leitura no mês atual; `ajustes.js` valida campos opcionais e grava exclusivamente as preferências locais. Não há escrita no repositório de lançamentos, migração nem alteração nos backups financeiros.
+- O catálogo, registro obrigatório, SW e gerador de HTML incluem o novo módulo e testes cobrem recorrências, fim de mês, orçamento excedido e compatibilidade com preferências anteriores.
+
+## P2.3a — Agenda de compromissos e previsões (v58)
+
+- `previsoes.js` é um módulo de leitura: recebe a lista de transações e datas de referência para listar as próximas despesas registradas ou recorrentes e totalizar os 12 meses seguintes via `motor-financeiro.js`.
+- `Relatórios` recebe a tabela responsiva de 12 meses e agenda próxima sem formulário nem ação de baixa. Conteúdo de lançamentos é escapado. O modelo atual não possui obrigação distinta de transação: por isso não apresenta etiquetas “paga” ou “atrasada”.
+- Contratos de backup, IndexedDB, importação e exclusão permanecem inalterados. O módulo foi registrado em catálogo/autodiagnóstico, SW, import do app e HTML único, com testes puros e inspeção de navegador.
+
+## P2.5a — Resumo anual sem dupla contagem (v59)
+
+- `relatorio-anual.js` calcula somente valores vencidos em 12 meses com data de referência explícita, aproveitando `motor-financeiro.js`. Aportes são somados separadamente e **não** subtraídos novamente do saldo dos lançamentos.
+- Interface com barras para entradas/saídas, navegação de anos, melhor mês e compartilhamento iniciado por toque. Nomes de meses e valores são renderizados sem strings financeiras em logs. Se a API de compartilhar não estiver disponível, oferece cópia pelo navegador.
+- Regras puras, autodiagnóstico, cache PWA, HTML independente e Chromium integram a regressão. Não introduz transações ou campos persistentes.
+
+## P2.5b — Desafio de 52 semanas por aportes vinculados (v60)
+
+- `desafio-52.js` define os 52 valores, gera a grade e deriva o andamento somente da coleção financeira `allocations` ligada à meta nominal dedicada. Exige correspondência de semana, valor e categoria; duplicatas são sinalizadas.
+- `objetivos.js` renderiza o desafio com as outras metas. `app.js` apenas abre o diálogo de meta ou de investimento existente e preenche valores; a escolha da origem e o commit ficam nas validações e no repositório já testados. Sem novos formatos de backup ou migrações.
+- Testes de fórmulas e situações inconsistentes, E2E mobile, autodiagnóstico, HTML independente e SW fazem parte da revisão.
+
+## P2.6a/P2.7a — Ordem visual e cobertura de larguras (v61)
+
+- CSS responsivo reorganiza apenas a exibição móvel do Resumo, colocando o orçamento antes da visão gráfica. Nenhum elemento financeiro é duplicado, removido ou gravado; desktop e DOM fonte mantêm a ordem estrutural anterior.
+- Foco da navegação inferior destacado, com seis módulos preservados. E2E confere ausência de overflow nas larguras 320, 390 e 768 px, além das rotas já cobertas em desktop e mobile.

@@ -1,11 +1,22 @@
+import {iniciarCategoriasRapidas} from './categorias-rapidas.js';
+
 export function criarModuloLancamentos(ctx) {
   const {getData, getMonth, getSearch, getFilterCategory, transactionsInMonth,
     n2, categorySet, header, money, esc, CATEGORY_ICONS, fmtDate, parseDate,
     icon, transactionForm, transactionDialog, currentMonth, getCurrentMonth, isoDate, renderizarOpcoesDespesas} = ctx;
   const mesAtual=()=>getCurrentMonth?.()||currentMonth;
+  const categoriasRapidas=iniciarCategoriasRapidas({dialog:transactionDialog,form:transactionForm,categorySet,icones:CATEGORY_ICONS,esc});
 
-  function entryList(items, emptyText) {
-    return items.length ? items.map(renderEntry).join('') : `<div class="proto-empty">${esc(emptyText)}</div>`;
+  function entryList(items, emptyText,agruparPorDia=false) {
+    if(!items.length)return `<div class="proto-empty">${esc(emptyText)}</div>`;
+    if(!agruparPorDia)return items.map(renderEntry).join('');
+    let ultimoDia='';
+    return items.map(item=>{
+      const cabecalho=item.occurrence!==ultimoDia?
+        `<h4 class="proto-date-group" data-day-group="${esc(item.occurrence)}">${fmtDate.format(parseDate(item.occurrence))}</h4>`:'';
+      ultimoDia=item.occurrence;
+      return cabecalho+renderEntry(item);
+    }).join('');
   }
 
   function renderTransactions(type) {
@@ -17,11 +28,11 @@ export function criarModuloLancamentos(ctx) {
     const normalized=search.toLocaleLowerCase('pt-BR');
     const list=all.filter(t=>(!filterCategory||t.category===filterCategory)&&(!normalized||`${t.description} ${t.category}`.toLocaleLowerCase('pt-BR').includes(normalized)));
     const total=n2(all.reduce((sum,t)=>sum+t.amount,0));
-    const categories=categorySet(type);
+    const categories=[...new Set([...categorySet(type),...all.map(item=>item.category)])];
     return `${header('',true)}
       <section class="card proto-total-card"><div class="proto-total-heading">${isIncome?'💵':'🧾'} ${isIncome?'Renda do mês':'Despesas do mês'}</div><div class="proto-big-total" style="color:${isIncome?'var(--green-text)':'var(--red-text)'}">${money(total)}</div></section>
       ${all.length?`<div class="filter-panel"><input class="search-field" id="transaction-search" type="search" value="${esc(search)}" placeholder="Buscar lançamento" aria-label="Buscar lançamento"/><select id="transaction-category" aria-label="Filtrar categoria"><option value="">Todas as categorias</option>${categories.map(c=>`<option value="${esc(c)}" ${filterCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>`:''}
-      <section class="card proto-list-card"><h3>${isIncome?'Fontes de renda':'Transações recentes'}</h3>${entryList(list,all.length?'Nenhum resultado para esse filtro.':isIncome?'Adicione sua primeira renda pelo botão +.':'Adicione sua primeira despesa pelo botão +.')}</section>
+      <section class="card proto-list-card"><h3>${isIncome?'Fontes de renda':'Transações recentes'}</h3>${entryList(list,all.length?'Nenhum resultado para esse filtro.':isIncome?'Adicione sua primeira renda pelo botão +.':'Adicione sua primeira despesa pelo botão +.',true)}</section>
       ${all.some(t=>t.recurring)?'<p class="section-note">↻ Itens recorrentes aparecem automaticamente nos meses seguintes.</p>':''}`;
   }
   function renderEntry(t) {
@@ -44,7 +55,9 @@ export function criarModuloLancamentos(ctx) {
     document.getElementById('transaction-type-toggle').classList.toggle('hidden',!!existing);
     document.getElementById('transaction-title').textContent=`${existing?'Editar':'Adicionar'} ${effectiveType==='income'?'renda':'despesa'}`;
     transactionDialog.showModal();
-    form.namedItem('description').focus();
+    // No smartphone, o usuário toca no campo Valor para abrir somente o teclado do sistema.
+    if(typeof window==='undefined'||!window.matchMedia?.('(max-width:879px)')?.matches)
+      form.namedItem('description').focus();
   }
   function setTransactionType(type,selectedCategory) {
     const form=transactionForm.elements;
@@ -54,7 +67,11 @@ export function criarModuloLancamentos(ctx) {
     cat.innerHTML=type==='expense'&&typeof renderizarOpcoesDespesas==='function'
       ?renderizarOpcoesDespesas(esc)
       :categorySet(type).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-    cat.value=categorySet(type).includes(choice)?choice:categorySet(type)[0];
+    // Categorias ocultas continuam editáveis quando presentes no registro histórico.
+    if(selectedCategory&&!categorySet(type).includes(selectedCategory))
+      cat.insertAdjacentHTML('beforeend',`<option value="${esc(selectedCategory)}">${esc(selectedCategory)} (histórica)</option>`);
+    cat.value=categorySet(type).includes(choice)||choice===selectedCategory?choice:categorySet(type)[0]||'';
+    categoriasRapidas.atualizar(type);
     document.querySelectorAll('[data-trans-type]').forEach(button=>button.classList.toggle('on',button.dataset.transType===type));
     document.getElementById('transaction-title').textContent=`Adicionar ${type==='income'?'renda':'despesa'}`;
   }

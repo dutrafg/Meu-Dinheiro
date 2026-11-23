@@ -18,11 +18,11 @@ test('Calendário não aceita datas inexistentes, inclusive em anos bissextos', 
   for (const date of ['2026-02-29','2026-02-31','2026-04-31','1900-02-29','2026-00-10','2026-13-01','2026-12-00','2026-12-32','2026-2-01','texto']) assert.equal(validarDataISO(date),false,date);
 });
 
-test('Backup existente restaura todas as quatro coleções sem alterar os valores', async () => {
+test('Backup existente restaura coleções antigas e adiciona compromissos vazios sem alterar valores', async () => {
   const {validarBackup} = await load('dist/modules/validacao.js');
   const original=backup();
   const restored=validarBackup(original,categories);
-  assert.deepEqual(restored,{transactions:original.transactions,goals:original.goals,allocations:original.allocations,completedAportes:original.completedAportes});
+  assert.deepEqual(restored,{transactions:original.transactions,goals:original.goals,allocations:original.allocations,completedAportes:original.completedAportes,commitments:[]});
   assert.equal(original.goals[0].saved,500);
 });
 
@@ -90,17 +90,21 @@ test('Falha na leitura bloqueia substituição automática e permite restauraç�
     localStorage:{getItem:key=>entries.get(key),setItem:(key,value)=>entries.set(key,value)},
     dialogos:{informar:(_,message)=>{warnings.push(message);return Promise.resolve(true);}},
     registrar:()=>{},console:{error:()=>{}},folderBackup:null,
+    espelho:{gravar:()=>Promise.resolve(true)},
+    repositorio:{gravar:async serializado=>{entries.set('meu-dinheiro-essencial:v1',serializado);return {ok:true,modo:'primario'};},
+      restaurarBackup:async serializado=>{entries.set('meu-dinheiro-essencial:v1',serializado);return {ok:true,modo:'primario'};}},
+    gravando:false,notify:()=>{},
   };
   vm.createContext(sandbox);
   vm.runInContext(`${code}\nthis.readData=readData;this.persist=persist;`,sandbox);
   sandbox.data=sandbox.readData();
   const corrupt=entries.get(sandbox.KEY);
   assert.equal(sandbox.storageLocked,true);
-  assert.equal(sandbox.persist({transactions:[tx()],goals:[goal()]}),false);
+  assert.equal(await sandbox.persist({transactions:[tx()],goals:[goal()]}),false);
   assert.equal(entries.get(sandbox.KEY),corrupt);
   assert.ok(warnings.some(message=>message.includes('bloqueada')));
   const recovered={transactions:[tx()],goals:[goal()],allocations:[],completedAportes:[]};
-  assert.equal(sandbox.persist(recovered,{allowRecovery:true}),true);
+  assert.equal(await sandbox.persist(recovered,{allowRecovery:true}),true);
   assert.equal(sandbox.storageLocked,false);
   assert.deepEqual(JSON.parse(entries.get(sandbox.KEY)).transactions,[tx()]);
 });

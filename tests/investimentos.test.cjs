@@ -5,8 +5,9 @@ const path=require('node:path');
 
 const read=name=>fs.readFileSync(path.join(__dirname,'../dist/modules',name),'utf8');
 const carregar=()=>{
-  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('dialogos.js').replace(/^export /gm,'')+'\n'+read('investimentos.js')
-    .replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
+  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('dialogos.js').replace(/^export /gm,'')+'\n'+
+    read('dominio-investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+    read('investimentos.js').replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'');
   return import(`data:text/javascript;base64,${Buffer.from(`${codigo}\nexport {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior,iniciarInvestimentos,CATEGORIAS_INVESTIMENTO,normalizarDadosLocais,validarBackup};`).toString('base64')}`);
 };
 const base=()=>({transactions:[],goals:[{id:'g',name:'Reserva',kind:'goal',target:1000,saved:20,deadline:''},
@@ -93,7 +94,7 @@ test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apen
   campos.get('amount').value='25';
   campos.get('category').value='Minha categoria';
   campos.get('origin').value='previous';
-  listeners.submit({preventDefault(){}});
+  await listeners.submit({preventDefault(){}});
   assert.equal(conteudo.goals[0].saved,45);
   assert.equal(conteudo.allocations.at(-1).category,'Minha categoria');
   assert.deepEqual(eventos.slice(-3),['log','fechar','render']);
@@ -102,7 +103,7 @@ test('Formulário exige objetivo, oferece categorias reutilizáveis e salva apen
   assert.equal(titulo.textContent,'Editar investimento');
   assert.equal(campos.get('id').value,'novo-id');
   campos.get('amount').value='35';
-  listeners.submit({preventDefault(){}});
+  await listeners.submit({preventDefault(){}});
   assert.equal(conteudo.goals[0].saved,55,'edita apenas a diferença de 10');
   assert.equal(conteudo.allocations.length,2,'não cria outro registro ao editar');
   assert.equal(avisos.at(-1),'Investimento atualizado sem duplicar o aporte.');

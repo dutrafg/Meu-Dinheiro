@@ -30,3 +30,11 @@ jobs:
           node --check dist/sw.js
       - name: Executar testes
         run: node --test tests/*.test.cjs
+
+      - name: Gerar HTML de homologação
+        run: node scripts/gerar-html-teste.cjs meu-dinheiro-roadmap-p0.html
+      - name: Disponibilizar HTML de homologação
+        uses: actions/upload-artifact@v4
+        with:
+          name: meu-dinheiro-roadmap-p0
+          path: meu-dinheiro-roadmap-p0.html

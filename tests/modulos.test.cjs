@@ -2,10 +2,13 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
+const {pathToFileURL}=require('node:url');
 
 const root = path.join(__dirname, '..');
 const read = filename => fs.readFileSync(path.join(root, filename), 'utf8');
-const load = async filename => import(`data:text/javascript;base64,${Buffer.from(read(filename).replace(/^import .*$/gm,'')).toString('base64')}`);
+const load = async filename => ['resumo.js','objetivos.js','lancamentos.js'].some(nome=>filename.endsWith('/'+nome))?
+  import(pathToFileURL(path.join(root,filename)).href):
+  import(`data:text/javascript;base64,${Buffer.from(read(filename).replace(/^import .*$/gm,'')).toString('base64')}`);
 
 function context(data) {
   const money = amount => `R$ ${Number(amount).toFixed(2)}`;

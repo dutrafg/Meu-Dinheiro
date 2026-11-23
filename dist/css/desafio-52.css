@@ -1,0 +1,18 @@
+.proto-challenge{margin:15px 0}
+.proto-challenge>summary{cursor:pointer;font-weight:750;font-size:1.03rem;line-height:1.4}
+.proto-challenge[open]>summary{margin-bottom:14px}
+.proto-challenge>p{color:var(--sub);line-height:1.5}
+.challenge-summary{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;align-items:baseline;margin:14px 0 10px}
+.challenge-summary strong{font-size:1rem;color:var(--green-text)}
+.challenge-summary span{font-size:.85rem;color:var(--sub)}
+.challenge-track{margin-bottom:17px}
+.challenge-track .progress-bar-fill{background:var(--green)}
+.challenge-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:14px 0 18px}
+.challenge-grid button{min-height:59px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);cursor:pointer}
+.challenge-grid button strong{font-size:.88rem}
+.challenge-grid button small{font-size:.66rem;color:var(--sub);white-space:nowrap}
+.challenge-grid button.is-done{border-color:var(--green);background:var(--green-bg);color:var(--green-text);cursor:default}
+.challenge-grid button.is-done small{color:var(--green-text)}
+.challenge-grid button:focus-visible{outline:3px solid var(--accent-text);outline-offset:2px}
+.challenge-warning{color:var(--red-text);background:var(--red-bg);padding:10px 12px;border-radius:10px}
+@media(max-width:450px){.challenge-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.challenge-grid button{min-height:54px}.challenge-grid button small{font-size:.65rem}}

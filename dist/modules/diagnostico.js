@@ -14,6 +14,68 @@ import {calcularViradaPeriodo} from './ciclo-periodo.js';
 
 const CHAVE_DADOS = 'meu-dinheiro-essencial:v1';
 const CACHE_PREFIXO = 'meu-dinheiro-essencial-v';
+// O teste lê SOMENTE arquivos públicos do cache; não consulta nem modifica dados financeiros.
+const RECURSOS_OFFLINE = Object.freeze([
+  ['ENTRADA','./index.html','html'],['APLICACAO','./app.js','javascript'],
+  ['ESTILOS','./styles.css','css'],['ESTILOS_MODULARES','./prototype.css','css'],
+  ['MANIFESTO','./manifest.webmanifest','manifesto'],
+  ['ICONE_192','./icon-192.png','png'],['ICONE_512','./icon-512.png','png'],
+  ['IMPORTACAO_CSV','./csv.js','javascript'],['GRAFICOS','./analytics.js','javascript'],
+  ['COPIA_LOCAL','./folder-backup.js','javascript'],
+  ['PERSISTENCIA','./modules/repositorio-financeiro.js','javascript'],
+  ['VALIDACAO','./modules/validacao.js','javascript'],
+  ['NOTIFICACOES','./modules/notificacoes.js','javascript'],
+  ['DIAGNOSTICO','./modules/diagnostico.js','javascript']
+]);
+
+export async function verificarPacoteOffline(cache){
+  const resultados=[];
+  for(const [nome,caminho,tipo] of RECURSOS_OFFLINE){
+    let valido=false;
+    try{
+      const resposta=await cache.match(caminho);
+      if(resposta?.ok&&typeof resposta.clone==='function'){
+        const copia=resposta.clone();
+        if(tipo==='png'){
+          const bytes=new Uint8Array(await copia.arrayBuffer());
+          valido=bytes.length>24&&[137,80,78,71,13,10,26,10].every((valor,i)=>bytes[i]===valor);
+        }else{
+          const corpo=await copia.text();
+          if(tipo==='html')valido=/<!doctype\s+html/i.test(corpo)&&/<script/i.test(corpo);
+          if(tipo==='javascript')valido=!/^\s*(?:<!doctype|<html)/i.test(corpo)&&/\b(?:import|export|function|const|let|var)\b/.test(corpo);
+          if(tipo==='css')valido=!/^\s*(?:<!doctype|<html)/i.test(corpo)&&
+            ((corpo.includes('{')&&corpo.includes('}'))||/^\s*@import\s+url\(/m.test(corpo));
+          if(tipo==='manifesto'){
+            const manifesto=JSON.parse(corpo);
+            valido=manifesto.start_url==='./'&&Array.isArray(manifesto.icons)&&manifesto.icons.length>=2;
+          }
+        }
+      }
+    }catch{/* Arquivo ausente, corrompido ou API de cache indisponível. */}
+    resultados.push({codigo:`OFFLINE_CACHE_${nome}`,estado:valido?'ok':'aviso',
+      descricao:valido?`Recurso ${nome.toLowerCase().replaceAll('_',' ')} íntegro para uso offline`:
+        `Recurso ${nome.toLowerCase().replaceAll('_',' ')} ausente/inválido no cache: reconecte, atualize e execute o teste novamente`,modulo:'offline'});
+  }
+  return resultados;
+}
+
+export function verificarHtmlIndependenteOffline(documento){
+  if(typeof documento?.querySelectorAll!=='function')return [{codigo:'OFFLINE_HTML_VERIFICACAO',estado:'nao_avaliado',
+    descricao:'HTML único: verificação do documento indisponível neste ambiente',modulo:'offline'}];
+  const scripts=[...documento.querySelectorAll('script')];
+  const estilos=[...documento.querySelectorAll('style')];
+  const externos=[...documento.querySelectorAll('script[src],link[rel="stylesheet"][href],link[rel="manifest"][href],img[src]')]
+    .filter(elemento=>!String(elemento.getAttribute?.('src')||elemento.getAttribute?.('href')||'').startsWith('data:'));
+  return [
+    {codigo:'OFFLINE_HTML_JAVASCRIPT',estado:scripts.some(e=>!e.getAttribute?.('src')&&String(e.textContent||'').includes('criarRelatorioDiagnostico'))?'ok':'erro',
+      descricao:'Lógica do aplicativo incorporada no próprio HTML',modulo:'offline'},
+    {codigo:'OFFLINE_HTML_ESTILOS',estado:estilos.some(e=>String(e.textContent||'').includes('--bg')&&String(e.textContent||'').includes('.proto'))?'ok':'erro',
+      descricao:'Aparência e estilos incorporados no próprio HTML',modulo:'offline'},
+    {codigo:'OFFLINE_HTML_SEM_DEPENDENCIAS',estado:externos.length===0?'ok':'erro',
+      descricao:externos.length===0?'Nenhum script, folha de estilos, manifesto ou imagem externa obrigatória':
+        'Há recursos externos necessários: esta prévia pode falhar sem internet',modulo:'offline'}
+  ];
+}
 // Contraste WCAG de texto comum: razão mínima 4,5:1. Sem dependências ou DOM.
 export function calcularContrasteCSS(primeira,segunda){
   const canais=cor=>{
@@ -35,9 +97,13 @@ export function calcularDuracaoDiagnostico(totalVerificacoes) {
 
 // Nenhum lançamento, nome, descrição, valor, caminho de pasta ou objeto de erro sai no JSON.
 export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderState=()=>null,getUpdateStatus=()=>null,
-  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,obterLogs=()=>[]}) {
+  getStorageLocked=()=>false,getCdiStatus=()=>false,getPreferences=()=>null,getNotificationStatus=()=>null,
+  getPersistenciaState=()=>null,getPersistenciaCheck=async()=>null,obterLogs=()=>[]}) {
   const dados = getData();
-  const integridade = verificarIntegridade(dados,CATEGORIES);
+  const prefsAtuais=getPreferences();
+  const categoriasDiagnostico={income:[...(CATEGORIES?.income||[]),...(prefsAtuais?.categoriasExtras?.income||[])],
+    expense:[...(CATEGORIES?.expense||[]),...(prefsAtuais?.categoriasExtras?.expense||[])]};
+  const integridade = verificarIntegridade(dados,categoriasDiagnostico);
   const transactions = Array.isArray(dados?.transactions) ? dados.transactions : [];
   const dates = transactions.map(item=>item?.date).filter(value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)).sort();
   let tamanhoBytes = null;
@@ -74,6 +140,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   const update = getUpdateStatus() || {};
   const resumo = {
     lancamentos: transactions.length,
+    compromissos:Array.isArray(dados?.commitments)?dados.commitments.length:0,
     metas: Array.isArray(dados?.goals)?dados.goals.length:0,
     aplicacoes: Array.isArray(dados?.allocations)?dados.allocations.length:0,
     lembretesConcluidos: Array.isArray(dados?.completedAportes)?dados.completedAportes.length:0,
@@ -82,6 +149,10 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     ultimoLancamento:dates.at(-1)||null,
     gravacaoBloqueada:Boolean(getStorageLocked())
   };
+  const estadoEspelho=getPersistenciaState();
+  let verificacaoEspelho=null;
+  try{verificacaoEspelho=await getPersistenciaCheck();}
+  catch{verificacaoEspelho={estado:'erro'};}
   const bibliotecas = {
     csv:typeof window.MeuDinheiroCSV?.importCSV==='function',
     graficos:typeof window.MeuDinheiroAnalytics?.expenseCategoryStats==='function',
@@ -89,6 +160,15 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   };
   const adicionar=(codigo,estado,descricao,modulo='ambiente')=>integridade.itens.push({codigo,estado,descricao,modulo});
   const conferir=(codigo,ok,correto,problema,modulo='ambiente',estadoRuim='erro')=>adicionar(codigo,ok?'ok':estadoRuim,ok?correto:problema,modulo);
+  if(estadoEspelho?.habilitado){
+    const consistente=['sincronizado','vazio'].includes(verificacaoEspelho?.estado)||
+      (estadoEspelho.primario&&verificacaoEspelho?.estado==='residuo');
+    conferir('ESPELHO_INDEXEDDB',consistente,'Cópia financeira IndexedDB sincronizada',
+      'Verifique a sincronização do armazenamento IndexedDB','dados','aviso');
+    conferir('FONTE_PRIMARIA_INDEXEDDB',estadoEspelho.primario===true&&!estadoEspelho.espelhoPendente,
+      'IndexedDB é a fonte principal e confirma as gravações antes do espelho legado',
+      'Banco primário indisponível, não inicializado ou com cópia local pendente','dados','aviso');
+  }
   // Cenário sintético: passado, recorrência mensal e transação futura, sem expor saldos.
   const saldoExemplo=calcularSaldoDisponivelHoje([
     {type:'income',date:'2026-02-10',amount:100,recurring:true},
@@ -133,6 +213,18 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     'Aplicação sem vínculo preservada','Aplicação legítima sem vínculo foi rejeitada','validacao');
   const backupAmostra={app:'meu-dinheiro-essencial',version:1,transactions:amostra.transactions.map(t=>({...t,recurring:false,createdAt:'2026-11-19T12:00:00.000Z'})),goals:amostra.goals};
   const rejeitaBackup=entrada=>{try{validarBackup(entrada,CATEGORIES);return false;}catch{return true;}};
+  const planoTeste={id:'diag-c',kind:'card',name:'Parcela exemplo',category:'Cartão de crédito',amount:25,day:31,startMonth:'2026-11',monthsCount:2};
+  const pagamentoTeste={id:'diag-p',description:'Parcela exemplo',type:'expense',category:'Cartão de crédito',amount:25,date:'2026-11-30',
+    recurring:false,commitmentId:'diag-c',commitmentMonth:'2026-11'};
+  conferir('PREVENTIVO_BACKUP_PARCELAS',!rejeitaBackup({...backupAmostra,commitments:[planoTeste],transactions:[...backupAmostra.transactions,pagamentoTeste]}),
+    'Backup sintético preserva compromissos e pagamentos vinculados',
+    'Risco de perda de parcelas ao restaurar backup completo','backup');
+  conferir('PREVENTIVO_PAGAMENTO_DUPLICADO',rejeitaBackup({...backupAmostra,commitments:[planoTeste],transactions:[...backupAmostra.transactions,pagamentoTeste,{...pagamentoTeste,id:'diag-p2'}]}),
+    'Backup bloqueia duas baixas da mesma parcela',
+    'Risco: uma mesma parcela poderia ser paga duas vezes','backup');
+  conferir('PREVENTIVO_BACKUP_ANTIGO',!rejeitaBackup({...backupAmostra,commitments:undefined}),
+    'Backup antigo sem compromissos continua legível',
+    'Risco: versões antigas de backup poderiam deixar de ser restauradas','backup');
   conferir('BACKUP_VINCULO_TIPO',rejeitaBackup({...backupAmostra,allocations:[{id:'diag-a',description:'Aporte',kind:'dream',amount:1,date:'2026-11-19',goalId:'diag-g'}]}),
     'Backup rejeita vínculo incompatível','Backup aceitou vínculo incompatível','backup');
   const legado={...backupAmostra,transactions:[{...amostra.transactions[0],category:'Categoria histórica'}]};
@@ -260,11 +352,25 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   adicionar('GRAVACAO_SEGURA',resumo.gravacaoBloqueada?'erro':'ok',resumo.gravacaoBloqueada?'Gravação bloqueada para proteger dados inconsistentes':'Dados locais sem bloqueio de gravação');
   adicionar('ARMAZENAMENTO',armazenamentoDisponivel?'ok':'aviso',armazenamentoDisponivel?'Armazenamento local disponível':'Armazenamento local indisponível');
   conferir('TAMANHO_DADOS',tamanhoBytes===null||tamanhoBytes<4*1024*1024,'Espaço local ainda abaixo do alerta de 4 MB','Dados locais próximos do limite de 4 MB','armazenamento','aviso');
+  const usoQuota=usoEstimado&&Number.isFinite(usoEstimado.usoAproximado)&&Number.isFinite(usoEstimado.quotaAproximada)&&usoEstimado.quotaAproximada>0?
+    usoEstimado.usoAproximado/usoEstimado.quotaAproximada:null;
+  conferir('RISCO_COTA_ARMAZENAMENTO',usoQuota===null||usoQuota<.8,
+    'Uso estimado inferior a 80% da cota do navegador ou quota indisponível',
+    'Risco futuro: armazenamento perto de esgotar; gere backup e libere espaço com segurança','armazenamento','aviso');
   conferir('API_INDEXED_DB',typeof indexedDB!=='undefined','IndexedDB disponível','IndexedDB indisponível (pasta automática opcional)','armazenamento','aviso');
   conferir('API_BLOB',typeof Blob==='function','API de arquivos Blob disponível','API de arquivos indisponível','armazenamento');
-  conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
-  conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
   const htmlIndependente=typeof location!=='undefined'&&!['https:','http:'].includes(location.protocol);
+  if(htmlIndependente){
+    adicionar('API_SERVICE_WORKER','nao_avaliado','Service Worker não é necessário no arquivo HTML independente','pwa');
+    adicionar('API_CACHE','nao_avaliado','Cache PWA não é necessário no arquivo HTML independente','pwa');
+    integridade.itens.push(...verificarHtmlIndependenteOffline(typeof document!=='undefined'?document:null));
+    conferir('OFFLINE_HTML_BIBLIOTECAS',Object.values(bibliotecas).every(Boolean),
+      'Importação, gráficos e cópias funcionam sem baixar bibliotecas',
+      'Há uma biblioteca interna não carregada no HTML independente','offline');
+  }else{
+    conferir('API_SERVICE_WORKER','serviceWorker' in navigator,'API do Service Worker disponível','Service Worker não suportado neste ambiente','pwa','aviso');
+    conferir('API_CACHE',typeof caches!=='undefined','API de cache disponível','Cache offline indisponível neste ambiente','pwa','aviso');
+  }
   if(htmlIndependente){
     adicionar('SW_ATIVO','nao_avaliado','Service Worker não se aplica ao HTML independente; testar no PWA publicado','pwa');
     adicionar('SW_CONTROLE','nao_avaliado','Controle offline não se aplica ao HTML independente; testar no PWA publicado','pwa');
@@ -273,13 +379,42 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
     conferir('SW_ATIVO',swRegistrado,'Service Worker ativo','Service Worker ainda não está ativo','pwa','aviso');
     conferir('SW_CONTROLE',Boolean(navigator.serviceWorker?.controller),'Página sob controle do Service Worker','Página ainda sem controle offline','pwa','aviso');
     conferir('CACHE_PWA',cacheInstalado.length>0,'Cache PWA encontrado','Cache PWA ainda não encontrado','pwa','aviso');
+    if(swRegistrado&&cacheInstalado.length&&typeof caches?.open==='function'){
+      const ordem=nome=>Number(nome.slice(CACHE_PREFIXO.length))||0;
+      const ativo=[...cacheInstalado].sort((a,b)=>ordem(b)-ordem(a))[0];
+      try{
+        const cache=await caches.open(ativo);
+        const resultados=await verificarPacoteOffline(cache);
+        integridade.itens.push(...resultados);
+        conferir('OFFLINE_CACHE_INTEGRIDADE',resultados.every(item=>item.estado==='ok'),
+          'Pacote essencial íntegro e consultável sem rede',
+          'Cache offline incompleto ou inválido; reconecte e atualize antes de desconectar','offline','aviso');
+        if(/^v\d+$/.test(update.versaoEmExecucao||''))
+          conferir('OFFLINE_CACHE_VERSAO',ativo===`${CACHE_PREFIXO}${update.versaoEmExecucao.slice(1)}`,
+            'Cache corresponde ao código em execução',
+            'Versão do cache diferente do aplicativo; recarregue online após concluir a atualização','offline','aviso');
+      }catch{adicionar('OFFLINE_CACHE_LEITURA','aviso','Cache encontrado, mas a leitura dos arquivos essenciais falhou','offline');}
+    }else adicionar('OFFLINE_CACHE_INSPECAO','nao_avaliado',
+      'Instale/abra o PWA conectado, aguarde o Service Worker e repita para inspecionar o pacote offline','offline');
   }
+  if(navigator.storage?.persisted){
+    try{
+      const persistente=await navigator.storage.persisted();
+      adicionar('RISCO_OFFLINE_EVICCAO_DADOS',persistente?'ok':'aviso',
+        persistente?'Navegador confirmou armazenamento persistente':
+          'Risco futuro: navegador pode limpar dados locais por falta de espaço ou política do sistema; mantenha backup externo','offline');
+    }catch{adicionar('OFFLINE_PERSISTENCIA','nao_avaliado','Permissão de armazenamento persistente não pôde ser consultada','offline');}
+  }else adicionar('OFFLINE_PERSISTENCIA','nao_avaliado','Navegador não informa persistência do armazenamento','offline');
   conferir('CACHE_VERSAO',cacheInstalado.length<=1||swEmEspera,
     swEmEspera&&cacheInstalado.length>1?'Caches em transição: atualização aguarda sua autorização':'Versões de cache consistentes',
     'Mais de uma versão de cache sem atualização pendente','pwa','aviso');
   if(pasta.state==='paused')adicionar('BACKUP_PASTA','aviso','Backup automático pausado após exclusão local; arquivo externo preservado');
   else if(['conflict','permission','error'].includes(pasta.state))adicionar('BACKUP_PASTA','aviso','Backup em pasta requer atenção e não está sincronizado');
   else adicionar('BACKUP_PASTA','ok',['saved','ready','saving'].includes(pasta.state)?'Backup em pasta conectado':'Backup em pasta opcional, sem falha ativa');
+  if(transactions.length>0||resumo.compromissos>0)
+    conferir('RISCO_SEM_BACKUP_EXTERNO',['saved','ready','saving'].includes(pasta.state),
+      'Cópia em pasta disponível para preservar os dados',
+      'Risco preventivo: não há cópia externa em pasta confirmada; exporte um JSON regularmente','backup','aviso');
   adicionar('ATUALIZADOR','ok',swEmEspera?'Nova versão disponível para instalar':'Estado da atualização consultado');
   conferir('BACKUP_ESTADO',['off','ready','saved','saving','permission','conflict','error','paused','unsupported',undefined].includes(pasta.state),'Estado de backup reconhecido','Estado de backup desconhecido','backup','aviso');
   conferir('ATUALIZADOR_ESTADO',update.ultimaVerificacao===undefined||Number.isFinite(update.ultimaVerificacao),'Estado do atualizador válido','Estado do atualizador inválido','atualizador');
@@ -297,6 +432,12 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   }
   conferir('LOGS_LIMITE',obterLogs().length<=50,'Log respeita o limite de 50 eventos','Log ultrapassou o limite de eventos','log');
   conferir('LOGS_FORMATO',obterLogs().every(l=>l&&/^[A-Z][A-Z0-9_]{2,49}$/.test(l.codigo||'')&&['erro','aviso','info','evento'].includes(l.nivel)),'Códigos do log sanitizados','Log contém códigos inesperados','log');
+  const errosRecentes=obterLogs().filter(l=>l?.nivel==='erro');
+  const reincidencias=new Map();
+  for(const log of errosRecentes)reincidencias.set(log.codigo,(reincidencias.get(log.codigo)||0)+1);
+  conferir('RISCO_ERROS_REPETIDOS',![...reincidencias.values()].some(qtd=>qtd>=3),
+    'Nenhuma mesma falha repetida três vezes nos últimos eventos desta sessão',
+    'Risco preventivo: uma falha técnica se repetiu ao menos três vezes nesta sessão; exporte diagnóstico e revise','log','aviso');
   const notificacoes=getNotificationStatus();
   if(notificacoes){
     conferir('NOTIFICACOES_PERSISTENCIA',notificacoes.armazenamentoOk,'Avisos podem ser dispensados e restaurados','Não foi possível gravar ou ler os avisos dispensados','notificacoes','aviso');
@@ -447,12 +588,45 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       conferir('NAVEGACAO_MOBILE_SEIS_ABAS',botoes.length===6,
         'As seis áreas estão na navegação do smartphone',
         'A navegação móvel não apresenta todas as áreas','interface');
+      if(typeof window!=='undefined'&&window.innerWidth<880&&botoes.length===6&&
+        botoes.every(botao=>typeof botao.getBoundingClientRect==='function')){
+        const semSobreposicao=botoes.every(botao=>{
+          const area=botao.getBoundingClientRect();
+          const icone=botao.querySelector('svg')?.getBoundingClientRect();
+          const rotulo=botao.querySelector('span')?.getBoundingClientRect();
+          return area.width>0&&Boolean(icone&&rotulo)&&rotulo.left>=area.left-1&&
+            rotulo.right<=area.right+1&&rotulo.top>=icone.bottom-1;
+        });
+        conferir('NAVEGACAO_MOBILE_SEM_SOBREPOSICAO',semSobreposicao,
+          'Ícones e rótulos das seis abas cabem sem sobreposição',
+          'Navegação móvel: ícones e textos se sobrepõem ou extrapolam seus botões','interface','aviso');
+      }
+      if(typeof document.getElementById==='function'&&document.getElementById('quick-add')){
+        conferir('ACAO_RAPIDA_UNICA_MOBILE',!document.querySelector?.('#mobile-quick-actions'),
+          'Botão + reúne cadastros sem barra fixa Gastei/Recebi',
+          'Há barra de lançamentos rápidos duplicada com o botão +','interface','aviso');
+        const campoValor=document.querySelector?.('#transaction-form [name="amount"]');
+        if(campoValor?.getAttribute)conferir('TECLADO_NATIVO_SEM_DUPLICACAO',
+          campoValor.inputMode==='decimal'&&!campoValor.readOnly&&
+          !document.querySelector?.('[data-money-key]')&&
+          !document.querySelector?.('#transaction-keyboard-mode'),
+          'Valor usa somente o campo e o teclado nativos do dispositivo',
+          'Campo monetário bloqueado ou teclado próprio duplicado','interface','aviso');
+      }
     }
-    const relatorios=document.querySelector?.('.settings-tools summary');
-    if(relatorios)conferir('AJUSTES_RELATORIOS_DESCOBERTA',
-      /pdf/i.test(relatorios.textContent||'')&&/backup/i.test(relatorios.textContent||''),
-      'Relatórios PDF e backups identificados no título dos Ajustes',
-      'Ferramentas de PDF e backup estão pouco identificadas','interface','aviso');
+    // Desde a P2 as ferramentas financeiras ficam em Relatórios, sem cópia em Ajustes.
+    const relatorios=document.getElementById('reports-page');
+    const ajustesPage=document.getElementById('settings-page');
+    if(typeof relatorios?.querySelector==='function'&&typeof ajustesPage?.querySelector==='function'){
+      const ids=['export-pdf','export-csv','import-csv','export-data','import-data','folder-backup-connect'];
+      conferir('RELATORIOS_EXPORTACAO_DESCOBERTA',ids.every(id=>
+        relatorios.querySelector(`#${id}`)===document.getElementById(id)&&Boolean(document.getElementById(id))),
+      'PDF, CSV, importação e backup estão disponíveis em Relatórios',
+      'Uma ferramenta de PDF, CSV ou backup não está localizada em Relatórios','interface','aviso');
+      conferir('AJUSTES_SEM_EXPORTACAO_DUPLICADA',ids.every(id=>!ajustesPage.querySelector(`#${id}`)),
+      'Ajustes não duplica controles financeiros de Relatórios',
+      'Há ferramentas financeiras duplicadas na área Ajustes','interface','aviso');
+    }
     const barraDesktop=document.getElementById('desktop-toolbar');
     if(barraDesktop&&typeof window!=='undefined'&&window.innerWidth>=880&&typeof window.getComputedStyle==='function'){
       const estilo=window.getComputedStyle(barraDesktop);
@@ -509,6 +683,7 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
   integridade.erros=integridade.itens.filter(item=>item.estado==='erro').length;
   integridade.avisos=integridade.itens.filter(item=>item.estado==='aviso').length;
   integridade.naoAvaliados=integridade.itens.filter(item=>item.estado==='nao_avaliado').length;
+  integridade.riscosPreventivos=integridade.itens.filter(item=>item.codigo.startsWith('RISCO_')&&item.estado==='aviso').length;
   return {
     aplicativo:'meu-dinheiro-essencial',formatoRelatorio:3,geradoEm:new Date().toISOString(),
     duracaoPrevistaMs:calcularDuracaoDiagnostico(integridade.itens.length),
@@ -524,6 +699,11 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
       armazenamentoEstimado:usoEstimado
     },
     dados:resumo,
+    persistenciaIndexedDB:estadoEspelho?{habilitado:estadoEspelho.habilitado,
+      estado:verificacaoEspelho?.estado||estadoEspelho.estado,
+      exclusaoProtegida:Boolean(estadoEspelho.exclusaoProtegida),
+      primario:Boolean(estadoEspelho.primario),modo:estadoEspelho.modo||'legado',
+      falhas:estadoEspelho.falhas,ultimaSincronizacao:estadoEspelho.ultimaSincronizacao}:null,
     backup:{estado:['off','ready','saved','saving','permission','conflict','error','unsupported'].includes(pasta.state)?pasta.state:'desconhecido',pastaConectada:Boolean(pasta.folder),ultimaGravacao:pasta.lastSavedAt instanceof Date?pasta.lastSavedAt.toISOString():null},
     atualizador:{registrado:swRegistrado,controlando:Boolean(navigator.serviceWorker?.controller),atualizacaoPendente:swEmEspera,versaoEmExecucao:/^v\d+$/.test(update.versaoEmExecucao||'')?update.versaoEmExecucao:null,versoesCache:cacheInstalado,ultimaVerificacao:typeof update.ultimaVerificacao==='number'&&update.ultimaVerificacao>0?new Date(update.ultimaVerificacao).toISOString():null},
     cdi:{cotacaoEmCacheValida:Boolean(getCdiStatus())},
@@ -573,6 +753,7 @@ export function unificarResultadosDiagnosticos(relatorio,complementos=[]) {
   return {...relatorio,formatoRelatorio:4,duracaoPrevistaMs:calcularDuracaoDiagnostico(itens.length),
     integridade:{...relatorio.integridade,itens,erros:itens.filter(item=>item.estado==='erro').length,
       avisos:itens.filter(item=>item.estado==='aviso').length,
+      riscosPreventivos:itens.filter(item=>item.codigo.startsWith('RISCO_')&&item.estado==='aviso').length,
       naoAvaliados:itens.filter(item=>item.estado==='nao_avaliado').length},
     complementos:{total:extras.length,modulos}};
 }
@@ -667,7 +848,7 @@ export function iniciarDiagnostico(ctx) {
       });
       if(atual!==rodada)return null;
       ultimoRelatorio=relatorio;
-      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${integridade.naoAvaliados?` · ${integridade.naoAvaliados} não avaliadas`:''}${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
+      resumo.textContent=`${integridade.itens.length} verificações · ${integridade.erros} erro(s) · ${integridade.avisos} aviso(s)${integridade.riscosPreventivos?` (${integridade.riscosPreventivos} riscos preventivos)`:''}${integridade.naoAvaliados?` · ${integridade.naoAvaliados} não avaliadas`:''}${relatorio.propostaInterface?` · ${relatorio.propostaInterface.pendentes} melhorias pendentes`:''}.`;
       if(integridade.erros)registrar('erro','INTEGRIDADE_FALHOU','integridade');
       else if(integridade.avisos)registrar('aviso','INTEGRIDADE_ALERTA','integridade');
       return relatorio;

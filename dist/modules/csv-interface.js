@@ -1,5 +1,6 @@
 import { podeAplicarNoObjetivo } from './validacao.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
+import {converterOfxParaCsv,identificarOfx} from './ofx.js';
 export function iniciarModuloCsv(ctx) {
   const {getData, setMonth, goalCandidates, hideBackupMenu, isoDate, notify,
     esc, fmtDate, parseDate, money, CATEGORIES, uniqueId, n2, persist, render, registrar=()=>{}, registrarEvento=()=>{}} = ctx;
@@ -55,13 +56,15 @@ export function iniciarModuloCsv(ctx) {
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
     if(file.size>10*1024*1024){registrar('aviso','CSV_ARQUIVO_GRANDE','csv');notify('O CSV deve ter até 10 MB.');return;}
     try{
-      csvAnalysis=window.MeuDinheiroCSV.importCSV(await file.text(),CATEGORIES);
+      const texto=await file.text();
+      const conteudo=identificarOfx(texto)||/\.ofx$/i.test(file.name)?converterOfxParaCsv(texto):texto;
+      csvAnalysis=window.MeuDinheiroCSV.importCSV(conteudo,CATEGORIES);
       csvSelections=new Map();
       refreshCSVPreview();
       csvDialog.showModal();
     }catch{pendingCsv=null;pendingAllocations=null;csvAnalysis=null;registrar('erro','CSV_IMPORTACAO_FALHOU','csv');notify('Não foi possível ler o CSV. Confira o arquivo.');}
   });
-  document.getElementById('csv-confirm-import').addEventListener('click',()=>{
+  document.getElementById('csv-confirm-import').addEventListener('click',async()=>{
     const data=getData();
     if(!pendingCsv||!pendingAllocations||pendingAllocations.some(a=>!a.kind))return;
     if(!pendingCsv.length&&!pendingAllocations.length)return;
@@ -74,7 +77,7 @@ export function iniciarModuloCsv(ctx) {
       if(goal)goal.saved=n2(goal.saved+allocation.amount);
     }
     const next={...data,goals,transactions:[...data.transactions,...added],allocations:[...(data.allocations||[]),...addedAllocations]};
-    if(persist(next)){
+    if(await persist(next)){
       registrarEvento('IMPORTAR_CSV','csv');
       const newest=[...added,...addedAllocations].map(t=>t.date).sort().at(-1);if(newest)setMonth(newest.slice(0,7));
       pendingCsv=null;pendingAllocations=null;csvDialog.close();render();notify(`${added.length} lançamentos e ${addedAllocations.length} aplicações importados.${added.some(t=>t.type==='income')?' 🔔 Confira seus aportes.':''}`);

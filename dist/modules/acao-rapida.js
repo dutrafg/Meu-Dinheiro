@@ -49,7 +49,7 @@ export function iniciarAcaoRapida({getView,getObjectiveKind=()=> 'goal',openTran
     return true;
   }
   function atualizar(visao=getView()){
-    const indisponivel=visao==='ajustes';
+    const indisponivel=visao==='ajustes'||visao==='relatorios';
     botaoMovel.classList.toggle('hidden',indisponivel);
     grupoDesktop.classList.toggle('hidden',indisponivel);
     botaoMovel.setAttribute('aria-label',`Abrir opções de cadastro; sugestão: ${acaoMovelParaVisao(visao,getObjectiveKind()).rotulo.toLowerCase()}`);

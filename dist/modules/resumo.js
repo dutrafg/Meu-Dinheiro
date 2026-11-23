@@ -1,30 +1,8 @@
-// Saldo estimado de todo o histórico até hoje. Recorrências são contadas somente
-// quando a respectiva ocorrência mensal já venceu; não altera nenhum registro.
-export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
-  if(!Array.isArray(transacoes)||!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO))return null;
-  const [anoAtual,mesAtual]=hojeISO.split('-').map(Number);
-  let total=0;
-  for(const item of transacoes){
-    if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||item.date>hojeISO||
-      !['income','expense'].includes(item.type)||!Number.isFinite(item.amount))continue;
-    let quantidade=1;
-    if(item.recurring){
-      const [anoInicio,mesInicio,dia]=item.date.split('-').map(Number);
-      const meses=(anoAtual-anoInicio)*12+mesAtual-mesInicio;
-      const ultimoDia=new Date(Date.UTC(anoAtual,mesAtual,0)).getUTCDate();
-      const ocorrenciaAtual=`${hojeISO.slice(0,7)}-${String(Math.min(dia,ultimoDia)).padStart(2,'0')}`;
-      quantidade=meses+(ocorrenciaAtual<=hojeISO?1:0);
-    }
-    total+=(item.type==='income'?1:-1)*item.amount*quantidade;
-  }
-  // Transferência interna comprovada pelo usuário: sai do dinheiro disponível,
-  // mas não vira despesa e não reduz o valor total do patrimônio investido.
-  for(const aporte of Array.isArray(aplicacoes)?aplicacoes:[]){
-    if(aporte?.origin==='salary'&&aporte.date<=hojeISO&&Number.isFinite(aporte.amount)&&
-      transacoes.some(t=>t.id===aporte.salaryId&&t.type==='income'))total-=aporte.amount;
-  }
-  return Number.isFinite(total)?Math.round(total*100)/100:null;
-}
+import {calcularSaldoDisponivelHoje} from './motor-financeiro.js';
+import {destaquesObjetivos} from './dominio-objetivos.js';
+import {calcularOrcamentoDia} from './orcamento.js';
+// API histórica conservada para consumidores e testes anteriores.
+export {calcularSaldoDisponivelHoje} from './motor-financeiro.js';
 
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
@@ -101,9 +79,9 @@ export function criarModuloResumo(ctx) {
     const s=sums(month);
     const hojeISO=isoDate(new Date());
     const saldoDisponivel=calcularSaldoDisponivelHoje(data.transactions,hojeISO,data.allocations);
-    const selected=getPreferences().reservaGoalId;
-    const reserva=data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name)))||data.goals.find(g=>g.kind==='goal');
-    const sonho=data.goals.find(g=>g.kind==='dream');
+    const prefs=getPreferences();
+    const {reserva,sonho}=destaquesObjetivos(data,prefs.reservaGoalId);
+    const orcamento=month===hojeISO.slice(0,7)?calcularOrcamentoDia(data.transactions,prefs.limiteMensal,hojeISO):null;
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);
     return `${header('',true)}
@@ -122,6 +100,21 @@ export function criarModuloResumo(ctx) {
           </div>
         </div>
       </div>
+      <div class="summary-quick-actions" role="group" aria-label="Registrar movimentação rapidamente">
+        <button type="button" data-action="add" data-type="expense">− Registrar despesa</button>
+        <button type="button" data-action="add" data-type="income">+ Registrar renda</button>
+      </div>
+      ${month===hojeISO.slice(0,7)?`<section class="card proto-budget-card" aria-label="Planejamento de gastos do mês">
+        <div class="proto-budget-heading"><h3>Hoje você pode gastar</h3><button type="button" class="button button-secondary" data-view="ajustes">Ajustar limite</button></div>
+        ${orcamento?`<strong class="proto-budget-value">${money(orcamento.podeGastarHoje)}</strong>
+          <p>Até ${money(orcamento.cotaHoje)} para hoje; já gastou ${money(orcamento.gastoHoje)} hoje.</p>
+          <div class="progress-bar proto-budget-track" role="img" aria-label="Gastou ${money(orcamento.gastoAcumulado)} de ${money(orcamento.limite)} do limite mensal"><div class="progress-bar-fill" style="width:${Math.min(100,Math.max(0,orcamento.percentual))}%"></div></div>
+          <div class="proto-budget-labels"><span>Gastou ${money(orcamento.gastoAcumulado)}</span><span>Limite ${money(orcamento.limite)}</span></div>
+          ${orcamento.percentual>=80?`<p class="proto-budget-alert" role="status">${orcamento.excedeu?'Limite mensal ultrapassado.':'Atenção: você já usou '+orcamento.percentual+'% do seu limite.'}</p>`:''}
+          <p class="proto-budget-note">Estimativa baseada nas despesas registradas e recorrentes vencidas; faltam ${orcamento.diasRestantes} dias, incluindo hoje. Não é saldo de conta.</p>`:
+        `<p>Defina um limite mensal para acompanhar quanto ainda pode gastar por dia, sem alterar seus lançamentos.</p>`}
+        ${prefs.metaPoupancaMensal?`<p class="proto-budget-goal">Meta de economia mensal: <strong>${money(prefs.metaPoupancaMensal)}</strong>. Registre seus aportes em Objetivos.</p>`:''}
+      </section>`:''}
       ${renderSaude()}
       <section class="card proto-list-card"><h3>Últimas transações</h3>${entryList(recent,'Nenhuma transação neste mês.')}</section>
       ${renderExpenseCharts()}

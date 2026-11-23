@@ -79,6 +79,7 @@ test('Análise com dois gráficos aparece somente em Resumo', () => {
 test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizadas', () => {
   const app=read('dist/modules/objetivos.js');
   const percent=app.split('function goalProgressPercent(goal) {')[1].split('function progressLine(goal) {')[0];
+  const dominio=read('dist/modules/dominio-objetivos.js').replace(/^export /gm,'');
   const renderer=app.split('function renderGoal(g) {')[1].split('function openGoal(kind,id=')[0];
   const sandbox={
     money:value=>`R$ ${Number(value).toFixed(2)}`,
@@ -88,7 +89,7 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
     parseDate:value=>new Date(`${value}T00:00:00Z`),
     fmtDate:{format:()=> '30 nov. 2026'}
   };
-  vm.runInNewContext(`function goalProgressPercent(goal) {${percent}function renderGoal(g) {${renderer}this.renderGoal=renderGoal;this.goalProgressPercent=goalProgressPercent;`,sandbox);
+  vm.runInNewContext(`${dominio}\nfunction goalProgressPercent(goal) {${percent}function renderGoal(g) {${renderer}this.renderGoal=renderGoal;this.goalProgressPercent=goalProgressPercent;`,sandbox);
   const makeGoal=(kind,saved,target=100)=>({id:`id-${kind}`,kind,name:kind==='goal'?'Reserva':'Carro',target,saved,deadline:''});
   for(const kind of ['goal','dream']){
     for(const [saved,expected] of [[0,0],[25,25],[100,100],[150,100]]){
@@ -112,6 +113,60 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
   assert.match(css,/@media\(max-width:879px\)[\s\S]*\.proto-goals-grid\{grid-template-columns:1fr\}/);
 });
 
+test('Log detalhado inicia automaticamente sem registrar dados financeiros', () => {
+  const app=read('dist/app.js');
+  const ativacao=app.indexOf('configurarDetalhado(true);');
+  const inicializacao=app.indexOf("registrarEvento('SESSAO_INICIADA','sistema');");
+  const leitura=app.indexOf('let data = readData();');
+  assert.ok(ativacao>=0&&ativacao<inicializacao&&inicializacao<leitura,
+    'A telemetria precisa ser habilitada antes de ler dados locais');
+  const logger=read('dist/modules/log.js');
+  assert.match(logger,/const MAXIMO = 50;/);
+  assert.match(logger,/sessionStorage\.setItem\(CHAVE,JSON\.stringify\(buffer\)\)/);
+});
+
+test('Exclusão protegida usa tombstone e inicialização vazia em todo PWA', () => {
+  const app=read('dist/app.js');
+  const espelho=read('dist/modules/espelho-indexeddb.js');
+  const diagnostico=read('dist/modules/diagnostico.js');
+  assert.match(read('dist/modules/repositorio-financeiro.js'),/espelho\.iniciarVazio\(\)/);
+  assert.match(app,/repositorio\.gravar\(serializado\)/);
+  assert.match(app,/guardaConcorrencia\.podeGravar\(\)/);
+  assert.match(espelho,/apagado:true,marcador/);
+  assert.match(diagnostico,/exclusaoProtegida:Boolean\(estadoEspelho\.exclusaoProtegida\)/);
+});
+
+test('Recuperação assistida exige inspeção, dois backups e seleção com dupla confirmação', () => {
+  const html=read('dist/index.html');
+  const app=read('dist/app.js');
+  const modulo=read('dist/modules/recuperacao-conflitos.js');
+  for(const id of ['recovery-inspect','recovery-status','recovery-local-summary',
+    'recovery-indexeddb-summary','recovery-download-local','recovery-download-indexeddb',
+    'recovery-choice','recovery-apply'])
+    assert.match(html,new RegExp('id="'+id+'"'));
+  assert.match(app,/iniciarRecuperacaoConflitos\(/);
+  assert.match(modulo,/obterCopiaParaRecuperacao\(\)/);
+  assert.match(modulo,/montarBackupRecuperacao/);
+  const leitura=modulo.slice(modulo.indexOf('async function inspecionar()'),
+    modulo.indexOf('async function recuperar()'));
+  assert.doesNotMatch(leitura,/\.setItem\(|\.removeItem\(|\.clear\(|\.put\(|\.delete\(/);
+  assert.match(modulo,/recuperarComEscolha\(/);
+  assert.equal((modulo.match(/await confirmar\(/g)||[]).length,2);
+  assert.match(read('dist/sw.js'),/\.\/modules\/recuperacao-conflitos\.js/);
+});
+
+test('Objetivos têm controles visíveis para alternar entre reserva e sonhos', () => {
+  const objetivos=read('dist/modules/objetivos.js');
+  const app=read('dist/app.js');
+  const css=read('dist/css/objetivos.css');
+  assert.match(objetivos,/data-objective-tab="goal"/);
+  assert.match(objetivos,/data-objective-tab="dream"/);
+  assert.match(objetivos,/role="group" aria-label="Tipo de objetivo"/);
+  assert.match(objetivos,/aria-pressed=/);
+  assert.match(app,/objectiveTab\.dataset\.objectiveTab/);
+  assert.match(css,/\.objective-kind-button:focus-visible/);
+});
+
 test('Service worker coloca todos os arquivos offline no cache e muda de versão', () => {
   const source = read('dist/sw.js');
   const assets=JSON.parse(source.match(/const ASSETS=(\[[^\]]+\])/)[1].replaceAll("'",'"'));
@@ -120,7 +175,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v39/);
+  assert.match(source, /meu-dinheiro-essencial-v67/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

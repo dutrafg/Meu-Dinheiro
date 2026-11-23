@@ -182,3 +182,8 @@ node scripts/gerar-html-teste.cjs meu-dinheiro-teste.html
 ```
 
 Essa cópia abre offline como arquivo HTML, mas **não instala o PWA nem recebe atualizações por Service Worker**. Para usar os recursos instaláveis e o atualizador, sirva a pasta `dist/` em HTTPS ou `localhost`.
+
+
+## Roadmap de manutenção — P0.1 (branch de homologação)
+
+Esta etapa adiciona espelho de dados financeiros em IndexedDB e monitoramento técnico no diagnóstico. O armazenamento primário ainda é localStorage para manter compatibilidade; consulte DATABASE.md para a migração completa e AGENTS.md para regras de manutenção. O HTML de homologação é gerado como artefato do GitHub Actions, sem publicação automática na main.
