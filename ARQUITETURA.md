@@ -160,6 +160,11 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 - `scripts/gerar-html-teste.cjs` gera um HTML completo portátil com indicador de homologação e botão que abre o diagnóstico; `tests/offline-completo.test.cjs` detecta recursos faltando, HTML servido como JS, PNG inválido, referências externas e sintaxe do arquivo único.
 - `scripts/verificar-interface.cjs` instala SW, coloca o navegador offline de verdade, recarrega e confirma navegação/IndexedDB/cache; também executa diagnóstico do arquivo local com conexão desligada. O CI Chromium é a validação da plataforma porque o Chromium local pode ser bloqueado pelo sandbox.
 
+## P3.3 — Diagnóstico baseado no layout atual (v64)
+
+- `registro-modulos.js` usa `verificarOrcamentoSintetico()` para calcular a cota real (9,65) e confirmar em centavos o orçamento restante (280,00), sem assumir valor arredondado incorretamente; `tests/orcamento.test.cjs` cobre o cenário e uma implementação propositalmente errada.
+- `diagnostico.js` inspeciona a presença real de botões em `#reports-page` e a ausência de duplicação em `#settings-page`, substituindo a heurística antiga de procurar os termos “PDF” e “backup” no título de Ajustes. `tests/diagnostico.test.cjs` cobre ausência e duplicação, e o Chromium valida o resultado no HTML offline.
+
 ## P2.2 — Orçamento diário e preferência mensal (v57)
 
 - `orcamento.js` expõe cálculo puro que recebe data de referência e teto em reais e processa despesas vencidas do mês em centavos. A cota de hoje usa despesas anteriores e distribui o restante pelos dias até fechar o mês; gastos de hoje reduzem essa cota, sem criar valores negativos.

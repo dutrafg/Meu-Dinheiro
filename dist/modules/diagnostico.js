@@ -589,11 +589,19 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
         'As seis áreas estão na navegação do smartphone',
         'A navegação móvel não apresenta todas as áreas','interface');
     }
-    const relatorios=document.querySelector?.('.settings-tools summary');
-    if(relatorios)conferir('AJUSTES_RELATORIOS_DESCOBERTA',
-      /pdf/i.test(relatorios.textContent||'')&&/backup/i.test(relatorios.textContent||''),
-      'Relatórios PDF e backups identificados no título dos Ajustes',
-      'Ferramentas de PDF e backup estão pouco identificadas','interface','aviso');
+    // Desde a P2 as ferramentas financeiras ficam em Relatórios, sem cópia em Ajustes.
+    const relatorios=document.getElementById('reports-page');
+    const ajustesPage=document.getElementById('settings-page');
+    if(typeof relatorios?.querySelector==='function'&&typeof ajustesPage?.querySelector==='function'){
+      const ids=['export-pdf','export-csv','import-csv','export-data','import-data','folder-backup-connect'];
+      conferir('RELATORIOS_EXPORTACAO_DESCOBERTA',ids.every(id=>
+        relatorios.querySelector(`#${id}`)===document.getElementById(id)&&Boolean(document.getElementById(id))),
+      'PDF, CSV, importação e backup estão disponíveis em Relatórios',
+      'Uma ferramenta de PDF, CSV ou backup não está localizada em Relatórios','interface','aviso');
+      conferir('AJUSTES_SEM_EXPORTACAO_DUPLICADA',ids.every(id=>!ajustesPage.querySelector(`#${id}`)),
+      'Ajustes não duplica controles financeiros de Relatórios',
+      'Há ferramentas financeiras duplicadas na área Ajustes','interface','aviso');
+    }
     const barraDesktop=document.getElementById('desktop-toolbar');
     if(barraDesktop&&typeof window!=='undefined'&&window.innerWidth>=880&&typeof window.getComputedStyle==='function'){
       const estilo=window.getComputedStyle(barraDesktop);

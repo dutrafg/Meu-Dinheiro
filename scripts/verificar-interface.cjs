@@ -538,6 +538,18 @@ async function verificar(){
       'O HTML independente deve comprovar ausência de dependências de rede');
     assert.ok(htmlTeste.some(texto=>texto.includes('Lógica do aplicativo incorporada')),
       'O HTML independente deve comprovar scripts embutidos');
+    const regressaoDiagnostico=await paginaHtml.evaluate(()=>{
+      const grupos=[...document.querySelectorAll('.diagnostics-group')];
+      const orcamento=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('orcamento'));
+      const interfaceGrupo=grupos.find(g=>g.querySelector('summary')?.textContent?.startsWith('interface'));
+      return {orcamentoOk:orcamento?.querySelectorAll('.diagnostics-ok').length===1,
+        relatoriosOk:[...(interfaceGrupo?.querySelectorAll('.diagnostics-ok')||[])].some(item=>
+          item.textContent.includes('PDF, CSV, importação e backup estão disponíveis em Relatórios')),
+        semDuplicacao:[...(interfaceGrupo?.querySelectorAll('.diagnostics-ok')||[])].some(item=>
+          item.textContent.includes('Ajustes não duplica controles financeiros de Relatórios'))};
+    });
+    assert.deepEqual(regressaoDiagnostico,{orcamentoOk:true,relatoriosOk:true,semDuplicacao:true},
+      'Os erros reais recebidos no JSON devem permanecer corrigidos no HTML offline');
     assert.equal(errosHtml.length,0,`Erros JavaScript no HTML independente: ${errosHtml.join('; ')}`);
     await contextoHtml.close();
     console.log('E2E desktop, smartphone, P2, PWA realmente offline (cache e recarga), HTML file:// sem rede, tombstone, OFX e backup JSON: validados.');

@@ -196,23 +196,39 @@ test('Diagnóstico inspeciona paridade móvel, acessibilidade do diálogo e desc
   let oculto=false;
   const fab={getAttribute:chave=>atributosFab[chave],classList:{contains:nome=>nome==='hidden'&&oculto},
     getBoundingClientRect:()=>({width:oculto?0:54,height:oculto?0:54})};
+  const ferramentas=['export-pdf','export-csv','import-csv','export-data','import-data','folder-backup-connect'];
+  const botoes=Object.fromEntries(ferramentas.map(id=>[id,{id}]));
+  const relatorios={querySelector:selector=>botoes[selector.replace(/^#/,'')]||null};
+  const ajustesPage={querySelector:()=>null};
   const elementos={'quick-add':fab,'desktop-create-trigger':{
     getAttribute:chave=>chave==='aria-controls'?'desktop-create-menu':null},
     'desktop-create-menu':menuDesktop,'mobile-create-dialog':menuMovel,
-    'mobile-nav':{querySelectorAll:()=>Array.from({length:6},()=>({}))}};
+    'mobile-nav':{querySelectorAll:()=>Array.from({length:6},()=>({}))},
+    'reports-page':relatorios,'settings-page':ajustesPage,...botoes};
   const context={Date,Intl,Blob,verificarIntegridade:()=>({itens:[],erros:0,avisos:0}),
     auditarCodigoPublicado:async()=>({disponivel:false,motivo:'Teste local'}),
     navigator:{userAgent:'Teste',serviceWorker:{}},window:{innerWidth:390,getComputedStyle:()=>({})},
-    document:{getElementById:id=>elementos[id]||{},
-      querySelector:selector=>selector==='.settings-tools summary'?{textContent:'Relatórios PDF, CSV, importação e backup'}:null},
+    document:{getElementById:id=>elementos[id]||{},querySelector:()=>null},
     localStorage:{getItem:()=>null}};
   vm.runInNewContext(`${semImports('dist/modules/diagnostico.js')}\nthis.criar=criarRelatorioDiagnostico;`,context);
   const gerar=()=>context.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
   const extrair=(relatorio,codigo)=>relatorio.integridade.itens.find(item=>item.codigo===codigo)?.estado;
   const correto=await gerar();
   for(const codigo of ['ACAO_RAPIDA_MENU','ACAO_RAPIDA_MOBILE_DIALOGO','ACAO_RAPIDA_PARIDADE',
-    'ACAO_RAPIDA_MOBILE_ATALHOS','ACAO_RAPIDA_TOQUE_MOBILE','NAVEGACAO_MOBILE_SEIS_ABAS','AJUSTES_RELATORIOS_DESCOBERTA'])
+    'ACAO_RAPIDA_MOBILE_ATALHOS','ACAO_RAPIDA_TOQUE_MOBILE','NAVEGACAO_MOBILE_SEIS_ABAS',
+    'RELATORIOS_EXPORTACAO_DESCOBERTA','AJUSTES_SEM_EXPORTACAO_DUPLICADA'])
     assert.equal(extrair(correto,codigo),'ok',codigo);
+  const antigo=botoes['export-pdf'];
+  delete botoes['export-pdf'];
+  const pdfAusente=await gerar();
+  assert.equal(extrair(pdfAusente,'RELATORIOS_EXPORTACAO_DESCOBERTA'),'aviso',
+    'A ausência de PDF em Relatórios precisa ser detectada');
+  botoes['export-pdf']=antigo;
+  ajustesPage.querySelector=selector=>selector==='#import-data'?botoes['import-data']:null;
+  const duplicadoAjustes=await gerar();
+  assert.equal(extrair(duplicadoAjustes,'AJUSTES_SEM_EXPORTACAO_DUPLICADA'),'aviso',
+    'Controles duplicados em Ajustes precisam ser detectados');
+  ajustesPage.querySelector=()=>null;
   oculto=true;
   const ajustes=await gerar();
   assert.equal(extrair(ajustes,'ACAO_RAPIDA_TOQUE_MOBILE'),undefined,

@@ -1,5 +1,12 @@
 # Mudanças propostas — roadmap de manutenção
 
+## v64 — Correção dos falsos alarmes apontados pelo diagnóstico de 23/11
+
+- `MOD_ORCAMENTO`: corrigida a expectativa da autoverificação sintética, de R$ 10,00 para R$ 9,65. A lógica financeira existente estava correta. O teste passa a verificar também o saldo de R$ 280,00 e rejeitar calculadoras adulteradas.
+- `AJUSTES_RELATORIOS_DESCOBERTA`: removido teste de posição obsoleta. Agora verifica PDF, CSV, importação e backup em Relatórios e ausência de controles duplicados em Ajustes, com regressões negativa/positiva.
+- Chromium passa a afirmar que os dois novos checks estão verdes no HTML local desconectado. Versão e cache PWA sincronizados em v64; 371 testes Node locais aprovados, CI pendente.
+- Aviso preventivo de possível limpeza de dados pelo navegador preservado. Sem alterações financeiras, exclusões ou migração de dados.
+
 ## v63 — Diagnóstico offline completo e HTML portátil
 
 - No PWA, o diagnóstico lê do cache a assinatura real de HTML, JavaScript, CSS, manifesto e PNG, informa arquivos ausentes/inválidos e versões divergentes, sem fazer requisições de rede nem expor valores pessoais.

@@ -5,6 +5,14 @@ const path=require('node:path');
 
 const importar=()=>import(pathToFileURL(path.join(__dirname,'..','dist','modules','orcamento.js')).href);
 
+test('Autoverificação do orçamento usa a cota real de R$ 9,65 e rejeita regressões',async()=>{
+  const {verificarOrcamentoSintetico}=await import(pathToFileURL(path.join(__dirname,'..','dist','modules','registro-modulos.js')).href);
+  assert.equal(verificarOrcamentoSintetico(),true);
+  assert.equal(verificarOrcamentoSintetico(()=>({gastoAnterior:20,cotaHoje:10,diasRestantes:29,restanteMes:280})),false,
+    'O valor antigo de R$ 10,00 não pode voltar a produzir falso erro');
+  assert.equal(verificarOrcamentoSintetico(()=>null),false);
+});
+
 test('Cota diária usa saldo do orçamento antes de hoje e desconta despesa do dia',async()=>{
   const {calcularOrcamentoDia}=await importar();
   const r=calcularOrcamentoDia([

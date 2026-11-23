@@ -25,6 +25,14 @@ import {resumirAno} from './relatorio-anual.js';
 import {resumirDesafio52,valorSemana52,renderDesafio52} from './desafio-52.js';
 import {ocorrenciaCompromisso,registrarPagamentoCompromisso,resumirCartao} from './compromissos.js';
 
+// Autoverificação determinística: a conta é feita em centavos pelo mesmo motor
+// do Resumo, e o valor esperado reflete 280,00 divididos por 29 dias restantes.
+export function verificarOrcamentoSintetico(calcular=calcularOrcamentoDia){
+  const resultado=calcular([{date:'2026-11-01',type:'expense',amount:20}],300,'2026-11-02');
+  return resultado?.gastoAnterior===20&&Math.round(resultado.cotaHoje*100)===965&&
+    resultado.diasRestantes===29&&Math.round(resultado.restanteMes*100)===28000;
+}
+
 // Único ponto de registro; CI exige cobertura para cada arquivo em modules/.
 export function registrarModulosDoApp(api) {
   const {dialogos,moduloResumo,moduloLancamentos,moduloObjetivos,moduloBackup,moduloCsv,
@@ -46,10 +54,7 @@ export function registrarModulosDoApp(api) {
   registrar('lancamentos',()=>typeof moduloLancamentos.renderTransactions==='function'&&typeof moduloLancamentos.openTransaction==='function');
   registrar('teclado-monetario',()=>aplicarTeclaMonetaria('0','1')==='0.01'&&
     aplicarTeclaMonetaria('0.12','3')==='1.23'&&aplicarTeclaMonetaria('1.23','backspace')==='0.12');
-  registrar('orcamento',()=>{
-    const calculo=calcularOrcamentoDia([{date:'2026-11-01',type:'expense',amount:20}],300,'2026-11-02');
-    return calculo?.gastoAnterior===20&&calculo.cotaHoje===10&&calculo.diasRestantes===29;
-  });
+  registrar('orcamento',verificarOrcamentoSintetico);
   registrar('previsoes',()=>{
     const teste=[{type:'income',amount:200,date:'2026-11-05',recurring:true},
       {type:'expense',amount:50,date:'2026-11-10',recurring:true}];
