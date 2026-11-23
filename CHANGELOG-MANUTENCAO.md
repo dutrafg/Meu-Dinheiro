@@ -5,7 +5,7 @@
 - Removidos visor de valor, teclado de centavos em grade, texto de instruções e botão para alternar teclados do formulário de renda/despesa. Campo `Valor (R$)` fica visível e editável com teclado numérico nativo.
 - Categorias por ícones preservadas em módulo pequeno `categorias-rapidas.js`; removido `teclado-monetario.js` para não manter código sem uso. O menu `+`, os dados e o visual do restante do aplicativo continuam iguais.
 - Diagnóstico passou a alertar se o valor for bloqueado ou se alguma tecla personalizada reaparecer. Testes Node/Chromium verificam preenchimento nativo, categorias e ausência de duplicação.
-- Cache/versão sincronizados em v66. Branch de homologação, sem alteração na `main` ou nos contratos de dados; teste físico no Android continua pendente.
+- Cache/versão sincronizados em v66. **372/372 testes Node e QA Chromium móvel/desktop/offline aprovados no CI** (runs 45139318897 e 45139318864). Branch de homologação, sem alteração na `main` ou nos contratos de dados; teste físico no Android continua pendente.
 
 ## v65 — Botão + único, navegação sem colisão e teclado monetário opcional
 
