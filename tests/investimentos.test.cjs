@@ -5,8 +5,9 @@ const path=require('node:path');
 
 const read=name=>fs.readFileSync(path.join(__dirname,'../dist/modules',name),'utf8');
 const carregar=()=>{
-  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('dialogos.js').replace(/^export /gm,'')+'\n'+read('investimentos.js')
-    .replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
+  const codigo=read('validacao.js').replace(/^export /gm,'')+'\n'+read('dialogos.js').replace(/^export /gm,'')+'\n'+
+    read('dominio-investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+    read('investimentos.js').replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'');
   return import(`data:text/javascript;base64,${Buffer.from(`${codigo}\nexport {adicionarInvestimentoVinculado,editarInvestimentoVinculado,encontrarSalarioAnterior,iniciarInvestimentos,CATEGORIAS_INVESTIMENTO,normalizarDadosLocais,validarBackup};`).toString('base64')}`);
 };
 const base=()=>({transactions:[],goals:[{id:'g',name:'Reserva',kind:'goal',target:1000,saved:20,deadline:''},

@@ -5,9 +5,10 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const read = file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
+const semModulos = file=>read(file).replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'');
 const semImports = file=>(file==='dist/modules/diagnostico.js'?
-  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\n${read('dist/modules/dialogos.js').replace(/^export /gm,'')}\n${read('dist/modules/concorrencia-dados.js').replace(/^export /gm,'')}\n${read('dist/modules/ciclo-periodo.js').replace(/^export /gm,'')}\n`:'')+
-  (file==='dist/modules/diagnostico.js'?read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+  `const verificarPropostaInterface=()=>null;const preferenciasPadrao=()=>({tema:"auto",cor:"azul"});\n${semModulos('dist/modules/motor-financeiro.js')}\n${semModulos('dist/modules/dominio-objetivos.js')}\n${semModulos('dist/modules/resumo.js')}\n${semModulos('dist/modules/validacao.js')}\n${semModulos('dist/modules/limpeza-dados.js')}\n${semModulos('dist/modules/dialogos.js')}\n${semModulos('dist/modules/concorrencia-dados.js')}\n${semModulos('dist/modules/ciclo-periodo.js')}\n`:'')+
+  (file==='dist/modules/diagnostico.js'?semModulos('dist/modules/dominio-investimentos.js')+'\n'+semModulos('dist/modules/investimentos.js')+'\n'+
     read('dist/modules/calendario-financeiro.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n':'')+
   read(file).replace(/^import .*$/gm,'').replace(/^export /gm,'');
 const dados = ()=>({

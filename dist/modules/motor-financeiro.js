@@ -78,3 +78,30 @@ export function estimarRendimentoCdi(principal,percentualDiario,diasUteis=21) {
     percentualDiario<=0||percentualDiario>=1||!Number.isSafeInteger(diasUteis)||diasUteis<1)return null;
   return reaisMotor(centavosMotor(principal*(Math.pow(1+percentualDiario/100,diasUteis)-1)));
 }
+
+// Saldo disponível estimado até uma data, com recorrências vencidas e somente
+// as aplicações declaradas como transferências internas vindas do salário.
+// Não equivale ao saldo bancário e não altera transações ou aplicações.
+export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
+  if(!Array.isArray(transacoes)||!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO))return null;
+  const [anoAtual,mesAtual]=hojeISO.split('-').map(Number);
+  let total=0;
+  for(const item of transacoes){
+    if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||item.date>hojeISO||
+      !['income','expense'].includes(item.type)||!Number.isFinite(item.amount))continue;
+    let quantidade=1;
+    if(item.recurring){
+      const [anoInicio,mesInicio,dia]=item.date.split('-').map(Number);
+      const meses=(anoAtual-anoInicio)*12+mesAtual-mesInicio;
+      const ultimoDia=new Date(Date.UTC(anoAtual,mesAtual,0)).getUTCDate();
+      const ocorrenciaAtual=`${hojeISO.slice(0,7)}-${String(Math.min(dia,ultimoDia)).padStart(2,'0')}`;
+      quantidade=meses+(ocorrenciaAtual<=hojeISO?1:0);
+    }
+    total+=(item.type==='income'?1:-1)*item.amount*quantidade;
+  }
+  for(const aporte of Array.isArray(aplicacoes)?aplicacoes:[]){
+    if(aporte?.origin==='salary'&&aporte.date<=hojeISO&&Number.isFinite(aporte.amount)&&
+      transacoes.some(t=>t.id===aporte.salaryId&&t.type==='income'))total-=aporte.amount;
+  }
+  return Number.isFinite(total)?Math.round(total*100)/100:null;
+}

@@ -24,15 +24,17 @@ dist/
     impressao.css          # Saída A4 sem controles, incluindo tema claro
   app.js                   # Orquestração, persistência e eventos legados
   modules/
-    resumo.js              # Tela Resumo e gráficos por categoria
+    resumo.js              # Tela Resumo e gráficos por categoria; consulta o motor financeiro
     calendario-financeiro.js # Cálculo diário, intensidade, renderização e detalhes
     saude.js               # Poupança, fôlego e temperatura: regras puras e card
     notificacoes.js        # Dispensar/restaurar lembretes sem concluir aportes
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
-    objetivos.js           # Metas/Sonho, progresso, reserva e formulário
-    investimentos.js       # Cadastro e edição de aportes vinculados a objetivos
+    objetivos.js           # Interface de metas e sonhos, sem fórmulas duplicadas
+    dominio-objetivos.js   # P1.3: progresso, restante, totalização e vínculo de objetivos
+    investimentos.js       # Interface de cadastro e edição; preserva exports históricos
+    dominio-investimentos.js # P1.4: regras puras de aportes e vínculos salariais
     concorrencia-dados.js   # Conflitos entre abas e proteção opcional do armazenamento
     ciclo-periodo.js        # Dia/mês atual após retomar o PWA ou virar a data
     backup.js              # Backup completo JSON e cópias na pasta
@@ -126,6 +128,14 @@ O teste `tests/atualizador.test.cjs` simula atualização, ausência de conexão
 As regras puras para ocorrências de recorrências, listagem por mês, totais monetários e reserva principal passam a residir em dist/modules/motor-financeiro.js. O app.js oferece somente adaptadores finos para as telas; os testes do motor não dependem do DOM ou banco de dados.
 
 Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI bruto de 21 dias úteis também mora no motor. A data de referência é um argumento explícito; a função de percentual configurável é injetada a partir de `regras-financeiras.js`, preservando uma única origem para essa regra. O `app.js` apenas fornece estado e formata o texto. Simulações não alteram saldos, investimentos, conclusão de aportes nem armazenamento.
+
+## P1.3–P1.5 — Domínios puros e contratos de compatibilidade (v54)
+
+- `dominio-objetivos.js` contém o progresso, restante, soma de metas/sonhos sem contar aplicações vinculadas duas vezes, seleção de candidatos e cartões de destaque. `objetivos.js` controla apenas UI, formulários e formatação.
+- `dominio-investimentos.js` contém localização de salários, validação dos vínculos, inserção e edição imutável de investimentos. `investimentos.js` controla os diálogos e reexporta as APIs antigas para preservar consumidores existentes.
+- `motor-financeiro.js` também calcula o saldo disponível histórico até a data de referência. `resumo.js` faz a renderização e mantém o export antigo como encaminhamento.
+- Nenhum domínio puro lê DOM, IndexedDB, localStorage, rede ou relógio implicitamente (datas são argumentos). A interface continua usando `persist()` para submeter alterações; nenhum cálculo grava dados.
+- Dois novos módulos integram catálogo, registro de autoverificações, cache PWA e prévia HTML; testes validam dados imutáveis, valores em centavos e carga com 10 mil aplicações sintéticas.
 
 ## P2.1 — Homologação no navegador
 

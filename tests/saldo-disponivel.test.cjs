@@ -2,8 +2,9 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const {pathToFileURL}=require('node:url');
 const source=fs.readFileSync(path.join(__dirname,'..','dist/modules/resumo.js'),'utf8');
-const carregar=()=>import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const carregar=()=>import(pathToFileURL(path.join(__dirname,'..','dist/modules/resumo.js')).href);
 
 test('Saldo de hoje acumula histórico até a data atual, sem antecipar lançamentos',async()=>{
   const {calcularSaldoDisponivelHoje:saldo}=await carregar();

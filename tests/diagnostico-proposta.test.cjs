@@ -4,10 +4,12 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const read=relative=>fs.readFileSync(path.join(__dirname,'..',relative),'utf8');
+const semModulos=relative=>read(relative).replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'');
 const carregar=async()=>{
-  const objetivos=read('dist/modules/objetivos.js').replace(/^export /gm,'');
+  const dominio=read('dist/modules/dominio-objetivos.js').replace(/^export /gm,'');
+  const objetivos=read('dist/modules/objetivos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const diagnostico=read('dist/modules/diagnostico-proposta.js').replace(/^import .*$/gm,'');
-  return import(`data:text/javascript;base64,${Buffer.from(`${objetivos}\n${diagnostico}`).toString('base64')}`);
+  return import(`data:text/javascript;base64,${Buffer.from(`${dominio}\n${objetivos}\n${diagnostico}`).toString('base64')}`);
 };
 
 function elementoDeTeste(){
@@ -196,7 +198,7 @@ test('Diagnóstico trata proposta como categoria separada de erros e avisa sobre
 
 test('Relatório principal incorpora o checklist sem classificar propostas pendentes como falhas',async()=>{
   const {avaliarRequisitosProposta}=await carregar();
-  const codigo=read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
+  const codigo=semModulos('dist/modules/dominio-investimentos.js')+'\n'+semModulos('dist/modules/investimentos.js')+'\n'+
     read('dist/modules/calendario-financeiro.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')+'\n'+
     read('dist/modules/diagnostico.js').replace(/^import .*$/gm,'').replace(/^export /gm,'');
   const verificar=()=>({itens:[],erros:0,avisos:0});
@@ -206,7 +208,7 @@ test('Relatório principal incorpora o checklist sem classificar propostas pende
       verificarPropostaInterface:()=>comProposta?avaliarRequisitosProposta({TEMA_AUTO:true,TEMA_AZUL:false}):null,
       preferenciasPadrao:()=>({tema:'auto',cor:'azul'}),navigator:{userAgent:'Browser teste',serviceWorker:{}},
       window:{},localStorage:{getItem:()=>null}};
-    vm.runInNewContext(`${read('dist/modules/resumo.js').replace(/^export /gm,'')}\n${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/limpeza-dados.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\n${read('dist/modules/dialogos.js').replace(/^export /gm,'')}\n${read('dist/modules/concorrencia-dados.js').replace(/^export /gm,'')}\n${read('dist/modules/ciclo-periodo.js').replace(/^export /gm,'')}\n${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
+    vm.runInNewContext(`${semModulos('dist/modules/motor-financeiro.js')}\n${semModulos('dist/modules/dominio-objetivos.js')}\n${semModulos('dist/modules/resumo.js')}\n${semModulos('dist/modules/validacao.js')}\n${semModulos('dist/modules/limpeza-dados.js')}\n${semModulos('dist/modules/dialogos.js')}\n${semModulos('dist/modules/concorrencia-dados.js')}\n${semModulos('dist/modules/ciclo-periodo.js')}\n${codigo}\nthis.criar=criarRelatorioDiagnostico;`,contexto);
     return contexto.criar({getData:()=>({transactions:[],goals:[],allocations:[],completedAportes:[]}),CATEGORIES:{income:[],expense:[]}});
   };
   const sem=await gerar(false),com=await gerar(true);

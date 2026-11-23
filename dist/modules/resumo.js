@@ -1,30 +1,7 @@
-// Saldo estimado de todo o histórico até hoje. Recorrências são contadas somente
-// quando a respectiva ocorrência mensal já venceu; não altera nenhum registro.
-export function calcularSaldoDisponivelHoje(transacoes,hojeISO,aplicacoes=[]){
-  if(!Array.isArray(transacoes)||!/^\d{4}-\d{2}-\d{2}$/.test(hojeISO))return null;
-  const [anoAtual,mesAtual]=hojeISO.split('-').map(Number);
-  let total=0;
-  for(const item of transacoes){
-    if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||item.date>hojeISO||
-      !['income','expense'].includes(item.type)||!Number.isFinite(item.amount))continue;
-    let quantidade=1;
-    if(item.recurring){
-      const [anoInicio,mesInicio,dia]=item.date.split('-').map(Number);
-      const meses=(anoAtual-anoInicio)*12+mesAtual-mesInicio;
-      const ultimoDia=new Date(Date.UTC(anoAtual,mesAtual,0)).getUTCDate();
-      const ocorrenciaAtual=`${hojeISO.slice(0,7)}-${String(Math.min(dia,ultimoDia)).padStart(2,'0')}`;
-      quantidade=meses+(ocorrenciaAtual<=hojeISO?1:0);
-    }
-    total+=(item.type==='income'?1:-1)*item.amount*quantidade;
-  }
-  // Transferência interna comprovada pelo usuário: sai do dinheiro disponível,
-  // mas não vira despesa e não reduz o valor total do patrimônio investido.
-  for(const aporte of Array.isArray(aplicacoes)?aplicacoes:[]){
-    if(aporte?.origin==='salary'&&aporte.date<=hojeISO&&Number.isFinite(aporte.amount)&&
-      transacoes.some(t=>t.id===aporte.salaryId&&t.type==='income'))total-=aporte.amount;
-  }
-  return Number.isFinite(total)?Math.round(total*100)/100:null;
-}
+import {calcularSaldoDisponivelHoje} from './motor-financeiro.js';
+import {destaquesObjetivos} from './dominio-objetivos.js';
+// API histórica conservada para consumidores e testes anteriores.
+export {calcularSaldoDisponivelHoje} from './motor-financeiro.js';
 
 export function criarModuloResumo(ctx) {
   const {getData, getPreferences, getMonth, shiftMonth, sums, monthLabel, money, esc,
@@ -101,9 +78,7 @@ export function criarModuloResumo(ctx) {
     const s=sums(month);
     const hojeISO=isoDate(new Date());
     const saldoDisponivel=calcularSaldoDisponivelHoje(data.transactions,hojeISO,data.allocations);
-    const selected=getPreferences().reservaGoalId;
-    const reserva=data.goals.find(g=>g.kind==='goal'&&(selected?g.id===selected:/reserva|emerg[eê]ncia/i.test(g.name)))||data.goals.find(g=>g.kind==='goal');
-    const sonho=data.goals.find(g=>g.kind==='dream');
+    const {reserva,sonho}=destaquesObjetivos(data,getPreferences().reservaGoalId);
     const recent=transactionsInMonth(month).slice(0,5);
     const hasHistory=Array.from({length:6},(_,i)=>sums(shiftMonth(month,i-5)).count).some(Boolean);
     return `${header('',true)}

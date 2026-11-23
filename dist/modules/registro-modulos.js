@@ -13,7 +13,9 @@ import {calcularSaldoDisponivelHoje} from './resumo.js';
 import {validarFraseLimpeza,apagarDadosLocais} from './limpeza-dados.js';
 import {criarProtecaoConcorrencia,solicitarPersistenciaLocal} from './concorrencia-dados.js';
 import {mesLocalDaData,calcularViradaPeriodo} from './ciclo-periodo.js';
-import {ocorrenciaNoMes,totaisDoMes,principalReserva,aportesPendentes,estimarRendimentoCdi} from './motor-financeiro.js';
+import {ocorrenciaNoMes,totaisDoMes,principalReserva,aportesPendentes,estimarRendimentoCdi,calcularSaldoDisponivelHoje} from './motor-financeiro.js';
+import {percentualObjetivo,restanteObjetivo,resumirObjetivos,candidatosVinculo,destaquesObjetivos} from './dominio-objetivos.js';
+import {validarVinculosSalariais} from './dominio-investimentos.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
 import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
 import {converterOfxParaCsv,identificarOfx} from './ofx.js';
@@ -36,6 +38,12 @@ export function registrarModulosDoApp(api) {
       GRUPOS_DESPESA.length>=5&&renderizarOpcoesDespesas(texto=>texto).includes('<optgroup');
   });
   registrar('objetivos',()=>typeof moduloObjetivos.renderGoals==='function'&&typeof moduloObjetivos.openGoal==='function');
+  registrar('dominio-objetivos',()=>percentualObjetivo({target:200,saved:50})===25&&
+    restanteObjetivo({target:200,saved:50})===150&&
+    resumirObjetivos({goals:[{id:'g',kind:'goal',target:200,saved:50}],allocations:[]},'goal').guardado===50&&
+    candidatosVinculo({goals:[{id:'r',kind:'goal',name:'Reserva de emergência'}]},'reserve').length===1&&
+    destaquesObjetivos({goals:[{id:'d',kind:'dream',name:'Viagem'}]}).sonho?.id==='d');
+  registrar('dominio-investimentos',()=>validarVinculosSalariais({transactions:[],allocations:[]}).ok===true);
   registrar('backup',()=>typeof moduloBackup.folderBackup?.getState==='function');
   registrar('csv-interface',()=>typeof moduloCsv==='function');
   registrar('ofx',()=>{
@@ -123,7 +131,8 @@ export function registrarModulosDoApp(api) {
     principalReserva({goals:[{id:'m',name:'Reserva',kind:'goal',saved:10}],allocations:[]})===10&&
     aportesPendentes([{id:'s',type:'income',date:'2026-11-01',amount:100,description:'Exemplo',category:'Salário'}],
       [],'2026-11-22',()=>10)[0]?.tenPercent===10&&
-    estimarRendimentoCdi(10000,0.04)===84.34);
+    estimarRendimentoCdi(10000,0.04)===84.34&&
+    calcularSaldoDisponivelHoje([{id:'s',type:'income',amount:150,date:'2026-11-01'}],'2026-11-22')===150);
   registrar('regras-financeiras',()=>regras.calcularAporte({type:'income',category:'Salário base',amount:100},{percentual:10,categoriasAporte:['Salário base']})===10);
   registrar('log',()=>Array.isArray(logger.obterLogs()));
   registrar('dialogos',()=>typeof dialogos.confirmar==='function'&&typeof dialogos.informar==='function'&&

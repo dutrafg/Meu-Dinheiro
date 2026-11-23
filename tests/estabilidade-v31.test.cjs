@@ -81,7 +81,7 @@ test('Origem do salário limita aportes e não contabiliza investimento anterior
     description:'Salário de novembro',category:'Salário',recurring:false}],
     goals:[{id:'meta',kind:'goal',name:'Reserva',target:300,saved:0,deadline:''}],allocations:[],completedAportes:[]};
   const context={Date,Math};
-  vm.runInNewContext(`${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\nthis.api={adicionarInvestimentoVinculado,editarInvestimentoVinculado,validarVinculosSalariais};`,context);
+  vm.runInNewContext(`${read('dist/modules/validacao.js').replace(/^export /gm,'')}\n${read('dist/modules/dominio-investimentos.js').replace(/^import .*$/gm,'').replace(/^export /gm,'')}\n${read('dist/modules/investimentos.js').replace(/^import .*$/gm,'').replace(/^export \{.*\} from .*$/gm,'').replace(/^export /gm,'')}\nthis.api={adicionarInvestimentoVinculado,editarInvestimentoVinculado,validarVinculosSalariais};`,context);
   const {adicionarInvestimentoVinculado:adicionar,editarInvestimentoVinculado:editar,validarVinculosSalariais:validar}=context.api;
   const comSalario=adicionar(base,{id:'a',goalId:'meta',description:'Aporte salário',amount:80,date:'2026-11-06',category:'CDB',origin:'salary'});
   assert.equal(comSalario.allocations[0].salaryId,'salario');

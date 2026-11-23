@@ -79,6 +79,7 @@ test('Análise com dois gráficos aparece somente em Resumo', () => {
 test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizadas', () => {
   const app=read('dist/modules/objetivos.js');
   const percent=app.split('function goalProgressPercent(goal) {')[1].split('function progressLine(goal) {')[0];
+  const dominio=read('dist/modules/dominio-objetivos.js').replace(/^export /gm,'');
   const renderer=app.split('function renderGoal(g) {')[1].split('function openGoal(kind,id=')[0];
   const sandbox={
     money:value=>`R$ ${Number(value).toFixed(2)}`,
@@ -88,7 +89,7 @@ test('Meta e sonho mostram barra proporcional, porcentagem e ações padronizada
     parseDate:value=>new Date(`${value}T00:00:00Z`),
     fmtDate:{format:()=> '30 nov. 2026'}
   };
-  vm.runInNewContext(`function goalProgressPercent(goal) {${percent}function renderGoal(g) {${renderer}this.renderGoal=renderGoal;this.goalProgressPercent=goalProgressPercent;`,sandbox);
+  vm.runInNewContext(`${dominio}\nfunction goalProgressPercent(goal) {${percent}function renderGoal(g) {${renderer}this.renderGoal=renderGoal;this.goalProgressPercent=goalProgressPercent;`,sandbox);
   const makeGoal=(kind,saved,target=100)=>({id:`id-${kind}`,kind,name:kind==='goal'?'Reserva':'Carro',target,saved,deadline:''});
   for(const kind of ['goal','dream']){
     for(const [saved,expected] of [[0,0],[25,25],[100,100],[150,100]]){
@@ -174,7 +175,7 @@ test('Service worker coloca todos os arquivos offline no cache e muda de versão
     assert.ok(fs.existsSync(path.join(dist,local)),`Arquivo PWA ausente: ${local}`);
   }
   assert.ok(assets.includes('./analytics.js'));
-  assert.match(source, /meu-dinheiro-essencial-v53/);
+  assert.match(source, /meu-dinheiro-essencial-v54/);
   assert.ok(assets.includes('./folder-backup.js'));
   assert.ok(assets.includes('./modules/csv-interface.js'));
   assert.ok(assets.includes('./modules/atualizador.js'));

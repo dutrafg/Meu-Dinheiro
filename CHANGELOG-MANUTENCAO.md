@@ -123,3 +123,11 @@
 - A estimativa bruta de CDI em dias úteis foi isolada da geração de HTML, sem criar rendimento, aporte ou alteração de saldo.
 - `app.js` passou a adaptar as funções do motor à interface e reutilizar a regra de percentual de `regras-financeiras.js`; autoverificação e testes de 10 mil rendas sintéticas ampliados.
 - Cache PWA e versão visível avançam juntos para **v53**. P0.5 permanece aguardando instalação/offline e backup real em dispositivo antes da conclusão; `main` permanece intacta.
+
+## P1.3–P1.5 — Modularização financeira completa (v54)
+
+- Criados `dominio-objetivos.js` e `dominio-investimentos.js`: fórmulas de metas, totalizações sem dupla contagem, candidatos a vínculo, origem salarial e edição imutável saíram dos controladores de tela.
+- Saldo histórico disponível foi centralizado em `motor-financeiro.js` e reutilizado pelo Resumo. Os exports históricos do Resumo e dos Investimentos permanecem compatíveis.
+- Catálogo, autoverificações, cache PWA e gerador de HTML receberam os novos domínios, sem mudanças no banco, backups ou direitos de publicação.
+- Testes de contratos puros e de 10 mil aplicações sintéticas adicionados, com **332 testes Node locais aprovados**; o CI de Chromium é a verificação seguinte na branch.
+- **P1 concluída tecnicamente.** P0.5 segue pendente apenas da homologação real no PWA e de um backup real; a `main` não foi modificada.
