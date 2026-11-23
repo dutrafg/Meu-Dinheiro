@@ -33,7 +33,7 @@ dist/
     relatorio-pdf.js       # Controle da impressão local e limpeza temporária
     relatorio-pdf-conteudo.js # Modelo puro com valores, categorias e objetivos
     lancamentos.js         # Renda/Despesas, linhas e formulário
-    teclado-monetario.js   # P2.6b: teclado de centavos padrão no móvel, com alternância explícita para campo nativo
+    categorias-rapidas.js  # P2.6c: seleção visual de categorias, sem teclado monetário duplicado
     objetivos.js           # Interface de metas e sonhos, sem fórmulas duplicadas
     dominio-objetivos.js   # P1.3: progresso, restante, totalização e vínculo de objetivos
     investimentos.js       # Interface de cadastro e edição; preserva exports históricos
@@ -145,7 +145,7 @@ Na P1.2, o cálculo dos lembretes de aportes pendentes e da estimativa de CDI br
 ## P2.1 — Entrada rápida e histórico responsivo (v56)
 
 - A versão v65 simplifica a interface móvel: **somente o botão `+`** abre renda, despesa, meta, sonho e investimento; a barra fixa com dois botões de lançamento foi retirada conforme a preferência do usuário. O PC mantém os atalhos do Resumo.
-- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. No smartphone, começa em `readOnly/inputMode=none` com teclado visual de centavos, sem teclado do sistema em paralelo. Há botão explícito para alternar ao teclado numérico nativo e voltar. Os botões de categoria usam a lista existente.
+- O diálogo de lançamento mantém o `input type=number` original para teclado físico, leitor de tela e validação existente. **Desde a v66, também no smartphone o campo fica visível e editável com teclado nativo (`inputmode=decimal`), sem grade numérica interna nem alternância**. Os botões de categoria usam a lista existente.
 - Os lançamentos em Renda/Despesas recebem cabeçalhos por dia, sem alterar a ordem ou os dados persistidos. No PC, o Resumo ganhou ações diretas de renda e despesa.
 - As fotos são referência de fluxo e composição, não componentes copiados. Nenhum esquema de dados, regra de saldo ou comportamento de backup foi modificado.
 
@@ -168,8 +168,14 @@ Além dos testes Node, o workflow browser-qa.yml instala Playwright/Chromium e e
 ## P2.6b/P3.4 — Revisão visual móvel (v65)
 
 - `responsivo.css` apresenta as seis áreas em grade proporcional, com ícones sobre os rótulos. `scripts/verificar-interface.cjs` mede limites de cada botão/ícone/rótulo nas larguras 320, 384, 390 e 768 px.
-- `acao-rapida.js` conserva o menu `+` como única entrada rápida flutuante do smartphone. `lancamentos.js` evita chamar o teclado do celular ao abrir o formulário; `teclado-monetario.js` alterna conscientemente os modos de entrada sem alterar as validações financeiras.
+- `acao-rapida.js` conserva o menu `+` como única entrada rápida flutuante do smartphone. `lancamentos.js` não força foco ao abrir o formulário; desde a v66, `categorias-rapidas.js` se limita aos botões de categorias, sem controlar o campo monetário ou abrir teclado próprio.
 - `diagnostico.js` faz checagens somente de leitura para grade sem sobreposição, ausência da barra duplicada e alternativa de entrada monetária. Nenhum dado persistido, esquema ou regra de cálculo muda.
+
+## P2.6c — Entrada monetária nativa sem teclado interno (v66)
+
+- A pedido do usuário, o HTML/CSS do teclado de centavos e seu alternador foram removidos. Não ficam botões ocultos nem JavaScript de formatação paralelo ao campo numérico, reduzindo a altura do diálogo no smartphone.
+- O módulo antigo `teclado-monetario.js` foi substituído por `categorias-rapidas.js`, que só atualiza os ícones e o `<select>` de categorias. Catálogo do diagnóstico, autoverificação, cache SW, HTML único e testes cobrem a substituição.
+- O teste E2E confirma que o valor é editável no campo nativo, sem controles extras, e permanece idêntico após selecionar categoria. Diagnóstico sinaliza regressões de campo bloqueado ou reaparecimento de teclado próprio.
 
 ## P2.2 — Orçamento diário e preferência mensal (v57)
 

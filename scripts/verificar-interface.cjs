@@ -194,18 +194,16 @@ async function verificar(){
       assert.equal(await page.locator(`#${dialogo}`).evaluate(el=>el.open),true,`Cadastro móvel de ${tipo}`);
       if(tipo==='expense'){
         const valor=page.locator('#transaction-form [name="amount"]');
-        assert.equal(await valor.evaluate(el=>el.readOnly&&el.inputMode==='none'),true,
-          'No celular o campo não abre teclado nativo ao usar centavos');
-        assert.equal(await page.locator('#transaction-dialog .transaction-amount-field').isVisible(),false);
-        await page.locator('#transaction-dialog [data-money-key="1"]').click();
-        assert.equal(await valor.inputValue(),'0.01');
-        await page.locator('#transaction-keyboard-mode').click();
-        assert.equal(await valor.evaluate(el=>!el.readOnly&&el.inputMode==='decimal'),true);
+        assert.equal(await page.locator('#transaction-dialog .transaction-amount-field').isVisible(),true);
+        assert.equal(await valor.evaluate(el=>!el.readOnly&&el.inputMode==='decimal'),true,
+          'Campo de valor móvel aceita o teclado numérico do sistema');
+        assert.equal(await page.locator('#transaction-dialog [data-money-key], #transaction-keyboard-mode, #transaction-keypad-display').count(),0,
+          'Nenhum teclado próprio deve disputar espaço com o teclado do celular');
         await valor.fill('12.34');
-        await page.locator('#transaction-keyboard-mode').click();
+        assert.equal(await valor.inputValue(),'12.34');
+        await page.locator('#transaction-category-tiles [data-mobile-category]').first().click();
         assert.equal(await valor.inputValue(),'12.34',
-          'Alternar teclados não apaga o valor digitado');
-        assert.equal(await valor.evaluate(el=>el.readOnly&&el.inputMode==='none'),true);
+          'Escolher categoria não deve modificar valor digitado no teclado nativo');
       }
       await page.locator(`#${dialogo} .close-dialog`).first().click();
     }

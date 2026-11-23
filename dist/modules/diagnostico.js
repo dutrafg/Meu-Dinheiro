@@ -605,10 +605,13 @@ export async function criarRelatorioDiagnostico({getData,CATEGORIES,getFolderSta
         conferir('ACAO_RAPIDA_UNICA_MOBILE',!document.querySelector?.('#mobile-quick-actions'),
           'Botão + reúne cadastros sem barra fixa Gastei/Recebi',
           'Há barra de lançamentos rápidos duplicada com o botão +','interface','aviso');
-        const entrada=document.getElementById('transaction-keyboard-mode');
-        if(entrada)conferir('TECLADO_MONETARIO_ALTERNANCIA',Boolean(document.getElementById('transaction-keypad-display')),
-          'Entrada monetária oferece teclado em centavos e opção de teclado do celular',
-          'Opção de teclado monetário sem visor de valor','interface','aviso');
+        const campoValor=document.querySelector?.('#transaction-form [name="amount"]');
+        if(campoValor?.getAttribute)conferir('TECLADO_NATIVO_SEM_DUPLICACAO',
+          campoValor.inputMode==='decimal'&&!campoValor.readOnly&&
+          !document.querySelector?.('[data-money-key]')&&
+          !document.querySelector?.('#transaction-keyboard-mode'),
+          'Valor usa somente o campo e o teclado nativos do dispositivo',
+          'Campo monetário bloqueado ou teclado próprio duplicado','interface','aviso');
       }
     }
     // Desde a P2 as ferramentas financeiras ficam em Relatórios, sem cópia em Ajustes.

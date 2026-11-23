@@ -1,5 +1,12 @@
 # Mudanças propostas — roadmap de manutenção
 
+## v66 — Teclado numérico somente do celular
+
+- Removidos visor de valor, teclado de centavos em grade, texto de instruções e botão para alternar teclados do formulário de renda/despesa. Campo `Valor (R$)` fica visível e editável com teclado numérico nativo.
+- Categorias por ícones preservadas em módulo pequeno `categorias-rapidas.js`; removido `teclado-monetario.js` para não manter código sem uso. O menu `+`, os dados e o visual do restante do aplicativo continuam iguais.
+- Diagnóstico passou a alertar se o valor for bloqueado ou se alguma tecla personalizada reaparecer. Testes Node/Chromium verificam preenchimento nativo, categorias e ausência de duplicação.
+- Cache/versão sincronizados em v66. Branch de homologação, sem alteração na `main` ou nos contratos de dados; teste físico no Android continua pendente.
+
 ## v65 — Botão + único, navegação sem colisão e teclado monetário opcional
 
 - Removida a barra fixa móvel com `− Gastei` e `+ Recebi`; o botão `+` abre renda, despesa, metas, sonhos e investimentos. Atalhos do Resumo no PC continuam, sem mudança no visual geral aprovado.

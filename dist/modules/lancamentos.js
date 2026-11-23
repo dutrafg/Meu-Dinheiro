@@ -1,11 +1,11 @@
-import {iniciarTecladoMonetario} from './teclado-monetario.js';
+import {iniciarCategoriasRapidas} from './categorias-rapidas.js';
 
 export function criarModuloLancamentos(ctx) {
   const {getData, getMonth, getSearch, getFilterCategory, transactionsInMonth,
     n2, categorySet, header, money, esc, CATEGORY_ICONS, fmtDate, parseDate,
     icon, transactionForm, transactionDialog, currentMonth, getCurrentMonth, isoDate, renderizarOpcoesDespesas} = ctx;
   const mesAtual=()=>getCurrentMonth?.()||currentMonth;
-  const teclado=iniciarTecladoMonetario({dialog:transactionDialog,form:transactionForm,categorySet,icones:CATEGORY_ICONS,esc});
+  const categoriasRapidas=iniciarCategoriasRapidas({dialog:transactionDialog,form:transactionForm,categorySet,icones:CATEGORY_ICONS,esc});
 
   function entryList(items, emptyText,agruparPorDia=false) {
     if(!items.length)return `<div class="proto-empty">${esc(emptyText)}</div>`;
@@ -55,8 +55,7 @@ export function criarModuloLancamentos(ctx) {
     document.getElementById('transaction-type-toggle').classList.toggle('hidden',!!existing);
     document.getElementById('transaction-title').textContent=`${existing?'Editar':'Adicionar'} ${effectiveType==='income'?'renda':'despesa'}`;
     transactionDialog.showModal();
-    teclado.prepararEntrada?.();
-    // Não força teclado nativo na abertura móvel: o teclado em centavos já está visível.
+    // No smartphone, o usuário toca no campo Valor para abrir somente o teclado do sistema.
     if(typeof window==='undefined'||!window.matchMedia?.('(max-width:879px)')?.matches)
       form.namedItem('description').focus();
   }
@@ -72,7 +71,7 @@ export function criarModuloLancamentos(ctx) {
     if(selectedCategory&&!categorySet(type).includes(selectedCategory))
       cat.insertAdjacentHTML('beforeend',`<option value="${esc(selectedCategory)}">${esc(selectedCategory)} (histórica)</option>`);
     cat.value=categorySet(type).includes(choice)||choice===selectedCategory?choice:categorySet(type)[0]||'';
-    teclado.atualizar(type);
+    categoriasRapidas.atualizar(type);
     document.querySelectorAll('[data-trans-type]').forEach(button=>button.classList.toggle('on',button.dataset.transType===type));
     document.getElementById('transaction-title').textContent=`Adicionar ${type==='income'?'renda':'despesa'}`;
   }

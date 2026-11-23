@@ -1,8 +1,8 @@
 // Inventário obrigatório: toda adição em dist/modules deve entrar aqui com teste real.
 // O teste de arquitetura compara esta lista com o diretório inteiro, sem exceções.
 export const MODULOS_OBRIGATORIOS = Object.freeze([
-  'acao-rapida','ajustes','atualizador','auditoria-codigo','backup','calendario-financeiro','catalogo-diagnostico','categorias-brasileiras','ciclo-periodo','concorrencia-dados','csv-interface','desafio-52','diagnostico','diagnostico-proposta','dialogos','dominio-investimentos','dominio-objetivos','espelho-indexeddb',
-  'compromissos','compromissos-interface','integridade','investimentos','lancamentos','limpeza-dados','log','motor-financeiro','notificacoes','objetivos','ofx','orcamento','preferencias','previsoes','recuperacao-conflitos','registro-modulos','repositorio-financeiro','regras-financeiras','relatorio-anual','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','teclado-monetario','validacao'
+  'acao-rapida','ajustes','atualizador','auditoria-codigo','backup','calendario-financeiro','catalogo-diagnostico','categorias-brasileiras','categorias-rapidas','ciclo-periodo','concorrencia-dados','csv-interface','desafio-52','diagnostico','diagnostico-proposta','dialogos','dominio-investimentos','dominio-objetivos','espelho-indexeddb',
+  'compromissos','compromissos-interface','integridade','investimentos','lancamentos','limpeza-dados','log','motor-financeiro','notificacoes','objetivos','ofx','orcamento','preferencias','previsoes','recuperacao-conflitos','registro-modulos','repositorio-financeiro','regras-financeiras','relatorio-anual','relatorio-pdf','relatorio-pdf-conteudo','resumo','saude','validacao'
 ]);
 
 const registros=new Map();

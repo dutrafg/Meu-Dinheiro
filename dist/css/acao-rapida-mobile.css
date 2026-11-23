@@ -10,7 +10,7 @@
 .mobile-create-options button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .mobile-create-options button[data-create-kind="investment"]{grid-column:1/-1;flex-direction:row;min-height:60px}
 .mobile-create-footnote{font-size:.78rem;line-height:1.5;color:var(--sub);margin:14px 0 0}
-.transaction-mobile-entry{display:none}
+.transaction-category-panel{display:none}
 .proto-date-group{font-size:.82rem;color:var(--accent-text);font-weight:750;margin:18px 0 5px;padding-left:10px;border-left:3px solid var(--accent)}
 .proto-date-group:first-of-type{margin-top:8px}
 .summary-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0 18px}
@@ -21,17 +21,9 @@
 @media(max-width:879px){
   .summary-quick-actions{display:none}
   .form-dialog.mobile-create-dialog{max-height:calc(90dvh - env(safe-area-inset-bottom));padding:21px 18px calc(21px + env(safe-area-inset-bottom))}
-  .transaction-mobile-entry{display:block;margin:8px 0 17px}
-  #transaction-dialog .transaction-amount-field{display:none}
-  #transaction-dialog.transaction-native-keyboard .transaction-amount-field{display:flex}
-  #transaction-dialog.transaction-native-keyboard .transaction-keypad{display:none}
-  .transaction-keyboard-toggle{display:block;margin:0 auto 13px;padding:10px 15px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--accent-text);font-size:.8rem;font-weight:750;min-height:44px}
-  .transaction-keypad-display{display:block;text-align:center;font-size:clamp(2rem,8vw,3rem);font-weight:800;letter-spacing:-.025em;color:var(--accent-text);margin:5px 0 13px}
-  .transaction-keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-  .transaction-keypad button{min-width:0;min-height:48px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-size:1.25rem;font-weight:750;cursor:pointer}
-  .transaction-keypad button:active{background:var(--accent-soft)}
-  .transaction-keypad button:focus-visible,.transaction-category-tiles button:focus-visible{outline:3px solid var(--accent-text);outline-offset:2px}
-  .transaction-keypad-note{font-size:.73rem;color:var(--sub);margin:9px 0 13px;line-height:1.35}
+  .transaction-category-panel{display:block;margin:7px 0 17px}
+  #transaction-dialog .transaction-amount-field{display:flex}
+  .transaction-category-tiles button:focus-visible{outline:3px solid var(--accent-text);outline-offset:2px}
   .transaction-category-title{font-size:.88rem;font-weight:750;margin:10px 0}
   .transaction-category-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
   .transaction-category-tiles button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:70px;padding:8px 3px;border-radius:13px;background:var(--bg);color:var(--text);border:1px solid var(--border);cursor:pointer}

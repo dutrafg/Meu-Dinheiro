@@ -18,7 +18,7 @@ import {validarVinculosSalariais} from './dominio-investimentos.js';
 import {cliqueForaDoDialogo} from './dialogos.js';
 import {CATEGORIAS_DESPESA,GRUPOS_DESPESA,renderizarOpcoesDespesas} from './categorias-brasileiras.js';
 import {converterOfxParaCsv,identificarOfx} from './ofx.js';
-import {aplicarTeclaMonetaria} from './teclado-monetario.js';
+import {categoriasVisiveis} from './categorias-rapidas.js';
 import {calcularOrcamentoDia} from './orcamento.js';
 import {criarModuloPrevisoes,projetarDozeMeses,proximasDespesasPrevistas} from './previsoes.js';
 import {resumirAno} from './relatorio-anual.js';
@@ -52,8 +52,8 @@ export function registrarModulosDoApp(api) {
       {type:'expense',amount:40,date:'2026-02-02'},
       {type:'expense',amount:20,date:'2026-02-20'}],'2026-02-10')===60);
   registrar('lancamentos',()=>typeof moduloLancamentos.renderTransactions==='function'&&typeof moduloLancamentos.openTransaction==='function');
-  registrar('teclado-monetario',()=>aplicarTeclaMonetaria('0','1')==='0.01'&&
-    aplicarTeclaMonetaria('0.12','3')==='1.23'&&aplicarTeclaMonetaria('1.23','backspace')==='0.12');
+  registrar('categorias-rapidas',()=>categoriasVisiveis(['Mercado','Contas'],'Contas').join('|')==='Contas|Mercado'&&
+    categoriasVisiveis(Array.from({length:12},(_,i)=>String(i)),'3').length===8);
   registrar('orcamento',verificarOrcamentoSintetico);
   registrar('previsoes',()=>{
     const teste=[{type:'income',amount:200,date:'2026-11-05',recurring:true},

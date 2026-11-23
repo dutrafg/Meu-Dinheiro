@@ -1,6 +1,6 @@
 # Roadmap de manutenção — Meu Dinheiro
 
-**Situação:** **v65: botão + único, teclado e navegação móvel corrigidos; 372/372 testes Node e Chromium CI aprovados**, na branch `refactor/roadmap-manutencao-p0-20261122` (runs 45137750414 e 45137750327). O diagnóstico v64 enviado em 23/11 passou em 225 verificações, sem erros; resta um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente, P2.6 aguarda inspeção física; **P1 concluída**, **P0.5 ainda em homologação física** e `main` não alterada.
+**Situação:** **v66: teclado próprio removido do celular a pedido do usuário; somente entrada numérica nativa e categorias por ícones**, na branch `refactor/roadmap-manutencao-p0-20261122`, em testes. A v65 teve 372/372 testes Node e QA Chromium aprovados; o diagnóstico v64 do Samsung passou em 225 verificações sem erros, com um aviso preventivo de armazenamento. P2.1–P2.5 e P2.7 concluídas tecnicamente; P2.6 aguarda validação da v66 e inspeção física. **P1 concluída**, **P0.5 em homologação física** e `main` não alterada.
 
 | Fase | Status | Entregas e próximos passos |
 | --- | --- | --- |
@@ -19,15 +19,15 @@
 | P1.3 | ✅ Concluída | Cálculo puro de metas/sonhos: progresso, restante, totais sem duplicar aplicações vinculadas, candidatos e destaques |
 | P1.4 | ✅ Concluída | Regras puras de investimentos/edição/vínculos salariais em `dominio-investimentos.js`, controlador visual isolado e API histórica preservada |
 | P1.5 | ✅ Concluída localmente | Saldo disponível extraído para motor único; testes de contratos, 10 mil investimentos sintéticos, verificação sintática, cache offline, HTML independente e regressões existentes (333/333) |
-| **P2 — Qualidade, interface e funções de referência** | **v65 CI aprovado; inspeção física pendente** | Funções de referência e diagnósticos integrados; v65 melhora o fluxo de lançamento no celular mantendo o estilo novo e o botão + como acionador único |
-| P2.1 | ✅ Concluída em branch; ajuste de experiência em v65 | Celular: teclado em centavos, categorias por ícones e cadastros no botão +, sem barra fixa de dois botões. PC: ações de cadastro no Resumo. Histórico agrupado por dia |
+| **P2 — Qualidade, interface e funções de referência** | **v66 em testes; inspeção física pendente** | Visual aprovado mantido; somente botão + para cadastros e somente campo monetário nativo no celular |
+| P2.1 | ✅ Concluída em branch; teclado simplificado em v66 | Celular: valor via teclado do sistema, categorias por ícones e cadastros no +, sem barra fixa. PC: ações do Resumo. Histórico agrupado por dia |
 | P2.2 | ✅ Concluída em branch (CI Node/Chromium) | Limite mensal e meta de guardar opcionais em Ajustes; orçamento diário em centavos, considerando despesas vencidas e do dia, aviso a partir de 80%, sem confundir estimativa com saldo bancário |
 | **P2.3** | **✅ Concluída (CI v62)** | Agenda e previsão de 12 meses incluem contas a pagar e fixos; vencimentos e estado de pagamento; pagamento cria uma única despesa e preserva histórico, sem dupla contagem |
 | P2.4 | ✅ Concluída (CI v62) | Categorias personalizadas com renomear/ocultar/ícone preservando o histórico; cartão parcelado com saldo a pagar, próxima fatura e confirmação de cada parcela |
 | **P2.5** | **✅ Concluída na branch; CI Node + Chromium aprovados (v60)** | Resumo anual, compartilhamento explícito, desafio 52 semanas com meta real, 52 valores e confirmação de cada aporte via diálogo de investimento; nenhuma movimentação automática |
-| P2.6 | 🟡 CI aprovado, homologação física pendente (v65) | Orçamento do dia prioritário, barra inferior de seis abas reorganizada, sem sobreposição de rótulos; botão + único e alternância entre teclado de centavos e teclado nativo. Falta ensaio real no smartphone/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
+| P2.6 | 🟡 v66 em homologação | Orçamento do dia prioritário; seis abas sem sobreposição; botão + único; teclado personalizado excluído e somente entrada numérica nativa. Falta ensaio real no Samsung/PWA; modo demonstrativo fora do escopo publicado para proteger dados |
 | P2.7 | ✅ Auditoria offline automatizada aprovada (v63) | 370/370 testes Node e Chromium aprovados: instalação do Service Worker, corte real de internet, recarga offline, dados preservados e HTML `file://`; inspeção física de P2.6 continua separada |
-| **P3 — Logs e observabilidade** | **v64 aprovada; verificações visuais v65 adicionadas** | Diagnóstico distingue erros reais e riscos preventivos; v65 também confere colisão de abas, ausência de barra duplicada e estrutura da alternância de teclado |
+| **P3 — Logs e observabilidade** | **v64/v65 aprovadas; check v66 em teste** | Diagnóstico distingue erros reais e riscos preventivos; v66 detecta campo nativo bloqueado ou retorno acidental de teclado customizado |
 | **P4 — Homologação e publicação** | **Pendente** | Testes manuais PWA/Android/desktop, recuperação, backup e autorização para publicar |
 
 ## Regras de avanço
@@ -44,7 +44,7 @@
 - Arquivo HTML único: valida scripts/estilos incorporados, ausência de dependências de rede (inclusive imagens) e bibliotecas internas; Service Worker é corretamente identificado como não aplicável nesse modo.
 - Navegador automatizado (**CI aprovado**): instala cache conectado, corta realmente a rede do contexto Chromium, recarrega, navega entre telas, roda diagnóstico, confere espelho IndexedDB e reconecta; o HTML único é aberto em `file://` com navegador offline.
 - Risco preventivo `RISCO_OFFLINE_EVICCAO_DADOS`: sistema operacional/navegador pode remover armazenamento não persistente; manter backup JSON fora do aparelho.
-- Gerador entrega `Meu-Dinheiro-v65-Mobile-Offline.html` com instruções e botão para executar o diagnóstico. Guia manual em `VALIDACAO-OFFLINE.md`.
+- Gerador entrega `Meu-Dinheiro-v66-Teclado-Nativo-Offline.html` com instruções e botão para executar o diagnóstico. Guia manual em `VALIDACAO-OFFLINE.md`.
 - **Não concluímos P0.5 nem P2.6 sem ensaio físico** em Android/iOS e confirmação explícita de backup/restauração de dados fictícios.
 - CI v63 aprovado: código https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963590 e navegador offline https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45093963618.
 
@@ -63,6 +63,13 @@
 - No diálogo de lançamento, teclado de centavos é padrão sem convocar o teclado do sistema; botão acessível permite optar pelo teclado numérico nativo. Abertura no celular não foca descrição à força.
 - A v65 adiciona regressões Node e Chromium e autoverificações de layout/atalho/teclado; não modifica dados financeiros existentes, armazenamento, saldos nem fórmulas. **Homologação física de P0.5/P2.6 ainda é necessária.**
 - **CI v65 aprovado:** 372/372 testes Node (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45137750414) e Chromium desktop/móvel + offline (https://github.com/dutrafg/Meu-Dinheiro/actions/runs/45137750327). A aprovação automatizada não substitui o ensaio manual do Samsung com o HTML v65 e o PWA instalado.
+
+## P2.6c — Teclado nativo sem duplicação (v66)
+
+- Foto no Samsung mostrou teclado próprio ocupando grande parte do diálogo. O usuário solicitou removê-lo completamente, preservando a nova interface.
+- A interface passou a exibir **Valor (R$)** com `inputmode="decimal"` e `type="number"` imediatamente após a descrição, usando apenas o teclado do sistema ao tocar no campo. Removidos visor numérico, grade de teclas e botão de alternância.
+- A seleção rápida de categorias permanece; sua lógica foi isolada em `categorias-rapidas.js`, retirando código monetário obsoleto e atualizando o inventário e cache offline. O motor financeiro, os registros e backups não mudaram.
+- Testes de regressão de campo nativo e categorias; Chromium verifica abertura do formulário, ausência total de teclas próprias, valor digitado e seleção sem alteração de valor. P0.5 e P2.6 ainda exigem homologação física.
 
 ## Verificação da P2 até v60
 

@@ -1,10 +1,10 @@
-# Validação offline — Meu Dinheiro v65
+# Validação offline — Meu Dinheiro v66
 
 Este roteiro usa **somente dados fictícios**. A homologação não autoriza publicação nem substitui backup real.
 
 ## A) Arquivo HTML independente — celular ou PC
 
-1. Baixe `Meu-Dinheiro-v65-Mobile-Offline.html` para o dispositivo e guarde uma cópia antes de começar.
+1. Baixe `Meu-Dinheiro-v66-Teclado-Nativo-Offline.html` para o dispositivo e guarde uma cópia antes de começar.
 2. Ative **modo avião**, desligando Wi-Fi e dados móveis. No PC, desconecte a internet.
 3. Abra o arquivo no navegador pelo gerenciador de arquivos. Alguns celulares restringem HTML local; se isso acontecer, teste no PC ou outro navegador e registre a limitação.
 4. Toque em **Executar diagnóstico completo**, aguarde até a mensagem "Diagnóstico concluído" (animação de até 25 segundos) e expanda o grupo **offline**.
@@ -14,7 +14,7 @@ Este roteiro usa **somente dados fictícios**. A homologação não autoriza pub
 
 ## B) PWA instalado — celular ou PC
 
-1. Com internet, abra a versão v65 da **branch de homologação**, aguarde o Service Worker ativar e atualize a página uma vez.
+1. Com internet, abra a versão v66 da **branch de homologação**, aguarde o Service Worker ativar e atualize a página uma vez.
 2. Em **Ajustes → Executar diagnóstico completo**, verifique o grupo **offline**: entrada, aplicação, estilos, manifesto, ícones, persistência, validação, notificações e diagnóstico em cache; `OFFLINE_CACHE_INTEGRIDADE` deve indicar sucesso.
 3. Se `OFFLINE_CACHE_VERSAO` alertar versão diferente, conclua a atualização e repita online antes de cortar a conexão.
 4. Use apenas lançamentos fictícios, habilite modo avião, feche a aba/PWA e abra novamente sem internet. Resumo, Renda, Despesas, Objetivos, previsões e diagnóstico devem abrir; não dependa do CDI remoto.

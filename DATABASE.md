@@ -113,6 +113,11 @@ A inicialização compara o espelho IndexedDB com o legado antes de replicar. Se
 - O botão `+` único, o teclado monetário alternável e a grade inferior de seis abas não escrevem preferências adicionais nem transformam registros ou backups.
 - `input type=number` e armazenamento de valores numéricos permanecem inalterados; o teclado em centavos apenas apresenta a entrada de modo diferente no celular. A homologação física da P0.5 continua pendente.
 
+## v66 — Somente entrada numérica nativa
+
+- Removido o teclado de centavos customizado por preferência do usuário. O campo monetário original `type=number/inputmode=decimal` é usado em celular e PC; nenhuma transformação de valores ou esquema novo é introduzido.
+- As categorias rápidas alteram apenas o `<select>` antes de salvar. O repositório IndexedDB, o espelho local e os formatos de backup/CSV/OFX permanecem idênticos; P0.5 segue em homologação física.
+
 ## P2.2 — Preferências de planejamento (v57)
 
 - `meu-dinheiro-essencial:preferencias:v1` passa a permitir `limiteMensal` e `metaPoupancaMensal`, ambos números monetários positivos até R$ 999.999.999,00, ou `null` quando não definidos. Preferências antigas são normalizadas, sem migração destrutiva.
